@@ -1,0 +1,114 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: qcess_postgres
+    environment:
+      POSTGRES_DB: qcessdb
+      POSTGRES_USER: qcessuser
+      POSTGRES_PASSWORD: qcess
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qcessuser -d qcessdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  sonarqube-db:
+    image: postgres:15
+    container_name: sonarqube_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonar_pg:/var/lib/postgresql/data
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    restart: unless-stopped
+    depends_on:
+      - sonarqube-db
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
+      - sonar_logs:/opt/sonarqube/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+
+  builder:
+    image: maven:3.9-eclipse-temurin-17
+    container_name: maven_builder
+    working_dir: /usr/src
+    depends_on:
+      sonarqube:
+        condition: service_healthy
+    environment:
+      SONAR_HOST_URL: ${SONAR_HOST_URL}
+      SONAR_TOKEN: ${SONAR_TOKEN}
+    volumes:
+      - ./:/usr/src
+    command: >
+      sh -c "mvn -f backend/pom.xml clean verify sonar:sonar
+      -Dsonar.projectKey=qcess
+      -Dsonar.projectName=qcess
+      -Dsonar.host.url=http://sonarqube:9000
+      -Dsonar.token=${SONAR_TOKEN}"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      builder:
+        condition: service_completed_successfully
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/qcessdb
+      SPRING_DATASOURCE_USERNAME: qcessuser
+      SPRING_DATASOURCE_PASSWORD: qcess
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  webadmin:
+    build:
+      context: ./webadmin
+    container_name: webadmin_app
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    name: qcess_pgdata
+  sonar_pg:
+    name: qcess_sonar_pg
+  sonar_data:
+    name: qcess_sonar_data
+  sonar_extensions:
+    name: qcess_sonar_extensions
+  sonar_logs:
+    name: qcess_sonar_logs

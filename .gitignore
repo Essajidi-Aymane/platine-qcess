@@ -1,0 +1,55 @@
+# --- Globaux / OS ---
+.DS_Store
+Thumbs.db
+
+# --- IDE ---
+.idea/
+.vscode/
+*.iml
+
+.env
+# --- Java / Maven (backend/*) ---
+backend/**/target/
+backend/**/.mvn/
+backend/**/hs_err_pid*
+backend/**/.classpath
+backend/**/.project
+
+# --- Node / Next.js (webadmin/*) ---
+webadmin/node_modules/
+webadmin/.next/
+webadmin/.turbo/
+webadmin/.vercel/
+webadmin/.eslintcache
+
+# --- Flutter (mobile/*) ---
+mobile/build/
+mobile/.dart_tool/
+mobile/.packages
+mobile/.flutter-plugins
+mobile/.flutter-plugins-deps
+mobile/ios/Flutter/.last_build_id
+mobile/ios/Pods/
+mobile/macos/Flutter/ephemeral/
+mobile/linux/flutter/ephemeral/
+mobile/windows/flutter/ephemeral/
+
+# --- Logs & coverage ---
+**/*.log
+**/logs/
+**/coverage/
+**/.nyc_output/
+
+# --- Sonar & tooling ---
+.sonar/
+.scannerwork/
+
+# --- Docker ---
+**/.env
+**/tmp/
+**/dist/
+
+# --- Misc archives ---
+*.zip
+*.tar
+*.tar.gz
