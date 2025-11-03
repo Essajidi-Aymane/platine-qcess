@@ -1,0 +1,287 @@
+'use client'
+import React, {useState} from 'react';
+import "../../globals.css";
+import { FaEye, FaRegEyeSlash  } from "react-icons/fa";
+
+
+
+const LoginRegister = () => {
+
+    const [tab , setTab ] = useState("login");
+
+    return (
+            <div className="h-full w-full  bg-[#E0E7FF] flex items-center justify-center">
+            <div className=" w-full max-w-md rounded-2xl bg-white p-6 shadow-md border border-white " >
+                <div className =' text-center mb-4 '>
+                <h1 className="text-2xl font-bold text-[#155DFC]">Qcess</h1>
+                    <p className=" text-md text-gray-400">Système de gestion de bâtiment modulaire
+
+                    </p>
+                </div>
+                <div className="  rounded-full flex  bg-gray-200 p-1 mb-4 text-sm">
+
+                    <button onClick={() => setTab("login")} className={`cursor-pointer flex-1 py-2 rounded-full transition ${ tab === "login" ? "bg-white shadow-sm" : "text-gray-600"}`} >
+                    Connexion
+                    </button>
+
+                    <button onClick={() => setTab("register")} className={`cursor-pointer flex-1 py-2 rounded-full transition ${ tab === "register" ? "bg-white shadow-sm" : "text-gray-600"}`} >
+                    Inscription
+                    </button>
+                </div>
+                {tab === "login" ? <LoginForm/> : <RegisterForm/> }
+
+            </div>
+        </div>
+    );
+};
+function LoginForm() {
+    const [form, setForm] = useState({ email: "", password: "", remember: false });
+    const [loading, setLoading] = useState(false);
+    const [error, setError]   = useState("");
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        setError("");
+        setLoading(true);
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(form),
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.message || "Identifiants invalides");
+            }
+            const params = new URLSearchParams(window.location.search);
+            const next = params.get("next") || "/dashboard";
+            window.location.assign(next);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+                <label htmlFor="email" className="block text-md font-medium">Email</label>
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="w-full rounded-md bg-[#F3F3F5] px-3 py-2
+                     focus:outline-none focus:ring-1 focus:border-gray-300 transition"
+                    placeholder="you@example.com"
+                />
+            </div>
+
+            <PasswordField
+                id="password"
+                name="password"
+                label="Mot de passe"
+                placeholder="••••••••"
+                autoComplete="current-password"
+                value={form.password}
+                onChange={(v) => setForm({ ...form, password: v })}
+            />
+
+            <label className="inline-flex items-center gap-2 text-sm">
+                <input
+                    type="checkbox"
+                    className="size-4"
+                    checked={form.remember}
+                    onChange={(e) => setForm({ ...form, remember: e.target.checked })}
+                    name="remember"
+                    id="remember"
+                />
+                Se souvenir de moi
+            </label>
+
+            {error && <p className="text-sm text-red-600">{error}</p>}
+
+            <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-md bg-[#030213] text-white text-lg font-medium py-2
+                   transition-all duration-300 ease-in-out
+                   hover:bg-white hover:text-[#030213] hover:border hover:border-[#030213]
+                   active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+                {loading ? "Connexion..." : "Se connecter"}
+            </button>
+        </form>
+    );
+}
+
+
+function RegisterForm() {
+    const [form, setForm] = useState({
+        fullName: "",
+        orgName: "",
+        email: "",
+        password: "",
+        confirm: "",
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError]   = useState("");
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        setError("");
+
+        if (!form.fullName || !form.orgName || !form.email || !form.password) {
+            setError("Tous les champs sont requis.");
+            return;
+        }
+        if (form.password !== form.confirm) {
+            setError("Les mots de passe ne correspondent pas.");
+            return;
+        }
+        if (form.password.length < 8) {
+            setError("Le mot de passe doit contenir au moins 8 caractères.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    fullName: form.fullName,
+                    orgName: form.orgName,
+                    email: form.email,
+                    password: form.password,
+                }),
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.message || "Inscription impossible.");
+            }
+            window.location.assign("/dashboard");
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col">
+                <label htmlFor="fullName" className="block text-md mb-1">Nom complet</label>
+                <input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    required
+                    autoComplete="name"
+                    value={form.fullName}
+                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                    className="w-full rounded-md bg-[#F3F3F5] px-3 py-2
+                     focus:outline-none focus:ring-1 focus:border-gray-300 transition"
+                />
+            </div>
+
+            <div className="flex flex-col">
+                <label htmlFor="orgName" className="block text-md mb-1">Organisation</label>
+                <input
+                    id="orgName"
+                    name="orgName"
+                    type="text"
+                    required
+                    autoComplete="organization"
+                    value={form.orgName}
+                    onChange={(e) => setForm({ ...form, orgName: e.target.value })}
+                    className="w-full rounded-md bg-[#F3F3F5] px-3 py-2
+                     focus:outline-none focus:ring-1 focus:border-gray-300 transition"
+                />
+            </div>
+
+            <div className="flex flex-col col-span-2">
+                <label htmlFor="emailReg" className="block text-md mb-1">Email</label>
+                <input
+                    id="emailReg"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="w-full rounded-md bg-[#F3F3F5] px-3 py-2
+                     focus:outline-none focus:ring-1 focus:border-gray-300 transition"
+                    placeholder="you@example.com"
+                />
+            </div>
+
+            <PasswordField
+                id="passwordReg"
+                name="password"
+                label="Mot de passe"
+                placeholder="••••••••"
+                autoComplete="new-password"
+                value={form.password}
+                onChange={(v) => setForm({ ...form, password: v })}
+            />
+
+            <PasswordField
+                id="confirmReg"
+                name="confirm"
+                label="Confirmer"
+                placeholder="••••••••"
+                autoComplete="new-password"
+                value={form.confirm}
+                onChange={(v) => setForm({ ...form, confirm: v })}
+            />
+
+            {error && <p className="col-span-2 text-sm text-red-600">{error}</p>}
+
+            <button
+                type="submit"
+                disabled={loading}
+                className="col-span-2 w-full rounded-md bg-[#030213] text-white text-lg font-medium py-2 transition-all duration-300 ease-in-out hover:bg-white hover:text-[#030213] hover:border hover:border-[#030213] active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+                {loading ? "Création..." : "S'inscrire"}
+            </button>
+        </form>
+    );
+}
+
+
+
+
+function PasswordField({ id, name, label, value, onChange, placeholder, autoComplete }) {
+    const [show, setShow] = useState(false);
+    return (
+        <div className="flex flex-col gap-1 relative">
+            <label htmlFor={id} className="block text-md font-medium">{label}</label>
+            <input
+                id={id}
+                name={name}
+                type={show ? "text" : "password"}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                autoComplete={autoComplete}
+                placeholder={placeholder}
+                className="w-full rounded-md bg-[#F3F3F5] px-3 py-2 pr-10 border-transparent focus:outline-none focus:ring-1 focus:border-gray-300 transition"/>
+            <button
+                type="button"
+                onClick={() => setShow(!show)}
+                className="absolute right-3 top-9 text-gray-500 hover:text-black transition" aria-label={show ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            >
+                {show ? <FaRegEyeSlash/> : <FaEye/>}
+            </button>
+        </div>
+    );
+}
+
+
+
+
+export default LoginRegister;
