@@ -122,28 +122,29 @@ package_webadmin:
 
 build_mobile:
   stage: build
-  image: node:20-alpine
+  image: cirrusci/flutter:stable
   rules:
     - changes:
         - "mobile/**"
   script:
     - cd mobile
-    - npm ci --prefer-offline --no-audit
+    - flutter pub get
+    - flutter build apk --release
   cache:
     key: mobile-$CI_COMMIT_REF_SLUG
     paths:
-      - mobile/node_modules/
+      - mobile/.pub-cache/
+      - mobile/build/
 
 test_mobile:
   stage: test
-  image: node:20-alpine
+  image: cirrusci/flutter:stable
   rules:
     - changes:
         - "mobile/**"
   script:
     - cd mobile
-    - npm ci --prefer-offline
-    - npm run test --if-present
+    - flutter test
   allow_failure: true
 
 sonar_mobile:
@@ -164,15 +165,15 @@ sonar_mobile:
 
 package_mobile:
   stage: package
-  image: node:20-alpine
+  image: cirrusci/flutter:stable
   rules:
     - changes:
         - "mobile/**"
   script:
     - cd mobile
-    - npm ci --prefer-offline
-    - npm run build
+    - flutter pub get
+    - flutter build apk --release
   artifacts:
     paths:
-      - mobile/dist/
+      - mobile/build/app/outputs/flutter-apk/app-release.apk
     expire_in: 1 week
