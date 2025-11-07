@@ -1,0 +1,178 @@
+image: maven:3.9.6-eclipse-temurin-21
+
+stages:
+  - build
+  - test
+  - sonar
+  - package
+
+cache:
+  key: maven
+  paths:
+    - .m2/repository
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+build_backend:
+  stage: build
+  rules:
+    - changes:
+        - "backend/**"
+  script:
+    - cd backend
+    - mvn clean compile -DskipTests
+
+test_backend:
+  stage: test
+  rules:
+    - changes:
+        - "backend/**"
+  script:
+    - cd backend
+    - mvn test
+  allow_failure: true
+
+sonar_backend:
+  stage: sonar
+  rules:
+    - changes:
+        - "backend/**"
+  script:
+    - cd backend
+    - mvn sonar:sonar
+        -Dsonar.projectKey=Qcess
+        -Dsonar.host.url=$SONAR_HOST_URL
+        -Dsonar.token=$SONAR_TOKEN
+        -Dsonar.java.source=21
+        -Dsonar.exclusions=**/pom.xml,**/target/**,**/.mvn/**
+  allow_failure: true
+
+package_backend:
+  stage: package
+  rules:
+    - changes:
+        - "backend/**"
+  script:
+    - cd backend
+    - mvn package -DskipTests -Dspring-boot.repackage.skip=true
+  artifacts:
+    paths:
+      - backend/**/target/*.jar
+    expire_in: 1 week
+
+build_webadmin:
+  stage: build
+  image: node:20-alpine
+  rules:
+    - changes:
+        - "webadmin/**"
+  script:
+    - cd webadmin
+    - npm ci --prefer-offline --no-audit
+    - npm run build
+  cache:
+    key: webadmin-$CI_COMMIT_REF_SLUG
+    paths:
+      - webadmin/node_modules/
+
+test_webadmin:
+  stage: test
+  image: node:20-alpine
+  rules:
+    - changes:
+        - "webadmin/**"
+  script:
+    - cd webadmin
+    - npm ci --prefer-offline
+    - npm run test --if-present
+  allow_failure: true
+
+sonar_webadmin:
+  stage: sonar
+  image: sonarsource/sonar-scanner-cli:latest
+  rules:
+    - changes:
+        - "webadmin/**"
+  script:
+    - cd webadmin
+    - sonar-scanner
+        -Dsonar.projectKey=Qcess-webadmin
+        -Dsonar.sources=src
+        -Dsonar.exclusions=**/*.test.ts,**/*.test.tsx,**/node_modules/**,**/.next/**,**/dist/**
+        -Dsonar.host.url=$SONAR_HOST_URL
+        -Dsonar.token=$SONAR_TOKEN
+  allow_failure: true
+
+package_webadmin:
+  stage: package
+  image: node:20-alpine
+  rules:
+    - changes:
+        - "webadmin/**"
+  script:
+    - cd webadmin
+    - npm ci --prefer-offline
+    - npm run build
+  artifacts:
+    paths:
+      - webadmin/.next/
+      - webadmin/dist/
+    expire_in: 1 week
+
+build_mobile:
+  stage: build
+  image: node:20-alpine
+  rules:
+    - changes:
+        - "mobile/**"
+  script:
+    - cd mobile
+    - npm ci --prefer-offline --no-audit
+  cache:
+    key: mobile-$CI_COMMIT_REF_SLUG
+    paths:
+      - mobile/node_modules/
+
+test_mobile:
+  stage: test
+  image: node:20-alpine
+  rules:
+    - changes:
+        - "mobile/**"
+  script:
+    - cd mobile
+    - npm ci --prefer-offline
+    - npm run test --if-present
+  allow_failure: true
+
+sonar_mobile:
+  stage: sonar
+  image: sonarsource/sonar-scanner-cli:latest
+  rules:
+    - changes:
+        - "mobile/**"
+  script:
+    - cd mobile
+    - sonar-scanner
+        -Dsonar.projectKey=Qcess-mobile
+        -Dsonar.sources=src
+        -Dsonar.exclusions=**/*.test.ts,**/*.test.tsx,**/node_modules/**,**/android/**,**/ios/**,**/dist/**
+        -Dsonar.host.url=$SONAR_HOST_URL
+        -Dsonar.token=$SONAR_TOKEN
+  allow_failure: true
+
+package_mobile:
+  stage: package
+  image: node:20-alpine
+  rules:
+    - changes:
+        - "mobile/**"
+  script:
+    - cd mobile
+    - npm ci --prefer-offline
+    - npm run build
+  artifacts:
+    paths:
+      - mobile/dist/
+    expire_in: 1 week
