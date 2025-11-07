@@ -124,8 +124,6 @@ build_mobile:
   stage: build
   image: cirrusci/flutter:stable:3.35.4
   rules:
-    - changes:
-        - "mobile/**"
   script:
     - cd mobile
     - flutter pub get
@@ -140,8 +138,6 @@ test_mobile:
   stage: test
   image: cirrusci/flutter:stable:3.35.4
   rules:
-    - changes:
-        - "mobile/**"
   script:
     - cd mobile
     - flutter test
@@ -151,8 +147,6 @@ sonar_mobile:
   stage: sonar
   image: sonarsource/sonar-scanner-cli:latest
   rules:
-    - changes:
-        - "mobile/**"
   script:
     - cd mobile
     - sonar-scanner
@@ -167,8 +161,6 @@ package_mobile:
   stage: package
   image: cirrusci/flutter:stable:3.35.4
   rules:
-    - changes:
-        - "mobile/**"
   script:
     - cd mobile
     - flutter pub get
