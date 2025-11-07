@@ -122,7 +122,7 @@ package_webadmin:
 
 build_mobile:
   stage: build
-  image: cirrusci/flutter:stable
+  image: cirrusci/flutter:stable:3.35.4
   rules:
     - changes:
         - "mobile/**"
@@ -138,7 +138,7 @@ build_mobile:
 
 test_mobile:
   stage: test
-  image: cirrusci/flutter:stable
+  image: cirrusci/flutter:stable:3.35.4
   rules:
     - changes:
         - "mobile/**"
@@ -165,7 +165,7 @@ sonar_mobile:
 
 package_mobile:
   stage: package
-  image: cirrusci/flutter:stable
+  image: cirrusci/flutter:stable:3.35.4
   rules:
     - changes:
         - "mobile/**"
