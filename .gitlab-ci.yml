@@ -122,7 +122,7 @@ package_webadmin:
 
 build_mobile:
   stage: build
-  image: cirrusci/flutter:3.35.1
+  image: ghcr.io/cirruslabs/flutter:latest
   rules:
   script:
     - cd mobile
@@ -136,7 +136,7 @@ build_mobile:
 
 test_mobile:
   stage: test
-  image: cirrusci/flutter:3.35.1
+  image: ghcr.io/cirruslabs/flutter:latest
   rules:
   script:
     - cd mobile
@@ -159,7 +159,7 @@ sonar_mobile:
 
 package_mobile:
   stage: package
-  image: cirrusci/flutter:3.35.1
+  image: ghcr.io/cirruslabs/flutter:latest
   rules:
   script:
     - cd mobile
