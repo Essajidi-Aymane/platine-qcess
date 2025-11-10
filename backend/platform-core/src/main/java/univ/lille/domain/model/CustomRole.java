@@ -17,7 +17,6 @@ public class CustomRole {
     private  String description ;
     private Organization organization ;
     private LocalDateTime createdAt;
-    private Long createdBy ;
 
 
 }

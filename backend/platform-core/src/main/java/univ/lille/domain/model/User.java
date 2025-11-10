@@ -8,6 +8,7 @@ import univ.lille.enums.UserRole;
 import univ.lille.enums.UserStatus;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -29,9 +30,12 @@ public class User {
 
     private UserStatus userStatus ;
     private UserRole role;
+    private CustomRole customRole ;
     private Organization organization ;
     private LocalDateTime createdAt ;
     private LocalDateTime lastLoginAt ;
+    @Builder.Default
+    private List<CustomRole> customRoles = new ArrayList<>();
     public String getDisplayName() {
         if (role == UserRole.ADMIN && fullName != null) {
             return fullName;
@@ -58,8 +62,22 @@ public class User {
         this.lastLoginAt = LocalDateTime.now();
     }
 
+    public  void assignRole( CustomRole role) {
+        if (!customRoles.contains(role)) {
+            customRoles.add(role);
+        }
+    }
+    public void removeRole( CustomRole role) {
+        customRoles.remove(role);
+    }
+    public boolean hasRole(CustomRole role) {
+        return customRoles.stream().anyMatch(r-> r.getName().equalsIgnoreCase(role.getName()));
+    }
     public boolean hasAnyAllowedRole(List<CustomRole> allowedRoles) {
-        return  allowedRoles.stream().anyMatch(allowedRoles::contains);
+        return  customRoles.stream().anyMatch(allowedRoles::contains);
 
+    }
+    public boolean canAccessZone(Zone zone) {
+        return zone.isAccessibleBy(this);
     }
 }
