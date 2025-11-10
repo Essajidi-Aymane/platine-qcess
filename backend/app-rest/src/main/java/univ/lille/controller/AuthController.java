@@ -39,4 +39,6 @@ public class AuthController {
     public ResponseEntity<String> getCurrentUser() {
         return ResponseEntity.ok("Authenticated");
     }
+
+
 }

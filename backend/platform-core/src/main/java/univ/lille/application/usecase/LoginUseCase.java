@@ -2,6 +2,8 @@ package univ.lille.application.usecase;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import univ.lille.domain.exception.InvalidCredentialsException;
@@ -17,6 +19,7 @@ import univ.lille.infrastructure.adapter.security.JwtService;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LoginUseCase implements LoginUserPort {
 
     private final UserRepository userRepository;
@@ -33,6 +36,7 @@ public class LoginUseCase implements LoginUserPort {
         user.updateLastLogin();
         userRepository.save(user);
         String token = jwtService.generateToken(user);
+        log.info("Login successful for user: {}", user.getEmail());
         return new AuthResponse(token, user.getEmail(), user.getRole(), user.getOrganization().getId());
 
 

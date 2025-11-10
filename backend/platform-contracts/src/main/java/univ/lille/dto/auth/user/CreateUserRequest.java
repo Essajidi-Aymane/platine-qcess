@@ -8,7 +8,7 @@ import univ.lille.enums.UserRole;
 @Data
 public class CreateUserRequest {
     @NotBlank
-    @Email
+    @Email(message = "Email should be valid")
     private String email ;
 
     private  String firstName ;

@@ -2,6 +2,9 @@ package univ.lille.application.usecase;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import univ.lille.application.usecase.service.AuthenticationService;
+
+
 import org.springframework.stereotype.Service;
 import univ.lille.application.usecase.mapper.UserMapper;
 import univ.lille.domain.exception.EmailAlreadyExistsException;
@@ -26,17 +29,24 @@ public class CreateUserUseCase  implements CreateUserPort {
     private final UserRepository userRepository;
     private final OrganizationRepository organizationRepository;
     private final EmailPort emailPort;
+    private final AuthenticationService authenticationService;
 
 
     @Override
     @Transactional
-    public UserDTO createUser(CreateUserRequest createUserRequest, Long organisationId, Long adminId) {
-        Organization org = organizationRepository.findById(organisationId) .orElseThrow(()->
-                new OrganizationNotFoundException("Organization not found "));
+    public UserDTO createUser(CreateUserRequest createUserRequest) {
+        Long organizationId = authenticationService.getCurrentUserOrganizationId();
+        Long adminId = authenticationService.getCurrentUserId();
+
+        Organization org = organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new OrganizationNotFoundException(
+                        "Organization not found with ID: " + organizationId
+                ));
 
         if (userRepository.existsByEmail(createUserRequest.getEmail())) {
-            throw  new EmailAlreadyExistsException(createUserRequest.getEmail());
-
+            throw new EmailAlreadyExistsException(
+                    "Email already exists: " + createUserRequest.getEmail()
+            );
         }
 
         String loginCode = CodeGenerator.generateLoginCode();

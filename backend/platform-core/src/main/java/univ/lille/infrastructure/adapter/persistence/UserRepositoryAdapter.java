@@ -2,6 +2,7 @@ package univ.lille.infrastructure.adapter.persistence;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import univ.lille.domain.model.User;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.infrastructure.adapter.persistence.entity.UserEntity;
@@ -32,11 +33,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
-        return userJpaRepository.findByEmail(email)
+        return userJpaRepository.findByEmailWithOrganization(email)
                 .map(mapper::toDomain);
     }
-
     @Override
     public boolean existsByEmail(String email) {
         return userJpaRepository.existsByEmail(email);

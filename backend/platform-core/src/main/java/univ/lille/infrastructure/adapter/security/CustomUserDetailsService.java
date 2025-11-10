@@ -6,29 +6,38 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import univ.lille.domain.model.User;
 import univ.lille.domain.port.out.UserRepository;
+import univ.lille.infrastructure.adapter.persistence.repository.UserJpaRepository;
 
 import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
-    private final UserRepository userRepository;
 
+    private final UserJpaRepository userJpaRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())
-                .password(user.getPassword() != null ? user.getPassword() : "")
-                .authorities(Collections.singletonList(
-                        new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
-                ))
-                .build();
+        var userEntity = userJpaRepository.findByEmailWithOrganization(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
+        Long orgId = userEntity.getOrganization() != null
+                ? userEntity.getOrganization().getId()
+                : null;
+
+        return new QcessUserPrincipal(
+                userEntity.getId(),
+                orgId,
+                userEntity.getEmail(),
+                userEntity.getPassword() != null ? userEntity.getPassword() : "",
+                Collections.singletonList(
+                        new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name())
+                )
+        );
     }
 }
