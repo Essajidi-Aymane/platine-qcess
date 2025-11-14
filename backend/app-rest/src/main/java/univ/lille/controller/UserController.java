@@ -28,8 +28,8 @@ public class UserController {
 
         UserDTO userDTO = createUserUseCase.createUser(createUserRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
-
-
     }
+
+
 
 }

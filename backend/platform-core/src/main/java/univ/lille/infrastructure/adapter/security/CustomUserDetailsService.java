@@ -7,8 +7,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import univ.lille.domain.model.User;
-import univ.lille.domain.port.out.UserRepository;
+
 import univ.lille.infrastructure.adapter.persistence.repository.UserJpaRepository;
 
 import java.util.Collections;

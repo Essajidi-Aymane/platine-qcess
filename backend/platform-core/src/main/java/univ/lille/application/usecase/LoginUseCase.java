@@ -26,6 +26,10 @@ public class LoginUseCase implements LoginUserPort {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
+    /**méthode de login
+     * @param loginRequest
+     * @return AuthResponse
+     * */
     @Override
     @Transactional
     public AuthResponse login(LoginRequest loginRequest) {
@@ -41,6 +45,10 @@ public class LoginUseCase implements LoginUserPort {
 
 
 }
+/**méthode de login par rôle
+ * @param user
+ * @param loginRequest
+ * */
 private void loginByRole ( User user, LoginRequest loginRequest  ) {
     if (user.getRole()== UserRole.ADMIN ) {
        verifyAdminCredentials( loginRequest, user);
@@ -54,19 +62,31 @@ private void loginByRole ( User user, LoginRequest loginRequest  ) {
     }}
 
 
+    /** méthode de vérification des credentials admin
+    * @param loginRequest
+    * @param user
+     * @exception InvalidCredentialsException si les credentials sont invalides
+    */
     private void verifyAdminCredentials( LoginRequest loginRequest, User user) {
         if (loginRequest.getPassword() == null || !passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Invalid credentials");
 
         }
     }
-
+    /**méthode de vérification des credentials user
+     * @param loginRequest
+     * @param user
+     * @exception InvalidCredentialsException si les credentials sont invalides
+     * */
     private void verifyUserCredentials( LoginRequest loginRequest, User user) {
         if (loginRequest.getLoginCode() == null || !loginRequest.getLoginCode().equals(user.getLoginCode())) {
             throw new InvalidCredentialsException("Invalid credentials");
         }
     }
-
+/**méthode de récupération de l'utilisateur par email
+ * @param email
+ * @return User
+ * */
 private User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));

@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import univ.lille.application.utils.NameUtils;
 import univ.lille.domain.exception.EmailAlreadyExistsException;
 import univ.lille.domain.model.Organization;
 import univ.lille.domain.model.User;
@@ -34,6 +35,8 @@ public class RegisterAdminUseCase implements RegisterAdminPort {
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+
+        String[] nameParts = NameUtils.splitFullName(request.getFullName());
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Email already in use : " + request.getEmail());
         }
@@ -49,6 +52,8 @@ public class RegisterAdminUseCase implements RegisterAdminPort {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
+                .firstName(nameParts[0])
+                .lastName(nameParts[1])
                 .organization(organization)
                 .role(UserRole.ADMIN)
                 .createdAt(LocalDateTime.now())

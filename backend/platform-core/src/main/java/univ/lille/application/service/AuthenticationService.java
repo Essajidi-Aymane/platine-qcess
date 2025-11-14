@@ -1,4 +1,4 @@
-package univ.lille.application.usecase.service;
+package univ.lille.application.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;

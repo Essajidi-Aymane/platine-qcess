@@ -2,11 +2,12 @@ package univ.lille.application.usecase;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import univ.lille.application.usecase.service.AuthenticationService;
+import univ.lille.application.service.AuthenticationService;
 
 
 import org.springframework.stereotype.Service;
 import univ.lille.application.usecase.mapper.UserMapper;
+import univ.lille.application.utils.NameUtils;
 import univ.lille.domain.exception.EmailAlreadyExistsException;
 import univ.lille.domain.exception.OrganizationNotFoundException;
 import univ.lille.domain.model.Organization;
@@ -37,6 +38,10 @@ public class CreateUserUseCase  implements CreateUserPort {
     public UserDTO createUser(CreateUserRequest createUserRequest) {
         Long organizationId = authenticationService.getCurrentUserOrganizationId();
         Long adminId = authenticationService.getCurrentUserId();
+        String fullName = NameUtils.buildFullName(
+                createUserRequest.getFirstName(),
+                createUserRequest.getLastName()
+        );
 
         Organization org = organizationRepository.findById(organizationId)
                 .orElseThrow(() -> new OrganizationNotFoundException(
@@ -52,6 +57,7 @@ public class CreateUserUseCase  implements CreateUserPort {
         String loginCode = CodeGenerator.generateLoginCode();
         User user = User.builder()
                 .email(createUserRequest.getEmail())
+                .fullName(fullName)
                 .firstName(createUserRequest.getFirstName())
                 .lastName(createUserRequest.getLastName())
                 .role(createUserRequest.getRole())
