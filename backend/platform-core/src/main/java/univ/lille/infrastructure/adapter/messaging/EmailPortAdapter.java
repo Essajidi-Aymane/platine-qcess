@@ -364,4 +364,82 @@ public class EmailPortAdapter implements EmailPort {
             </html>
             """.formatted(fullName, organizationName);
     }
+    @Override
+    public void sendPasswordResetEmail(String to, String fullName, String resetLink) {
+        try {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject("Réinitialisation de votre mot de passe Qcess");
+
+            String html = """
+                    <html>
+                      <body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background-color:#f3f4f6;">
+                        <table width="100%%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
+                          <tr>
+                            <td align="center">
+                              <table width="480" cellpadding="0" cellspacing="0" 
+                                     style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px rgba(15,23,42,0.15);">
+                                
+                                <tr>
+                                  <td style="background:linear-gradient(135deg,#155DFC,#6366F1);padding:24px 32px;color:#ffffff;">
+                                    <h1 style="margin:0;font-size:20px;font-weight:700;">Qcess</h1>
+                                    <p style="margin:4px 0 0;font-size:13px;opacity:0.9;">
+                                      Système de gestion de bâtiment modulaire
+                                    </p>
+                                  </td>
+                                </tr>
+                                
+                                <tr>
+                                  <td style="padding:24px 32px;color:#111827;font-size:14px;line-height:1.6;">
+                                    <p style="margin:0 0 12px;">Bonjour <strong>%s</strong>,</p>
+                                    <p style="margin:0 0 12px;">
+                                      Vous avez demandé à réinitialiser votre mot de passe administrateur Qcess.
+                                    </p>
+                                    <p style="margin:0 0 18px;">
+                                      Pour choisir un nouveau mot de passe, cliquez sur le bouton ci-dessous. 
+                                      Ce lien est valable pendant <strong>1 heure</strong>.
+                                    </p>
+                                    <p style="margin:0 0 24px;text-align:center;">
+                                      <a href="%s" 
+                                         style="display:inline-block;padding:12px 24px;border-radius:999px;
+                                                background:linear-gradient(135deg,#155DFC,#6366F1);color:#ffffff;
+                                                text-decoration:none;font-weight:600;font-size:14px;">
+                                        Réinitialiser mon mot de passe
+                                      </a>
+                                    </p>
+                                    <p style="margin:0 0 8px;font-size:12px;color:#6b7280;">
+                                      Si le bouton ne fonctionne pas, copiez-collez ce lien dans votre navigateur :
+                                    </p>
+                                    <p style="margin:0 0 18px;font-size:12px;color:#4b5563;word-break:break-all;">
+                                      %s
+                                    </p>
+                                    <p style="margin:0;font-size:12px;color:#9ca3af;">
+                                      Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.
+                                    </p>
+                                  </td>
+                                </tr>
+                                
+                                <tr>
+                                  <td style="padding:16px 32px;border-top:1px solid #e5e7eb;text-align:center;font-size:11px;color:#9ca3af;">
+                                    Qcess · Université de Lille
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                      </body>
+                    </html>
+                    """.formatted(fullName, resetLink, resetLink);
+
+            helper.setText(html, true);
+            javaMailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Erreur lors de l'envoi de l'email de réinitialisation", e);
+        }
+    }
 }

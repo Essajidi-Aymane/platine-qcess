@@ -16,6 +16,9 @@ import java.util.List;
 public class Organization {
     private Long id ;
     private String name ;
+    private String phone ;
+    private String address ;
+    private String description ;
     private LocalDateTime createdAt ;
 
     @Builder.Default

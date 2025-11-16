@@ -49,8 +49,15 @@ public class UserEntity {
     private CustomRoleEntity customRole;
 
     @Column(name = "created_at")
+    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createdAt;
     @Column(name = "last_login")
+    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime lastLogin;
 
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
+    @Column(name = "reset_password_token_expiry")
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime resetPasswordTokenExpiry;
 }

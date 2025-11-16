@@ -25,6 +25,16 @@ public class OrganizationEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column (nullable = true)
+    private String phone ;
+
+    @Column (nullable = true)
+    private String address ;
+
+    @Column(nullable = true)
+    private String description ;
+
+
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

@@ -12,6 +12,9 @@ public class OrganizationEntityMapper {
         return Organization.builder()
                 .id(entity.getId())
                 .name(entity.getName())
+                .phone(entity.getPhone())
+                .address(entity.getAddress())
+                .description(entity.getDescription())
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
@@ -22,6 +25,9 @@ public class OrganizationEntityMapper {
         return  OrganizationEntity.builder()
                 .id(domain.getId())
                 .name(domain.getName())
+                .phone(domain.getPhone())
+                .address(domain.getAddress())
+                .description(domain.getDescription())
                 .createdAt(domain.getCreatedAt())
                 .build();
     }

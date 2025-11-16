@@ -27,6 +27,8 @@ public class UserEntityMapper {
                 .createdAt(domain.getCreatedAt())
                 .loginCode(domain.getLoginCode())
                 .lastLogin(domain.getLastLoginAt())
+                .resetPasswordToken(domain.getPasswordResetToken())
+                .resetPasswordTokenExpiry(domain.getPasswordResetTokenExpiry())
                 .build();
 
 
@@ -50,6 +52,8 @@ public class UserEntityMapper {
                 .customRole(customRoleEntityMapper.toDomain(entity.getCustomRole()))
                 .createdAt(entity.getCreatedAt())
                 .lastLoginAt(entity.getLastLogin())
+                .passwordResetToken(entity.getResetPasswordToken())
+                .passwordResetTokenExpiry(entity.getResetPasswordTokenExpiry())
                 .build();
 
     }

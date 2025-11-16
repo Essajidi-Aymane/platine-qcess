@@ -11,6 +11,8 @@ public interface UserRepository {
     boolean existsByEmail(String email);
     List<User> findAll();
     List<User> findByOrganizationId(Long organizationId);
+    Optional<User> findByResetPasswordToken(String token);
+
 
     void deleteUser(User user);
 

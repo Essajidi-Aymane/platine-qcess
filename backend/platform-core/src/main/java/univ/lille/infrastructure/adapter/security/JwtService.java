@@ -16,8 +16,22 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private Long expiration;
 
+    @Value("${jwt.expiration-remember-me}")
+    private Long expirationRememberMe;
 
-    public String generateToken(User user) {
+
+    public String generateToken(User user ) {
+        return generateToken(user, false);
+    }
+
+
+    public String generateToken(User user, boolean rememberMe) {
+        long exp = rememberMe ? expirationRememberMe : expiration;
+        return buildToken(user, exp);
+
+    }
+
+    private String buildToken(User user, long exp) {
         SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
 
         return Jwts.builder()
@@ -26,7 +40,7 @@ public class JwtService {
                 .claim("role", user.getRole().name())
                 .claim("orgId", user.getOrganization().getId())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis()+ expiration))
+                .expiration(new Date(System.currentTimeMillis()+ exp))
                 .signWith(key)
                 .compact();
     }

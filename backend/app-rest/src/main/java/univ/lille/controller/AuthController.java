@@ -7,9 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import univ.lille.application.usecase.LoginUseCase;
 import univ.lille.application.usecase.LogoutUseCase;
 import univ.lille.application.usecase.RegisterAdminUseCase;
-import univ.lille.dto.auth.AuthResponse;
-import univ.lille.dto.auth.LoginRequest;
-import univ.lille.dto.auth.RegisterRequest;
+import univ.lille.dto.auth.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -44,6 +42,18 @@ public class AuthController {
         logoutUseCase.logout(jwt);
         return ResponseEntity.ok("Logged out successfully");
     }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        loginUseCase.forgotPassword(request);
+        return ResponseEntity.ok("Un email de réinitialisation a été envoyé si le compte existe.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        loginUseCase.resetPassword(request);
+        return ResponseEntity.ok("Mot de passe réinitialisé avec succès.");
+    }
+
 
     /**
      * Test si le token est valide

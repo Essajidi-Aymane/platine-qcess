@@ -59,6 +59,11 @@ public class UserRepositoryAdapter implements UserRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Optional<User> findByResetPasswordToken(String token) {
+        return userJpaRepository.findByResetPasswordToken(token)
+                .map(mapper::toDomain);
+    }
 
 
     @Override

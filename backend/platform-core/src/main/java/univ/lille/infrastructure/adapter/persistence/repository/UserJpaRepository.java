@@ -23,5 +23,6 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
     @Query("SELECT u FROM UserEntity u WHERE u.customRole.name = :roleName")
     List<UserEntity> findByCustomRoleName(@Param("roleName") String roleName);
 
+    Optional<UserEntity> findByResetPasswordToken(String token);
     List<UserEntity> findByCustomRole_Id(Long customRoleId);
 }

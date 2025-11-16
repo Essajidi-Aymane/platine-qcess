@@ -34,6 +34,9 @@ public class User {
     private Organization organization ;
     private LocalDateTime createdAt ;
     private LocalDateTime lastLoginAt ;
+    private String passwordResetToken ;
+    private LocalDateTime passwordResetTokenExpiry ;
+
     @Builder.Default
     private List<CustomRole> customRoles = new ArrayList<>();
     public String getDisplayName() {

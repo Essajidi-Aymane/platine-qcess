@@ -64,6 +64,6 @@ public class RegisterAdminUseCase implements RegisterAdminPort {
 
         String token = jwtService.generateToken(admin);
 
-        return new AuthResponse(token, admin.getEmail(), admin.getRole(), organization.getId());
+        return new AuthResponse(token, admin.getEmail(), admin.getRole(), organization.getId(), admin.getFullName());
     }
 }
