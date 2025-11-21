@@ -32,7 +32,7 @@ build_backend:
 # =====================
 test_backend:
   stage: test
-  needs: ["build_backend"]      # récupère les fichiers du build précédent
+  needs: ["build_backend"]
   script:
 
     - mvn -B -f backend/pom.xml test
@@ -49,7 +49,7 @@ sonar_backend:
   stage: sonar
   needs: ["test_backend"]
   script:
-    - mvn -f backend/pom.xml sonar:sonar -Dsonar.projectKey=essajidi-aymane-group_Essajidi-Aymane-project -Dsonar.organization=essajidi-aymane-group -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN -Dsonar.java.source=17 -Dsonar.branch.name=$CI_COMMIT_BRANCH "-Dsonar.exclusions=**/pom.xml,**/target/**,**/.mvn/**"
+    - mvn -f backend/pom.xml sonar:sonar -Dsonar.projectKey=essajidi-aymane-group_Essajidi-Aymane-project -Dsonar.organization=essajidi-aymane-group -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN -Dsonar.java.source=17 -Dsonar.branch.name=$CI_COMMIT_BRANCH -Dsonar.java.coveragePlugin=jacoco "-Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml" "-Dsonar.exclusions=**/pom.xml,**/target/**,**/.mvn/**"
   allow_failure: false
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
