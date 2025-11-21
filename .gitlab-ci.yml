@@ -33,11 +33,9 @@ test_backend:
   script:
     - mvn -f backend/pom.xml test -DskipTests
   allow_failure: true
-
 # ================
 # SONAR BACKEND
 # ================
-
 sonar_backend:
   stage: sonar
   script:
