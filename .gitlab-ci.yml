@@ -21,7 +21,7 @@ variables:
 build_backend:
   stage: build
   script:
-    - mvn -B -f backend/pom.xml clean compile -DskipTests
+    - mvn -B -f backend/pom.xml clean compile
   artifacts:
     paths:
       - backend/**/target

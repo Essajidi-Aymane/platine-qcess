@@ -22,15 +22,12 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class RegisterAdminUseCase implements RegisterAdminPort {
-
     private  final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService ;
     private final OrganizationRepository organizationRepository ;
     private final EmailPort emailPort;
    // private final ModuleServiceHelper moduleServiceHelper;
-
-
 
     @Override
     @Transactional
