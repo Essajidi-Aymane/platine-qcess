@@ -21,7 +21,7 @@ variables:
 build_backend:
   stage: build
   script:
-    - mvn -B -f backend/pom.xml clean compile -DskipTests
+    - mvn -B -f backend/pom.xml clean compile
   artifacts:
     paths:
       - backend/**/target
@@ -35,7 +35,7 @@ test_backend:
   needs: ["build_backend"]      # récupère les fichiers du build précédent
   script:
 
-    - mvn -B -f backend/pom.xml test -DskipTests
+    - mvn -B -f backend/pom.xml test
   artifacts:
     paths:
       - backend/**/target

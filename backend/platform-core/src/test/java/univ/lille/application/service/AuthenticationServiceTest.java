@@ -1,7 +1,7 @@
 package univ.lille.application.service;
 
 import org.junit.jupiter.api.*;
-import org.mockito.Mockito;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import univ.lille.domain.exception.UserNotFoundException;
