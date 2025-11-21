@@ -2,6 +2,7 @@
 import React, {useState} from 'react';
 import "../../globals.css";
 import { FaEye, FaRegEyeSlash  } from "react-icons/fa";
+import {useRouter } from "next/navigation";
 
 
 
@@ -38,21 +39,31 @@ function LoginForm() {
     const [form, setForm] = useState({ email: "", password: "", remember: false });
     const [loading, setLoading] = useState(false);
     const [error, setError]   = useState("");
+    const router = useRouter()
 
     async function handleSubmit(e) {
         e.preventDefault();
         setError("");
         setLoading(true);
         try {
-            const res = await fetch("/api/auth/login", {
+
+            const res = await fetch("http://localhost:8080/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form),
+                body: JSON.stringify(
+                    { email: form.email, password: form.password , rememberMe: form.remember}
+                ),
             });
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
                 throw new Error(data.message || "Identifiants invalides");
             }
+            const data = await res.json();
+
+            console.log("Login success:", data);
+
+            localStorage.setItem("token", data.token);
+
             const params = new URLSearchParams(window.location.search);
             const next = params.get("next") || "/dashboard";
             window.location.assign(next);
@@ -64,7 +75,8 @@ function LoginForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-4">
+        <div className=" flex flex-col items-center gap-4 w-full ">
+        <form onSubmit={handleSubmit} className=" w-full max-w-md flex flex-col gap-4">
             <div className="flex flex-col gap-1">
                 <label htmlFor="email" className="block text-md font-medium">Email</label>
                 <input
@@ -111,11 +123,21 @@ function LoginForm() {
                 className="w-full rounded-md bg-[#030213] text-white text-lg font-medium py-2
                    transition-all duration-300 ease-in-out
                    hover:bg-white hover:text-[#030213] hover:border hover:border-[#030213]
-                   active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                   active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
                 {loading ? "Connexion..." : "Se connecter"}
             </button>
         </form>
+            <div className="text-sm text-gray-600">
+                <span>Mot de passe oublié ?</span>{" "}
+                <button
+                    type="button"
+                    onClick={() => router.push("/auth/forgot-password")}
+                    className=" cursor-pointer font-medium text-[#030213] hover:underline hover:text-black transition"
+                >
+                    Réinitialiser
+                </button>
+            </div>        </div>
     );
 }
 
@@ -150,12 +172,12 @@ function RegisterForm() {
 
         setLoading(true);
         try {
-            const res = await fetch("/api/auth/register", {
+            const res = await fetch("http://localhost:8080/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     fullName: form.fullName,
-                    orgName: form.orgName,
+                    organizationName: form.orgName,
                     email: form.email,
                     password: form.password,
                 }),
@@ -164,7 +186,11 @@ function RegisterForm() {
                 const data = await res.json().catch(() => ({}));
                 throw new Error(data.message || "Inscription impossible.");
             }
+            const data = await res.json();
+            console.log("Register success:", data);
+            localStorage.setItem("token", data.token);
             window.location.assign("/dashboard");
+
         } catch (err) {
             setError(err.message);
         } finally {
@@ -245,7 +271,7 @@ function RegisterForm() {
             <button
                 type="submit"
                 disabled={loading}
-                className="col-span-2 w-full rounded-md bg-[#030213] text-white text-lg font-medium py-2 transition-all duration-300 ease-in-out hover:bg-white hover:text-[#030213] hover:border hover:border-[#030213] active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="cursor-pointer col-span-2 w-full rounded-md bg-[#030213] text-white text-lg font-medium py-2 transition-all duration-300 ease-in-out hover:bg-white hover:text-[#030213] hover:border hover:border-[#030213] active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
             >
                 {loading ? "Création..." : "S'inscrire"}
             </button>
