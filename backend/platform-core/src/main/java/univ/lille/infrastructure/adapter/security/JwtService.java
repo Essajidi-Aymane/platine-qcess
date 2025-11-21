@@ -12,12 +12,12 @@ import java.util.Date;
 @Service
 public class JwtService {
     @Value("${jwt.secret}")
-    private String secret;
+     String secret;
     @Value("${jwt.expiration}")
-    private Long expiration;
+     Long expiration;
 
     @Value("${jwt.expiration-remember-me}")
-    private Long expirationRememberMe;
+     Long expirationRememberMe;
 
 
     public String generateToken(User user ) {

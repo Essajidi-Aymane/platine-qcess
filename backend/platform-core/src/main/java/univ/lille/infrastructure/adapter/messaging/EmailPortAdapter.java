@@ -38,13 +38,13 @@ public class EmailPortAdapter implements EmailPort {
             helper.setText(htmlContent, true);
 
             javaMailSender.send(message);
-            log.info("✅ Email de bienvenue envoyé à : {}", to);
+            log.info(" Email de bienvenue envoyé à : {}", to);
 
         } catch (MessagingException e) {
-            log.error("❌ Erreur lors de l'envoi de l'email à : {}", to, e);
+            log.error(" Erreur lors de l'envoi de l'email à : {}", to, e);
             throw new RuntimeException("Erreur lors de l'envoi de l'email", e);
         } catch (Exception e) {
-            log.error("❌ Erreur inattendue lors de l'envoi de l'email", e);
+            log.error(" Erreur inattendue lors de l'envoi de l'email", e);
             throw new RuntimeException("Erreur lors de l'envoi de l'email", e);
         }
     }
@@ -63,13 +63,13 @@ public class EmailPortAdapter implements EmailPort {
             helper.setText(htmlContent, true);
 
             javaMailSender.send(message);
-            log.info("✅ Email administrateur envoyé à : {}", to);
+            log.info("Email administrateur envoyé à : {}", to);
 
         } catch (MessagingException e) {
-            log.error("❌ Erreur lors de l'envoi de l'email admin à : {}", to, e);
+            log.error(" Erreur lors de l'envoi de l'email admin à : {}", to, e);
             throw new RuntimeException("Erreur lors de l'envoi de l'email", e);
         } catch (Exception e) {
-            log.error("❌ Erreur inattendue lors de l'envoi de l'email", e);
+            log.error(" Erreur inattendue lors de l'envoi de l'email", e);
             throw new RuntimeException("Erreur lors de l'envoi de l'email", e);
         }
     }
