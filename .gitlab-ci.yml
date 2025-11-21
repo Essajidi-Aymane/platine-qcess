@@ -39,5 +39,6 @@ test_backend:
 sonar_backend:
   stage: sonar
   script:
+    - mvn -B -f backend/pom.xml clean verify
     - mvn -f backend/pom.xml sonar:sonar -Dsonar.projectKey=essajidi-aymane-group_Essajidi-Aymane-project -Dsonar.organization=essajidi-aymane-group -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN -Dsonar.java.source=17 "-Dsonar.exclusions=**/pom.xml,**/target/**,**/.mvn/**"
   allow_failure: false
