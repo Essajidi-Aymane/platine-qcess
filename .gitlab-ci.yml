@@ -1,0 +1,51 @@
+image: maven:3.9.6-eclipse-temurin-17
+
+stages:
+  - build
+  - test
+  - sonar
+
+cache:
+  key: maven
+  paths:
+    - .m2/repository
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+  GIT_DEPTH: "0"
+
+# ================
+# BUILD BACKEND
+# ================
+
+build_backend:
+  stage: build
+  script:
+    - mvn -f backend/pom.xml clean compile -DskipTests
+
+# ================
+# TEST BACKEND
+# ================
+
+test_backend:
+  stage: test
+  script:
+    - mvn -f backend/pom.xml test -DskipTests
+  allow_failure: true
+
+# ================
+# SONAR BACKEND
+# ================
+
+sonar_backend:
+  stage: sonar
+  script:
+    - mvn -f backend/pom.xml sonar:sonar \
+      -Dsonar.projectKey=Essajidi-Aymane-project \
+      -Dsonar.organization=$SONAR_ORGANIZATION \
+      -Dsonar.host.url=$SONAR_HOST_URL \
+      -Dsonar.token=$SONAR_TOKEN \
+      -Dsonar.java.source=17 \
+      -Dsonar.exclusions=**/pom.xml,**/target/**,**/.mvn/**
+  allow_failure: false
