@@ -37,6 +37,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/admin/create-user").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+            .exceptionHandling(exceptionHandling -> exceptionHandling
+                .authenticationEntryPoint(new RestAuthenticationEntryPoint())
+                .accessDeniedHandler(new RestAccessDeniedHandler())
+            )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )

@@ -29,7 +29,7 @@ class AuthenticationServiceTest {
     @Test
     void getCurrentUserId_should_return_id_when_authenticated() {
         QcessUserPrincipal principal =
-                new QcessUserPrincipal(5L, 10L, "test@mail.com", "pwd", null);
+                new QcessUserPrincipal(5L, 10L, "test@mail.com", "pwd", null, null);
 
         Authentication auth = mock(Authentication.class);
         when(auth.isAuthenticated()).thenReturn(true);
@@ -55,7 +55,7 @@ class AuthenticationServiceTest {
     @Test
     void getCurrentUserOrganizationId_should_return_orgId() {
         QcessUserPrincipal principal =
-                new QcessUserPrincipal(5L, 99L, "test@mail.com", "pwd", null);
+                new QcessUserPrincipal(5L, 99L, "test@mail.com", "pwd", null, null);
 
         Authentication auth = mock(Authentication.class);
         when(auth.isAuthenticated()).thenReturn(true);
