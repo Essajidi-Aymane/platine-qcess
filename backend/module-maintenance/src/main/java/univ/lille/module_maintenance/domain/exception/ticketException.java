@@ -5,10 +5,7 @@ public class TicketException extends RuntimeException {
         super(message);
     }
 
-    public static TicketException ticketNotFound(Long id) {
-        return new TicketNotFoundException("Ticket with id " + id + " not found.");
+    public TicketException(String message, Throwable cause) {
+        super(message, cause);
     }
-
-    
-
 }

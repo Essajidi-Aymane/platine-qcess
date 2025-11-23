@@ -1,68 +1,133 @@
 package univ.lille.module_maintenance.application;
 
-@RequiredArgsConstructor
+import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+
+import univ.lille.module_maintenance.domain.exception.CommentException;
+import univ.lille.module_maintenance.domain.exception.InvalidTicketException;
+import univ.lille.module_maintenance.domain.exception.TicketNotFoundException;
+import univ.lille.module_maintenance.domain.exception.UnauthorizedAccessException;
+import univ.lille.module_maintenance.domain.model.Comment;
+import univ.lille.module_maintenance.domain.model.CommentType;
+import univ.lille.module_maintenance.domain.model.Status;
+import univ.lille.module_maintenance.domain.model.Ticket;
+import univ.lille.module_maintenance.domain.port.TicketRepositoryPort;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Service
+@RequiredArgsConstructor
 public class TicketService {
-    private final TicketRepository ticketRepository;
-    private final TicketCatalog ticketCatalog;
 
-    public Ticket createTicket(Ticket ticket) {
-        TicketCatalog current = ticketCatalog.get();
-        Set<Ticket> updatedTickets = new HashSet<>(current.getTickets());
-        updatedTickets.add(ticket);
-        ticketRepository.save(ticketCatalog.with(updatedTickets));
-    }
+    private final TicketRepositoryPort ticketRepository;
 
-    public Set<Ticket> getAllTicketsOrganisation(Organization organization) {
-        return ticketRepository.get().getTickets();
-    }
-
-    public Set<Ticket> getAllTicketsUser(String userId) {
-        return ticketRepository.get().getTickets().stream()
-                .filter(ticket -> ticket.getCreatedByUserId().equals(userId))
-                .collect(Collectors.toSet());
-    }
-
-    public void addCommentToTicket(Long ticketId, Comment comment) {
-        Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
-        if (ticketOpt.isPresent()) {
-            Ticket ticket = ticketOpt.get();
-            ticket.getComments().add(comment);
-            ticketRepository.save(ticketCatalog.with(ticket));
-        } else {
-            throw new TicketNotFoundException("Ticket with ID " + ticketId + " not found.");
+    public void createTicket(@NonNull Ticket ticket) {
+        if (ticket.getStatus() == null) {
+            ticket.setStatus(Status.OPEN);
         }
+
+        ticketRepository.save(ticket);
     }
 
-    public void deleteTicket(Long ticketId) {
-        TicketCatalog current = ticketCatalog.get();
-        Set<Ticket> updatedTickets = current.getTickets().stream()
-                .filter(ticket -> !ticket.getId().equals(ticketId))
-                .collect(Collectors.toSet());
-        ticketRepository.save(ticketCatalog.with(updatedTickets));
+    @NonNull
+    public Ticket getTicketById(@NonNull Long ticketId) {
+        return ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException(ticketId));
     }
 
-    public void updateTicketStatus(Long ticketId, Status newStatus) {
-        Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
-        if (ticketOpt.isPresent()) {
-            Ticket ticket = ticketOpt.get();
-            ticket.setStatus(newStatus);
-            ticketRepository.save(ticketCatalog.with(ticket));
-        } else {
-            throw TicketException.ticketNotFound(ticketId);
+    @NonNull
+    public List<Ticket> getTicketsForUser(@NonNull Long userId) {
+        return ticketRepository.findByUserId(userId);
+    }
+
+    @NonNull
+    public List<Ticket> getTicketsForOrganization(@NonNull Long organizationId) {
+        return ticketRepository.findByOrganizationId(organizationId);
+    }
+
+    public void updateStatus(@NonNull Long ticketId, @NonNull Status newStatus) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException(ticketId));
+
+        try {
+            ticket.updateStatus(newStatus);
+        } catch (IllegalStateException ex) {
+            throw InvalidTicketException.invalidTransition(
+                    ticket.getStatus() != null ? ticket.getStatus().name() : "<null>",
+                    newStatus.name()
+            );
         }
+
+        ticketRepository.save(ticket);
     }
 
-    public void updateTicketTitle(Long ticketId, String newTitle) {
-        Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
-        if (ticketOpt.isPresent()) {
-            Ticket ticket = ticketOpt.get();
-            ticket.setTitle(newTitle);
-            ticketRepository.save(ticketCatalog.with(ticket));
-        } else {
-            throw TicketException.ticketNotFound(ticketId);
+    public void updateTicket(@NonNull Long ticketId, @NonNull String title, String description) {
+        if (title.isBlank()) {
+            throw InvalidTicketException.missingTitle();
         }
+
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException(ticketId));
+
+        ticket.setTitle(title);
+        ticket.setDescription(description);
+        ticket.setUpdatedAt(LocalDateTime.now());
+
+        ticketRepository.save(ticket);
     }
 
+    public void addUserComment(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId) {
+        addComment(ticketId, content, authorUserId, CommentType.USER);
+    }
 
+    public void addAdminCommentToThread(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId) {
+        addComment(ticketId, content, authorUserId, CommentType.ADMIN);
+    }
+
+    private void addComment(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId, @NonNull CommentType type) {
+        if (content.isBlank()) {
+            throw CommentException.emptyContent();
+        }
+
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException(ticketId));
+
+        Comment comment = Comment.builder()
+                .content(content)
+                .authorUserId(authorUserId)
+                .type(type)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        ticket.addComment(comment);
+        ticket.setUpdatedAt(LocalDateTime.now());
+
+        ticketRepository.save(ticket);
+    }
+
+    public void cancelTicket(@NonNull Long ticketId, @NonNull Long userId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException(ticketId));
+		
+        if (!ticket.belongsTo(userId)) {
+            throw UnauthorizedAccessException.cannotCancelTicket(userId, ticketId);
+        }
+		
+        Status currentStatus = ticket.getStatus();
+        if (currentStatus == null || !currentStatus.isCancellable()) {
+            throw InvalidTicketException.invalidTransition(
+                    currentStatus != null ? currentStatus.name() : "<null>",
+                    Status.CANCELLED.name()
+            );
+        }
+		
+        ticket.updateStatus(Status.CANCELLED);
+        ticketRepository.save(ticket);
+    }
+
+    public void deleteTicket(@NonNull Long ticketId) {
+        ticketRepository.deleteById(ticketId);
+    }
 }

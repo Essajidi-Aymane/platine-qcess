@@ -13,6 +13,7 @@
     <module>platform-contracts</module>
     <module>platform-core</module>
     <module>module-acess</module>
+    <module>module-maintenance</module>
     <module>app-rest</module>
   </modules>
 
@@ -47,6 +48,11 @@
       <dependency>
         <groupId>univ.lille</groupId>
         <artifactId>platform-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>univ.lille</groupId>
+        <artifactId>module-maintenance</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>
