@@ -9,7 +9,7 @@ public class TicketNotFoundException extends TicketException {
     }
     
     public TicketNotFoundException(Long ticketId) {
-        super("Le ticket avec l'ID " + ticketId + " est introuvable");
+        super(TicketErrorMessages.ticketNotFound(ticketId));
         this.ticketId = ticketId;
     }
     
@@ -19,13 +19,13 @@ public class TicketNotFoundException extends TicketException {
     
     public static TicketNotFoundException forUser(Long ticketId, Long userId) {
         return new TicketNotFoundException(
-            "Le ticket " + ticketId + " est introuvable pour l'utilisateur " + userId
+            TicketErrorMessages.ticketNotFound(ticketId) + " pour l'utilisateur " + userId
         );
     }
     
     public static TicketNotFoundException forOrganization(Long ticketId, Long organizationId) {
         return new TicketNotFoundException(
-            "Le ticket " + ticketId + " est introuvable pour l'organisation " + organizationId
+            TicketErrorMessages.ticketNotFound(ticketId) + " pour l'organisation " + organizationId
         );
     }
 }

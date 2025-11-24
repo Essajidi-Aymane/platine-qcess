@@ -23,12 +23,14 @@ public class InvalidTicketException extends TicketException {
     }
     
     public static InvalidTicketException invalidTransition(String currentStatus, String targetStatus) {
-        return new InvalidTicketException(
-            "Transition invalide du statut '" + currentStatus + "' vers '" + targetStatus + "'"
-        );
+        return new InvalidTicketException(TicketErrorMessages.transitionInvalid(currentStatus, targetStatus));
     }
     
     public static InvalidTicketException missingRequiredField(String fieldName) {
         return new InvalidTicketException("Le champ obligatoire '" + fieldName + "' est manquant");
+    }
+
+    public static InvalidTicketException fieldTooLong(String fieldName, int max) {
+        return new InvalidTicketException("Le champ '" + fieldName + "' dépasse la longueur maximale autorisée (" + max + ")");
     }
 }

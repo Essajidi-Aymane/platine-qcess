@@ -21,9 +21,7 @@ public class Ticket {
     private Priority priority;
     
     private Status status;
-    
-    private String adminComment;
-    
+        
     private Long createdByUserId;
     private String createdByUserName;
     private Long organizationId;

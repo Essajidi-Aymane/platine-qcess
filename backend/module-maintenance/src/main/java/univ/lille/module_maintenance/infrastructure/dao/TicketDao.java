@@ -46,10 +46,7 @@ public class TicketDao {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Priority priority;
-    
-    @Column(columnDefinition = "TEXT")
-    private String adminComment;
-    
+        
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<CommentDao> comments = new ArrayList<>();

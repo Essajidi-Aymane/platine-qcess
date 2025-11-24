@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@RequestMapping("/tickets")
+@RequestMapping("/api/maintenance/tickets")
 @RestController
 @RequiredArgsConstructor
 public class TicketController {
@@ -69,9 +69,9 @@ public class TicketController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/users/{userId}")
-    public ResponseEntity<List<TicketDTO>> getUserTickets(
-            @PathVariable Long userId) {
+        @GetMapping("/users/{userId}")
+        public ResponseEntity<List<TicketDTO>> getUserTickets(
+            @PathVariable("userId") Long userId) {
         List<Ticket> tickets = ticketService.getTicketsForUser(userId);
         List<TicketDTO> ticketDTOs = tickets.stream()
                 .map(TicketDTO::from)
@@ -101,9 +101,9 @@ public class TicketController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancelTicket(
-            @PathVariable Long id,
+        @DeleteMapping("/{id}")
+        public ResponseEntity<Void> cancelTicket(
+            @PathVariable("id") Long id,
             @AuthenticationPrincipal QcessUserPrincipal principal) {
         if (principal == null || principal.getId() == null) {
             return ResponseEntity.status(401).build();
@@ -114,8 +114,8 @@ public class TicketController {
     }
     
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}/status")
-    public ResponseEntity<Void> updateTicketStatus(@PathVariable Long id,
+    @PutMapping("/{id}/update-status")
+    public ResponseEntity<Void> updateTicketStatus(@PathVariable("id") Long id,
                                                    @RequestBody @Valid UpdateTicketStatusRequest newStatusRequest) {
         ticketService.updateStatus(id, newStatusRequest.newStatus());
 
@@ -124,7 +124,7 @@ public class TicketController {
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updateTicket(@PathVariable Long id,
+    public ResponseEntity<Void> updateTicket(@PathVariable("id") Long id,
                                              @RequestBody @Valid UpdateTicketRequest ticketRequest) {
         ticketService.updateTicket(
                 id,
@@ -135,9 +135,9 @@ public class TicketController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @PostMapping("/{id}/comments")
-    public ResponseEntity<Void> addUserComment(
-            @PathVariable Long id,
+        @PostMapping("/{id}/comments")
+        public ResponseEntity<Void> addUserComment(
+            @PathVariable("id") Long id,
             @RequestBody @Valid AddCommentRequest request,
             @AuthenticationPrincipal QcessUserPrincipal principal) {
         if (principal == null || principal.getId() == null) {
@@ -150,9 +150,9 @@ public class TicketController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/{id}/admin-comments")
-    public ResponseEntity<Void> addAdminComment(
-            @PathVariable Long id,
+        @PostMapping("/{id}/admin-comments")
+        public ResponseEntity<Void> addAdminComment(
+            @PathVariable("id") Long id,
             @RequestBody @Valid AddAdminCommentRequest request,
             @AuthenticationPrincipal QcessUserPrincipal principal) {
         if (principal == null || principal.getId() == null) {

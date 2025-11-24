@@ -3,6 +3,7 @@ package univ.lille.module_maintenance.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import univ.lille.module_maintenance.domain.exception.CommentException;
 import univ.lille.module_maintenance.domain.exception.InvalidTicketException;
@@ -23,6 +24,7 @@ public class TicketService {
 
     private final TicketRepositoryPort ticketRepository;
 
+    @Transactional
     public void createTicket(@NonNull Ticket ticket) {
         if (ticket.getStatus() == null) {
             ticket.setStatus(Status.OPEN);
@@ -47,6 +49,7 @@ public class TicketService {
         return ticketRepository.findByOrganizationId(organizationId);
     }
 
+    @Transactional
     public void updateStatus(@NonNull Long ticketId, @NonNull Status newStatus) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
@@ -63,9 +66,16 @@ public class TicketService {
         ticketRepository.save(ticket);
     }
 
+    @Transactional
     public void updateTicket(@NonNull Long ticketId, @NonNull String title, String description) {
         if (title.isBlank()) {
             throw InvalidTicketException.missingTitle();
+        }
+        if (title.length() > 200) {
+            throw InvalidTicketException.fieldTooLong("title", 200);
+        }
+        if (description != null && description.length() > 5000) {
+            throw InvalidTicketException.fieldTooLong("description", 5000);
         }
 
         Ticket ticket = ticketRepository.findById(ticketId)
@@ -78,17 +88,41 @@ public class TicketService {
         ticketRepository.save(ticket);
     }
 
+    @Transactional
     public void addUserComment(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId) {
-        addComment(ticketId, content, authorUserId, CommentType.USER);
-    }
-
-    public void addAdminCommentToThread(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId) {
-        addComment(ticketId, content, authorUserId, CommentType.ADMIN);
-    }
-
-    private void addComment(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId, @NonNull CommentType type) {
         if (content.isBlank()) {
             throw CommentException.emptyContent();
+        }
+        if (content.length() > 2000) {
+            throw CommentException.contentTooLong(2000);
+        }
+
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException(ticketId));
+
+        if (!ticket.belongsTo(authorUserId)) {
+            throw UnauthorizedAccessException.cannotCommentTicket(authorUserId, ticketId);
+        }
+
+        Comment comment = Comment.builder()
+                .content(content)
+                .authorUserId(authorUserId)
+                .type(CommentType.USER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        ticket.addComment(comment);
+        ticket.setUpdatedAt(LocalDateTime.now());
+        ticketRepository.save(ticket);
+    }
+
+    @Transactional
+    public void addAdminCommentToThread(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId) {
+        if (content.isBlank()) {
+            throw CommentException.emptyContent();
+        }
+        if (content.length() > 2000) {
+            throw CommentException.contentTooLong(2000);
         }
 
         Ticket ticket = ticketRepository.findById(ticketId)
@@ -97,16 +131,16 @@ public class TicketService {
         Comment comment = Comment.builder()
                 .content(content)
                 .authorUserId(authorUserId)
-                .type(type)
+                .type(CommentType.ADMIN)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         ticket.addComment(comment);
         ticket.setUpdatedAt(LocalDateTime.now());
-
         ticketRepository.save(ticket);
     }
 
+    @Transactional
     public void cancelTicket(@NonNull Long ticketId, @NonNull Long userId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
@@ -127,6 +161,7 @@ public class TicketService {
         ticketRepository.save(ticket);
     }
 
+    @Transactional
     public void deleteTicket(@NonNull Long ticketId) {
         ticketRepository.deleteById(ticketId);
     }

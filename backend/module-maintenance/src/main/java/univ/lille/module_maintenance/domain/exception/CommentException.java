@@ -18,4 +18,8 @@ public class CommentException extends TicketException {
             "L'utilisateur " + userId + " n'est pas autorisé à modifier le commentaire " + commentId
         );
     }
+
+    public static CommentException contentTooLong(int max) {
+        return new CommentException("Le contenu du commentaire dépasse la longueur maximale (" + max + ")");
+    }
 }

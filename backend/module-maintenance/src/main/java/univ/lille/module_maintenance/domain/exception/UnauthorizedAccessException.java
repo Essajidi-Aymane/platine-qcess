@@ -7,25 +7,31 @@ public class UnauthorizedAccessException extends TicketException {
     
     public static UnauthorizedAccessException cannotDeleteTicket(Long userId, Long ticketId) {
         return new UnauthorizedAccessException(
-            "L'utilisateur " + userId + " n'est pas autorisé à supprimer le ticket " + ticketId
+            TicketErrorMessages.userNotAuthorized("supprimer", userId, ticketId)
         );
     }
 
     public static UnauthorizedAccessException cannotCancelTicket(Long userId, Long ticketId) {
         return new UnauthorizedAccessException(
-            "L'utilisateur " + userId + " n'est pas autorisé à annuler le ticket " + ticketId
+            TicketErrorMessages.userNotAuthorized("annuler", userId, ticketId)
+        );
+    }
+    
+    public static UnauthorizedAccessException cannotCommentTicket(Long userId, Long ticketId) {
+        return new UnauthorizedAccessException(
+            TicketErrorMessages.userNotAuthorized("commenter", userId, ticketId)
         );
     }
     
     public static UnauthorizedAccessException cannotUpdateTicket(Long userId, Long ticketId) {
         return new UnauthorizedAccessException(
-            "L'utilisateur " + userId + " n'est pas autorisé à modifier le ticket " + ticketId
+            TicketErrorMessages.userNotAuthorized("modifier", userId, ticketId)
         );
     }
     
     public static UnauthorizedAccessException cannotViewTicket(Long userId, Long ticketId) {
         return new UnauthorizedAccessException(
-            "L'utilisateur " + userId + " n'est pas autorisé à consulter le ticket " + ticketId
+            TicketErrorMessages.userNotAuthorized("consulter", userId, ticketId)
         );
     }
     
