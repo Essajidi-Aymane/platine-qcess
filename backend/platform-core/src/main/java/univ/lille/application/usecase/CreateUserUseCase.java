@@ -37,7 +37,6 @@ public class CreateUserUseCase  implements CreateUserPort {
     @Transactional
     public UserDTO createUser(CreateUserRequest createUserRequest) {
         Long organizationId = authenticationService.getCurrentUserOrganizationId();
-        Long adminId = authenticationService.getCurrentUserId();
         String fullName = NameUtils.buildFullName(
                 createUserRequest.getFirstName(),
                 createUserRequest.getLastName()

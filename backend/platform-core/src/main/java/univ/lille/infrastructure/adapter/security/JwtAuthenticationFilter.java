@@ -13,6 +13,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import univ.lille.infrastructure.adapter.persistence.repository.BlacklistedTokenRepository;
+import jakarta.servlet.http.Cookie;
 
 import java.io.IOException;
 
@@ -30,20 +31,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
-
+        String jwt = null ;
         String authHeader = request.getHeader("Authorization");
+        if(authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+        }
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (jwt == null) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if (cookie.getName().equals("qcess_token")) {
+                        jwt = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+
+        }
+
+        if(jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String jwt = authHeader.substring(7);
+
         if (blacklistedTokenRepository.existsByToken(jwt)) {
             filterChain.doFilter(request, response);
             return;
         }
-        String userEmail = jwtService.extractEmail(jwt);
+        String userEmail;
+        try {
+            userEmail = jwtService.extractEmail(jwt);
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+
+            logger.warn("JWT invalide: {}", e);
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);

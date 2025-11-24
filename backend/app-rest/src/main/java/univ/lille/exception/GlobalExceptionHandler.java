@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error("Invalid Credentials")
-                .message("Email ou mot de passe incorrect")
+                .message(ex.getMessage())
                 .build();
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);

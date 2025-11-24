@@ -47,12 +47,13 @@ function LoginForm() {
         setLoading(true);
         try {
 
-            const res = await fetch("http://localhost:8080/api/auth/login", {
+            const res = await fetch("http://localhost:8080/api/auth/login/web", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(
                     { email: form.email, password: form.password , rememberMe: form.remember}
                 ),
+                credentials: "include"
             });
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
@@ -62,7 +63,6 @@ function LoginForm() {
 
             console.log("Login success:", data);
 
-            localStorage.setItem("token", data.token);
 
             const params = new URLSearchParams(window.location.search);
             const next = params.get("next") || "/dashboard";
@@ -181,6 +181,7 @@ function RegisterForm() {
                     email: form.email,
                     password: form.password,
                 }),
+                credentials: "include"
             });
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
@@ -188,7 +189,6 @@ function RegisterForm() {
             }
             const data = await res.json();
             console.log("Register success:", data);
-            localStorage.setItem("token", data.token);
             window.location.assign("/dashboard");
 
         } catch (err) {

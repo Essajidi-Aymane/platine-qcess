@@ -19,7 +19,7 @@ public class OrganizationController {
     private final OrganizationUseCase organizationUseCase ;
 
     @PatchMapping("/update-details")
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> updateOrgDetails(@Valid @RequestBody OrganizationUpdateRequest request) {
         organizationUseCase.updateOrganizationDetails(request);
         return ResponseEntity.ok("Organization details updated successfully.");

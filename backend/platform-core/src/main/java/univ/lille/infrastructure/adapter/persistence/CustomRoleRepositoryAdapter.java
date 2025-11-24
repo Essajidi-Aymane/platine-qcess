@@ -37,7 +37,7 @@ public class CustomRoleRepositoryAdapter implements CustomRoleRepository {
         List<CustomRoleEntity> entities = customRoleJpaRepository.findByOrganization_Id(organizationId);
         return entities.stream()
                 .map(mapper::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -45,7 +45,7 @@ public class CustomRoleRepositoryAdapter implements CustomRoleRepository {
         List<CustomRoleEntity> entities = customRoleJpaRepository.findByIdInAndOrganization_Id(ids, organizationId);
         return entities.stream()
                 .map(mapper::toDomain)
-                .collect(Collectors.toList());
+                .toList();
         }
 
     @Override
