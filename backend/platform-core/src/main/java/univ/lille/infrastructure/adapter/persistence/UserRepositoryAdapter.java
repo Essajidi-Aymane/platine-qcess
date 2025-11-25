@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import univ.lille.domain.model.User;
 import univ.lille.domain.port.out.UserRepository;
+import univ.lille.enums.UserRole;
 import univ.lille.infrastructure.adapter.persistence.entity.UserEntity;
 import univ.lille.infrastructure.adapter.persistence.mapper.UserEntityMapper;
 import univ.lille.infrastructure.adapter.persistence.repository.UserJpaRepository;
@@ -16,8 +17,8 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class UserRepositoryAdapter implements UserRepository {
-    public final UserJpaRepository userJpaRepository;
-    public final UserEntityMapper mapper;
+    private final UserJpaRepository userJpaRepository;
+    private final UserEntityMapper mapper;
     @Override
     public User save(User user) {
         UserEntity entity = mapper.toEntity(user);
@@ -53,6 +54,14 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public List<User> findByOrganizationId(Long organizationId) {
         return userJpaRepository.findByOrganization_Id(organizationId)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<User> findByOrganizationIdAndRole(Long organizationId, UserRole role) {
+        return userJpaRepository.findByOrganization_IdAndRole(organizationId, role)
                 .stream()
                 .map(mapper::toDomain)
                 .toList();

@@ -7,6 +7,7 @@ import java.util.Optional;
 public interface OrganizationRepository {
     Organization save(Organization organization);
     Optional<Organization> findById(Long id);
+    boolean existsById(Long id);
     Optional<Organization> findByName(String name);
     //Optional<Organization> findByCode(String code);
     void delete(Organization organization);

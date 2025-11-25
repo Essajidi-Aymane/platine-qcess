@@ -39,7 +39,7 @@ class CreateUserUseCaseTest {
     private AuthenticationService authenticationService;
 
     @InjectMocks
-    private CreateUserUseCase createUserUseCase;
+    private UserUseCase createUserUseCase;
 
     @Test
     void createUser_shouldCreateUserAndSendEmail_whenDataIsValid() {

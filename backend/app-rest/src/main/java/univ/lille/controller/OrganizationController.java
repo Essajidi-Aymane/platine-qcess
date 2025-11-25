@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import univ.lille.application.usecase.OrganizationUseCase;
+import univ.lille.domain.port.in.OrganizationManagementPort;
 import univ.lille.dto.org.OrganizationUpdateRequest;
 
 @RestController
@@ -16,12 +17,12 @@ import univ.lille.dto.org.OrganizationUpdateRequest;
 @RequiredArgsConstructor
 public class OrganizationController {
 
-    private final OrganizationUseCase organizationUseCase ;
+    private final OrganizationManagementPort organizationManagementPort;
 
     @PatchMapping("/update-details")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> updateOrgDetails(@Valid @RequestBody OrganizationUpdateRequest request) {
-        organizationUseCase.updateOrganizationDetails(request);
+        organizationManagementPort.updateOrganizationDetails(request);
         return ResponseEntity.ok("Organization details updated successfully.");
     }
 
