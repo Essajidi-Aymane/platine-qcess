@@ -20,7 +20,7 @@ RUN mvn -q -B -DskipTests -pl app-rest -am clean package
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
-COPY --from=build /src/app-rest/target/app-rest-*.jar app.jar
+COPY --from=build /src/app-rest/target/*SNAPSHOT.jar app.jar
 
 ENV DB_HOST=localhost \
     DB_PORT=5432 \

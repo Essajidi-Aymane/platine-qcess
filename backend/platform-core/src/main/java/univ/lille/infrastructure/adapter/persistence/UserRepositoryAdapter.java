@@ -7,12 +7,11 @@ import univ.lille.domain.model.User;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.infrastructure.adapter.persistence.entity.UserEntity;
 import univ.lille.infrastructure.adapter.persistence.mapper.UserEntityMapper;
-import univ.lille.infrastructure.adapter.persistence.repository.OrganizationJpaRepository;
 import univ.lille.infrastructure.adapter.persistence.repository.UserJpaRepository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 @Component
 @RequiredArgsConstructor
@@ -48,7 +47,7 @@ public class UserRepositoryAdapter implements UserRepository {
         return userJpaRepository.findAll()
                 .stream()
                 .map(mapper::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -56,7 +55,7 @@ public class UserRepositoryAdapter implements UserRepository {
         return userJpaRepository.findByOrganization_Id(organizationId)
                 .stream()
                 .map(mapper::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

@@ -9,12 +9,4 @@ import univ.lille.infrastructure.adapter.persistence.OrganizationRepositoryAdapt
 @Configuration
 public class BeanConfig {
 
-
-
-
-
-   // @Bean
-    ///public EmailPort emailPortBean(EmailPort emailPort) {
-       // return emailPort;
-    //}
 }
