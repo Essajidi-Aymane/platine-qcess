@@ -12,6 +12,7 @@ import univ.lille.application.usecase.LogoutUseCase;
 import univ.lille.domain.port.in.LoginUserPort;
 import univ.lille.domain.port.in.RegisterAdminPort;
 import univ.lille.dto.auth.*;
+import univ.lille.infrastructure.adapter.security.QcessUserPrincipal;
 
 @RestController
 @RequestMapping("/api/auth")
