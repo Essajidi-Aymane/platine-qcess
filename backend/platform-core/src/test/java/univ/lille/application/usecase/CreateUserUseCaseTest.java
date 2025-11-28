@@ -43,15 +43,12 @@ class CreateUserUseCaseTest {
 
     @Test
     void createUser_shouldCreateUserAndSendEmail_whenDataIsValid() {
-        // GIVEN
         Long orgId = 1L;
-        Long adminId = 42L;
 
         CreateUserRequest request = new CreateUserRequest();
         request.setEmail("user@test.com");
         request.setFirstName("John");
         request.setLastName("Doe");
-        // request.setRole(...); // optionnel selon ton enum
 
         Organization org = Organization.builder()
                 .id(orgId)
@@ -69,39 +66,30 @@ class CreateUserUseCaseTest {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .fullName(fullName)
-                .organization(org) // IMPORTANT pour éviter le NPE dans UserMapper.toDTO
+                .organization(org)
                 .build();
 
-        // Stubs
         when(authenticationService.getCurrentUserOrganizationId()).thenReturn(orgId);
-        when(authenticationService.getCurrentUserId()).thenReturn(adminId);
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(org));
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-        // WHEN
         UserDTO result = createUserUseCase.createUser(request);
 
-        // THEN
         assertThat(result).isNotNull();
         assertThat(result.getEmail()).isEqualTo("user@test.com");
 
-        // Vérifier qu'on sauvegarde bien l'utilisateur
         verify(userRepository).save(any(User.class));
-
-        // Vérifier qu'on envoie bien l'email de bienvenue
         verify(emailPort).sendWelcomeEmail(
                 eq("user@test.com"),
                 eq(fullName),
-                anyString() // loginCode généré
+                anyString()
         );
     }
 
     @Test
     void createUser_shouldThrow_whenOrganizationNotFound() {
-        // GIVEN
         Long orgId = 999L;
-        Long adminId = 42L;
 
         CreateUserRequest request = new CreateUserRequest();
         request.setEmail("user@test.com");
@@ -109,13 +97,10 @@ class CreateUserUseCaseTest {
         request.setLastName("Doe");
 
         when(authenticationService.getCurrentUserOrganizationId()).thenReturn(orgId);
-        when(authenticationService.getCurrentUserId()).thenReturn(adminId);
         when(organizationRepository.findById(orgId)).thenReturn(Optional.empty());
 
-        // WHEN
         Throwable thrown = catchThrowable(() -> createUserUseCase.createUser(request));
 
-        // THEN
         assertThat(thrown)
                 .isInstanceOf(OrganizationNotFoundException.class);
 
@@ -125,9 +110,7 @@ class CreateUserUseCaseTest {
 
     @Test
     void createUser_shouldThrow_whenEmailAlreadyExists() {
-        // GIVEN
         Long orgId = 1L;
-        Long adminId = 42L;
 
         CreateUserRequest request = new CreateUserRequest();
         request.setEmail("existing@test.com");
@@ -140,14 +123,11 @@ class CreateUserUseCaseTest {
                 .build();
 
         when(authenticationService.getCurrentUserOrganizationId()).thenReturn(orgId);
-        when(authenticationService.getCurrentUserId()).thenReturn(adminId);
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(org));
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
-        // WHEN
         Throwable thrown = catchThrowable(() -> createUserUseCase.createUser(request));
 
-        // THEN
         assertThat(thrown)
                 .isInstanceOf(EmailAlreadyExistsException.class);
 

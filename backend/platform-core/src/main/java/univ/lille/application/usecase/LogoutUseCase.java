@@ -13,6 +13,9 @@ public class LogoutUseCase {
 
 
     public void logout(String token) {
+        if (blacklistedTokenRepository.existsByToken(token)) {
+            return; // Token is already blacklisted, no further action needed
+        }
         BlackListedToken blackListedToken = BlackListedToken.builder()
                 .token(token)
                 .build();
