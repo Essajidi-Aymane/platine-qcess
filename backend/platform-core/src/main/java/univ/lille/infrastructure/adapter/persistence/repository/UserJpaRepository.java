@@ -26,4 +26,12 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByResetPasswordToken(String token);
     List<UserEntity> findByCustomRole_Id(Long customRoleId);
+    @Query("""
+        SELECT u FROM UserEntity u 
+        JOIN u.customRole r 
+        WHERE u.organization.id = :orgId 
+          AND r.id = :roleId
+    """)
+    List<UserEntity> findByOrganizationIdAndCustomRole(@Param("orgId")
+            Long organizationId,@Param("roleId") Long customRoleId);
 }

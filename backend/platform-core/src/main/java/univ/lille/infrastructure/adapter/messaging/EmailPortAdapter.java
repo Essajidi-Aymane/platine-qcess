@@ -442,4 +442,5 @@ public class EmailPortAdapter implements EmailPort {
             throw new RuntimeException("Erreur lors de l'envoi de l'email de réinitialisation", e);
         }
     }
+
 }

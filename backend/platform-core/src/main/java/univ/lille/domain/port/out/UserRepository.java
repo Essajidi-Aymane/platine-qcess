@@ -15,10 +15,11 @@ public interface UserRepository {
     List<User> findByOrganizationId(Long organizationId);
     List<User> findByOrganizationIdAndRole(Long organizationId, UserRole role);
     Optional<User> findByResetPasswordToken(String token);
+    List<User> findByOrganizationIdAndCustomRoleId(Long organizationId, Long customRoleId);
 
 
     void deleteUser(User user);
 
 
-
+    void saveAll(List<User> users);
 }

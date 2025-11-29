@@ -48,6 +48,17 @@ public class CustomRoleRepositoryAdapter implements CustomRoleRepository {
                 .toList();
         }
 
+    /**
+     * @param roleId
+     * @param organizationId
+     * @return
+     */
+    @Override
+    public Optional<CustomRole> findByIdAndOrganizationId(Long roleId, Long organizationId) {
+        return customRoleJpaRepository.findByIdAndOrganizationId(roleId, organizationId)
+                .map(mapper::toDomain);
+    }
+
     @Override
     public boolean existsByNameAndOrganizationId(String name, Long organizationId) {
         return customRoleJpaRepository.findByNameAndOrganization_Id(name, organizationId).isPresent();

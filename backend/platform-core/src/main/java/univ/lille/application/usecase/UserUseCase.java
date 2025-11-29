@@ -8,11 +8,14 @@ import univ.lille.application.service.AuthenticationService;
 import org.springframework.stereotype.Service;
 import univ.lille.application.usecase.mapper.UserMapper;
 import univ.lille.application.utils.NameUtils;
+import univ.lille.domain.exception.CustomRoleException;
 import univ.lille.domain.exception.EmailAlreadyExistsException;
 import univ.lille.domain.exception.OrganizationNotFoundException;
+import univ.lille.domain.model.CustomRole;
 import univ.lille.domain.model.Organization;
 import univ.lille.domain.model.User;
 import univ.lille.domain.port.in.UserPort;
+import univ.lille.domain.port.out.CustomRoleRepository;
 import univ.lille.domain.port.out.EmailPort;
 import univ.lille.domain.port.out.OrganizationRepository;
 import univ.lille.domain.port.out.UserRepository;
@@ -21,11 +24,13 @@ import univ.lille.dto.auth.user.UserDTO;
 import univ.lille.enums.UserRole;
 import univ.lille.enums.UserStatus;
 import univ.lille.infrastructure.utils.CodeGenerator;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserUseCase implements UserPort {
 
@@ -33,6 +38,7 @@ public class UserUseCase implements UserPort {
     private final OrganizationRepository organizationRepository;
     private final EmailPort emailPort;
     private final AuthenticationService authenticationService;
+    private CustomRoleRepository customRoleRepository;
 
 
     @Override
@@ -85,4 +91,57 @@ public class UserUseCase implements UserPort {
         List<User> users = userRepository.findByOrganizationIdAndRole(organizationId, UserRole.USER);
         return users.stream().map(UserMapper::toDTO).toList();
     }
+
+
+    /**
+     * @param roleId
+     * @param userIds
+     * @param orgId
+     * @param adminId
+     */
+    @Override
+    @Transactional
+    public void assignCustomRoleToUsers(Long roleId, List<Long> userIds, Long orgId, Long adminId) {
+
+        CustomRole role = customRoleRepository.findByIdAndOrganizationId(roleId , orgId)
+                .orElseThrow(() -> new CustomRoleException(
+                        "Custom role not found with ID: " + roleId + " in organization ID: " + orgId
+                ));
+        List<User> users = userRepository.findByOrganizationId(orgId) ;
+
+        for (User user :users){
+            user.setCustomRole(role);
+        }
+
+        userRepository.saveAll(users);
+    log.info("Assigned custom role ID {} to users {} in organization ID {} by admin ID {}",
+        roleId, userIds, orgId, adminId);
+
+    }
+
+    /**
+     * @param roleId
+     * @param userIds
+     * @param orgId
+     * @param adminId
+     */
+    @Override
+    public void unassignCustomRoleFromUsers(Long roleId, List<Long> userIds, Long orgId, Long adminId) {
+        CustomRole role = customRoleRepository.findByIdAndOrganizationId(roleId , orgId)
+                .orElseThrow(() -> new CustomRoleException(
+                        "Custom role not found with ID: " + roleId + " in organization ID: " + orgId
+                ));
+        List<User> users = userRepository.findByOrganizationId(orgId) ;
+
+        for (User user :users){
+            user.setCustomRole(null);
+        }
+
+        userRepository.saveAll(users);
+        log.info("Desassigned custom role ID {} from users {} in organization ID {} by admin ID {}",
+                roleId, userIds, orgId, adminId);
+
+    }
+
+
 }

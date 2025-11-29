@@ -5,4 +5,5 @@ public interface EmailPort {
     void sendAdminWelcomeEmail(String to, String fullName , String organizationName);
     void sendPasswordResetEmail(String to, String fullName, String resetLink);
 
+
 }

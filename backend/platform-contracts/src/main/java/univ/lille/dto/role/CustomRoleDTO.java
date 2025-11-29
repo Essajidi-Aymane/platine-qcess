@@ -10,7 +10,6 @@ public class CustomRoleDTO {
     private String name ;
     private String description ;
     private Long organizationId ;
-    private Integer userCount ;
     private LocalDateTime createdAt;
 
 }
