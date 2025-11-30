@@ -12,10 +12,13 @@ import 'package:mobile/features/home/data/repositories/I_dashboard_user_reposito
 import 'package:mobile/features/home/data/repositories/dashboard_user_repository_mock.dart';
 import 'package:mobile/features/home/logic/bloc/dashboard_bloc.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
+import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repository.dart';
+import 'package:mobile/features/maintenance/data/repositories/maintenance_repository.dart';
+import 'package:mobile/features/maintenance/logic/bloc/tickets_bloc.dart';
 
 final sl = GetIt.instance;
 
-const String apiBaseUrl = 'http://10.0.2.2:8080';
+const String apiBaseUrl = 'http://localhost:8080';
 const Duration httpTimeout = Duration(seconds: 30);
 
 Future<void> initDependencies() async {
@@ -23,6 +26,7 @@ Future<void> initDependencies() async {
   await initAuthFeature();
   await initSplashFeature();
   await initHomeFeature();
+  await initMaintenanceFeature();
 }
 
 Future<void> initNetworkDependencies() async {
@@ -88,5 +92,15 @@ Future<void> initHomeFeature() async {
     () => DashboardBloc(
       dashboardUserRepository: sl<IDashboardUserRepository>(),
     ),
+  );
+}
+
+Future<void> initMaintenanceFeature() async {
+  sl.registerLazySingleton<IMaintenanceRepository>(
+    () => MaintenanceRepository(sl<Dio>()),
+  );
+
+  sl.registerFactory<TicketsBloc>(
+    () => TicketsBloc(maintenanceRepository: sl<IMaintenanceRepository>()),
   );
 }

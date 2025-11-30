@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/utils/responsive_utils.dart';
 import 'package:mobile/features/home/data/models/feature_data.dart';
 import 'package:mobile/features/home/presentation/widgets/feature_button.dart';
+import 'package:mobile/core/rooting/app_routes.dart';
 
 class FeatureGrid extends StatelessWidget {
   const FeatureGrid({super.key});
@@ -41,7 +43,7 @@ class FeatureGrid extends StatelessWidget {
       ),
       const FeatureData(
         icon: Icons.build,
-        label: 'Tickets',
+        label: 'Maintenance',
         color: AppColors.ticketsColor,
       ),
     ];
@@ -63,7 +65,7 @@ class FeatureGrid extends StatelessWidget {
           icon: feature.icon,
           label: feature.label,
           color: feature.color,
-          onTap: () => _showComingSoon(context, feature.label),
+          onTap: () => _handleFeatureTap(context, feature.label),
         );
       },
     );
@@ -80,5 +82,15 @@ class FeatureGrid extends StatelessWidget {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  void _handleFeatureTap(BuildContext context, String label) {
+    switch (label) {
+      case 'Maintenance':
+        context.push(AppRoutes.maintenanceTickets);
+        break;
+      default:
+        _showComingSoon(context, label);
+    }
   }
 }
