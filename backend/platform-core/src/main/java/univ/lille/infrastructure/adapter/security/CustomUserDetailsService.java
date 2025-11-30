@@ -29,11 +29,21 @@ public class CustomUserDetailsService implements UserDetailsService {
                 ? userEntity.getOrganization().getId()
                 : null;
 
+        String displayName;
+        if (userEntity.getFirstName() != null && userEntity.getLastName() != null) {
+            displayName = userEntity.getFirstName() + " " + userEntity.getLastName();
+        } else if (userEntity.getFullName() != null) {
+            displayName = userEntity.getFullName();
+        } else {
+            displayName = userEntity.getEmail();
+        }
+
         return new QcessUserPrincipal(
                 userEntity.getId(),
                 orgId,
                 userEntity.getEmail(),
                 userEntity.getPassword() != null ? userEntity.getPassword() : "",
+                displayName,
                 Collections.singletonList(
                         new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name())
                 )
