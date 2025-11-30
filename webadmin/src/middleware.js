@@ -9,7 +9,7 @@ export function middleware(request) {
     const path = nextUrl.pathname;
     console.log('MIDDLEWARE QCESS → path =', path, 'token =', token ? 'PRESENT' : 'ABSENT');
 
-    if (!token && path.startsWith('/admin/dashboard')) {
+    if (!token && path.startsWith('/admin')) {
         const loginUrl = new URL('/auth/login-register', request.url);
         loginUrl.searchParams.set('next', path + nextUrl.search);
         return NextResponse.redirect(loginUrl);
@@ -24,5 +24,7 @@ export function middleware(request) {
 }
 
 export const config = {
-    matcher: ['/admin/dashboard', '/admin/dashboard/:path*', '/auth/login-register'],
+    matcher: ['/admin/:path*', '/auth/login-register'],
+
+
 };

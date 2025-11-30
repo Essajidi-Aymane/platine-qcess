@@ -7,12 +7,14 @@ public class CustomRoleMapper {
 
     public static CustomRoleDTO toDTO (univ.lille.domain.model.CustomRole customRole) {
         if(customRole == null ) return null;
-        CustomRoleDTO customRoleDTO = new CustomRoleDTO();
-        customRoleDTO.setId(customRole.getId());
-        customRoleDTO.setName(customRole.getName());
-        customRoleDTO.setDescription(customRole.getDescription());
-        customRoleDTO.setOrganizationId(customRole.getOrganization().getId());
-        customRoleDTO.setCreatedAt(customRole.getCreatedAt());
+        CustomRoleDTO customRoleDTO = CustomRoleDTO.builder()
+                .id(customRole.getId())
+                .name(customRole.getName())
+                .description(customRole.getDescription())
+                .organizationId(customRole.getOrganization().getId())
+                .createdAt(customRole.getCreatedAt())
+                .build();
+
 
         return customRoleDTO;
     }

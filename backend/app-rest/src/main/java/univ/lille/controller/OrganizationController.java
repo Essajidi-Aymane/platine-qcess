@@ -15,6 +15,8 @@ import univ.lille.dto.role.CustomRoleDTO;
 import univ.lille.dto.role.UpdateCustomRoleRequest;
 import univ.lille.infrastructure.adapter.security.QcessUserPrincipal;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/organizations")
 @RequiredArgsConstructor
@@ -28,6 +30,33 @@ public class OrganizationController {
     public ResponseEntity<String> updateOrgDetails(@Valid @RequestBody OrganizationUpdateRequest request) {
         organizationManagementPort.updateOrganizationDetails(request);
         return ResponseEntity.ok("Organization details updated successfully.");
+    }
+    @GetMapping("/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CustomRoleDTO>> getCustomRoles(@AuthenticationPrincipal QcessUserPrincipal principal) {
+        Long orgId = principal.getOrganizationId();
+        List<CustomRoleDTO> roles = customRolePort.getCustomRolesByOrganization(orgId);
+        return ResponseEntity.ok(roles);
+    }
+
+    /**
+     * methode donne le custom role d'un user
+     * */
+    @GetMapping("/me/custom-role")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<CustomRoleDTO> getMyCustomRole(
+            @AuthenticationPrincipal QcessUserPrincipal principal
+    ) {
+        Long userId = principal.getId();
+        Long orgId = principal.getOrganizationId();
+
+        CustomRoleDTO role = customRolePort.getCustomRoleForUser(userId, orgId);
+
+        if (role == null) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(role);
     }
 
     @PostMapping("/create-custom-role")

@@ -177,10 +177,51 @@ public class OrganizationUseCase implements  OrganizationManagementPort , Custom
         customRoleRepository.delete(role);
 
     }
+
+    /**
+     * @param organizationId
+     * @return
+     */
+    @Override
+    public List<CustomRoleDTO> getCustomRolesByOrganization(Long organizationId) {
+        List<CustomRole> roles = customRoleRepository.getCustomRolesByOrganizationId(organizationId);
+        return roles.stream()
+                .map(CustomRoleMapper::toDTO)
+                .toList();
+    }
+
+    /**
+     * @param userId
+     * @param organizationId
+     * @return
+     */
+    @Override
+    public CustomRoleDTO getCustomRoleForUser(Long userId, Long organizationId) {
+        User user = userRepository.findById(userId).orElseThrow(()->
+                new UserNotFoundException("User not found with ID: " + userId
+                ));
+
+
+        if (user.getOrganization() == null ||
+                !user.getOrganization().getId().equals(organizationId)) {
+            throw new AccessDeniedException(
+                    "User does not belong to the specified organization."
+            );
+        }
+        CustomRole role = user.getCustomRole();
+
+        if (role == null) return null ;
+
+        return  CustomRoleMapper.toDTO(role);
+    }
+
+
     private  Organization getOrganizationOrThrow(Long organizationId) {
         return organizationRepository.findById(organizationId)
                 .orElseThrow(() -> new OrganizationNotFoundException(
                         "Organization not found with ID: " + organizationId
                 ));
     }
+
+
 }
