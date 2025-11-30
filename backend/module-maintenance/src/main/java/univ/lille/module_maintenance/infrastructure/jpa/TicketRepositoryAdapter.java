@@ -21,9 +21,10 @@ public class TicketRepositoryAdapter implements TicketRepositoryPort {
 
     @Override
     @Transactional
-    public void save(@NonNull Ticket ticket) {
+    public Ticket save(@NonNull Ticket ticket) {
         TicketDao ticketDao = TicketMapper.toDao(ticket);
-        jpa.save(ticketDao);
+        TicketDao savedDao = jpa.save(ticketDao);
+        return TicketMapper.toDomain(savedDao);
     }
 
     @Override

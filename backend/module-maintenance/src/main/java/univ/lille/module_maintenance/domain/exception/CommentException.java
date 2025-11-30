@@ -22,4 +22,8 @@ public class CommentException extends TicketException {
     public static CommentException contentTooLong(int max) {
         return new CommentException("Le contenu du commentaire dépasse la longueur maximale (" + max + ")");
     }
+
+    public static CommentException cannotCommentCancelled() {
+        return new CommentException("Impossible de commenter un ticket annulé");
+    }
 }

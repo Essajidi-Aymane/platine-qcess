@@ -11,12 +11,14 @@ import univ.lille.module_maintenance.domain.exception.TicketNotFoundException;
 import univ.lille.module_maintenance.domain.exception.UnauthorizedAccessException;
 import univ.lille.module_maintenance.domain.model.Comment;
 import univ.lille.module_maintenance.domain.model.CommentType;
+import univ.lille.module_maintenance.domain.model.Priority;
 import univ.lille.module_maintenance.domain.model.Status;
 import univ.lille.module_maintenance.domain.model.Ticket;
 import univ.lille.module_maintenance.domain.port.TicketRepositoryPort;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -25,18 +27,20 @@ public class TicketService {
     private final TicketRepositoryPort ticketRepository;
 
     @Transactional
-    public void createTicket(@NonNull Ticket ticket) {
+    @NonNull
+    public Ticket createTicket(@NonNull Ticket ticket) {
         if (ticket.getStatus() == null) {
             ticket.setStatus(Status.OPEN);
         }
-
-        ticketRepository.save(ticket);
+        return ticketRepository.save(ticket);
     }
 
     @NonNull
     public Ticket getTicketById(@NonNull Long ticketId) {
-        return ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new TicketNotFoundException(ticketId));
+        return Objects.requireNonNull(
+            ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException(ticketId))
+        );
     }
 
     @NonNull
@@ -45,12 +49,25 @@ public class TicketService {
     }
 
     @NonNull
+    public List<Ticket> getTicketsForUser(@NonNull Long userId, Status status, Priority priority) {
+        List<Ticket> base = ticketRepository.findByUserId(userId);
+        return Objects.requireNonNull(applyFilters(base, status, priority));
+    }
+
+    @NonNull
     public List<Ticket> getTicketsForOrganization(@NonNull Long organizationId) {
         return ticketRepository.findByOrganizationId(organizationId);
     }
 
+    @NonNull
+    public List<Ticket> getTicketsForOrganization(@NonNull Long organizationId, Status status, Priority priority) {
+        List<Ticket> base = ticketRepository.findByOrganizationId(organizationId);
+        return Objects.requireNonNull(applyFilters(base, status, priority));
+    }
+
     @Transactional
-    public void updateStatus(@NonNull Long ticketId, @NonNull Status newStatus) {
+    @NonNull
+    public Ticket updateStatus(@NonNull Long ticketId, @NonNull Status newStatus) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
 
@@ -63,11 +80,12 @@ public class TicketService {
             );
         }
 
-        ticketRepository.save(ticket);
+        return ticketRepository.save(ticket);
     }
 
     @Transactional
-    public void updateTicket(@NonNull Long ticketId, @NonNull String title, String description) {
+    @NonNull
+    public Ticket updateTicket(@NonNull Long ticketId, @NonNull String title, String description) {
         if (title.isBlank()) {
             throw InvalidTicketException.missingTitle();
         }
@@ -85,11 +103,12 @@ public class TicketService {
         ticket.setDescription(description);
         ticket.setUpdatedAt(LocalDateTime.now());
 
-        ticketRepository.save(ticket);
+        return ticketRepository.save(ticket);
     }
 
     @Transactional
-    public void addUserComment(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId) {
+    @NonNull
+    public Ticket addUserComment(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId, String authorUserName) {
         if (content.isBlank()) {
             throw CommentException.emptyContent();
         }
@@ -99,6 +118,10 @@ public class TicketService {
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
+
+        if (ticket.getStatus() == Status.CANCELLED) {
+            throw CommentException.cannotCommentCancelled();
+        }
 
         if (!ticket.belongsTo(authorUserId)) {
             throw UnauthorizedAccessException.cannotCommentTicket(authorUserId, ticketId);
@@ -107,17 +130,19 @@ public class TicketService {
         Comment comment = Comment.builder()
                 .content(content)
                 .authorUserId(authorUserId)
+                .authorUserName(authorUserName)
                 .type(CommentType.USER)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         ticket.addComment(comment);
         ticket.setUpdatedAt(LocalDateTime.now());
-        ticketRepository.save(ticket);
+        return ticketRepository.save(ticket);
     }
 
     @Transactional
-    public void addAdminCommentToThread(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId) {
+    @NonNull
+    public Ticket addAdminCommentToThread(@NonNull Long ticketId, @NonNull String content, @NonNull Long authorUserId, String authorUserName) {
         if (content.isBlank()) {
             throw CommentException.emptyContent();
         }
@@ -128,20 +153,26 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
 
+        if (ticket.getStatus() == Status.CANCELLED) {
+            throw CommentException.cannotCommentCancelled();
+        }
+
         Comment comment = Comment.builder()
                 .content(content)
                 .authorUserId(authorUserId)
+                .authorUserName(authorUserName)
                 .type(CommentType.ADMIN)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         ticket.addComment(comment);
         ticket.setUpdatedAt(LocalDateTime.now());
-        ticketRepository.save(ticket);
+        return ticketRepository.save(ticket);
     }
 
     @Transactional
-    public void cancelTicket(@NonNull Long ticketId, @NonNull Long userId) {
+    @NonNull
+    public Ticket cancelTicket(@NonNull Long ticketId, @NonNull Long userId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
 		
@@ -158,11 +189,18 @@ public class TicketService {
         }
 		
         ticket.updateStatus(Status.CANCELLED);
-        ticketRepository.save(ticket);
+        return ticketRepository.save(ticket);
     }
 
     @Transactional
     public void deleteTicket(@NonNull Long ticketId) {
         ticketRepository.deleteById(ticketId);
+    }
+
+    private List<Ticket> applyFilters(List<Ticket> tickets, Status status, univ.lille.module_maintenance.domain.model.Priority priority) {
+        return tickets.stream()
+            .filter(t -> status == null || status.equals(t.getStatus()))
+            .filter(t -> priority == null || priority.equals(t.getPriority()))
+            .toList();
     }
 }

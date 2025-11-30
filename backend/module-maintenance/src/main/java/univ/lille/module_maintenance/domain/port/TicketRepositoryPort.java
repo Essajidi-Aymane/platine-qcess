@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface TicketRepositoryPort {
     
-    void save(@NonNull Ticket ticket);
+    Ticket save(@NonNull Ticket ticket);
     
     @NonNull
     Optional<Ticket> findById(@NonNull Long id);

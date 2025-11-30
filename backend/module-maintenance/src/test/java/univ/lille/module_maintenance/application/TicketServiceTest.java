@@ -161,7 +161,7 @@ class TicketServiceTest {
         @Test
         @DisplayName("addUserComment blank content throws CommentException")
         void addUserComment_blank() {
-            assertThrows(CommentException.class, () -> service.addUserComment(10L, "   ", 5L));
+            assertThrows(CommentException.class, () -> service.addUserComment(10L, "   ", 5L, "User5"));
             verify(ticketRepository, never()).findById(anyLong());
         }
 
@@ -169,14 +169,14 @@ class TicketServiceTest {
         @DisplayName("addUserComment unauthorized when not owner")
         void addUserComment_notOwner() {
             when(ticketRepository.findById(10L)).thenReturn(Optional.of(baseTicket));
-            assertThrows(UnauthorizedAccessException.class, () -> service.addUserComment(10L, "Hello", 999L));
+            assertThrows(UnauthorizedAccessException.class, () -> service.addUserComment(10L, "Hello", 999L, "User999"));
         }
 
         @Test
         @DisplayName("addUserComment success adds comment and saves")
         void addUserComment_success() {
             when(ticketRepository.findById(10L)).thenReturn(Optional.of(baseTicket));
-            service.addUserComment(10L, "Content", 5L);
+            service.addUserComment(10L, "Content", 5L, "User5");
             assertEquals(1, baseTicket.getComments().size());
             Comment c = baseTicket.getComments().get(0);
             assertEquals("Content", c.getContent());
@@ -188,7 +188,7 @@ class TicketServiceTest {
         @DisplayName("addAdminComment success adds admin comment and saves")
         void addAdminComment_success() {
             when(ticketRepository.findById(10L)).thenReturn(Optional.of(baseTicket));
-            service.addAdminCommentToThread(10L, "Admin Response", 50L);
+            service.addAdminCommentToThread(10L, "Admin Response", 50L, "AdminUser");
             assertEquals(1, baseTicket.getComments().size());
             Comment c = baseTicket.getComments().get(0);
             assertEquals(CommentType.ADMIN, c.getType());
@@ -200,7 +200,7 @@ class TicketServiceTest {
         @DisplayName("addAdminComment ticket not found throws")
         void addAdminComment_notFound() {
             when(ticketRepository.findById(999L)).thenReturn(Optional.empty());
-            assertThrows(TicketNotFoundException.class, () -> service.addAdminCommentToThread(999L, "X", 1L));
+            assertThrows(TicketNotFoundException.class, () -> service.addAdminCommentToThread(999L, "X", 1L, "AdminUser"));
         }
     }
 

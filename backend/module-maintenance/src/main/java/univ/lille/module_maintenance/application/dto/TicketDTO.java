@@ -17,7 +17,9 @@ public record TicketDTO(
     String priorityColor,
     Status status,
     List<Comment> comments,
+    Long createdByUserId,
     String createdByUserName,
+    Long organizationId,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {
@@ -33,7 +35,9 @@ public record TicketDTO(
             ticket.getPriority() != null ? ticket.getPriority().getDisplayColor() : null,
             ticket.getStatus(),
             ticket.getComments(),
+            ticket.getCreatedByUserId(),
             ticket.getCreatedByUserName(),
+            ticket.getOrganizationId(),
             ticket.getCreatedAt(),
             ticket.getUpdatedAt()
         );

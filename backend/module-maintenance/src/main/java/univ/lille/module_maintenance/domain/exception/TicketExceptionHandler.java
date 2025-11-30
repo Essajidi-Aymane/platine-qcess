@@ -1,4 +1,4 @@
-package univ.lille.module_maintenance.controller;
+package univ.lille.module_maintenance.domain.exception;
 
 import java.time.LocalDateTime;
 
@@ -8,11 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
-import univ.lille.module_maintenance.domain.exception.CommentException;
-import univ.lille.module_maintenance.domain.exception.InvalidTicketException;
-import univ.lille.module_maintenance.domain.exception.TicketException;
-import univ.lille.module_maintenance.domain.exception.TicketNotFoundException;
-import univ.lille.module_maintenance.domain.exception.UnauthorizedAccessException;
+import univ.lille.module_maintenance.controller.TicketController;
 
 @RestControllerAdvice(basePackageClasses = TicketController.class)
 public class TicketExceptionHandler {
