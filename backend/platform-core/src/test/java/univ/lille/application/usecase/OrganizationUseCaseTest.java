@@ -4,11 +4,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import univ.lille.application.service.AuthenticationService;
+import univ.lille.domain.model.CustomRole;
 import univ.lille.domain.model.Organization;
+import univ.lille.domain.model.User;
+import univ.lille.domain.port.out.CustomRoleRepository;
 import univ.lille.domain.port.out.OrganizationRepository;
+import univ.lille.domain.port.out.UserRepository;
 import univ.lille.dto.org.OrganizationUpdateRequest;
+import univ.lille.dto.role.CreateCustomRoleRequest;
+import univ.lille.dto.role.CustomRoleDTO;
+import univ.lille.dto.role.UpdateCustomRoleRequest;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -21,10 +31,19 @@ class OrganizationUseCaseTest {
     private OrganizationRepository organizationRepository;
 
     @Mock
+    private CustomRoleRepository   customRoleRepository;
+    @Mock
+    private UserRepository userRepository ;
+
+    @Mock
     private AuthenticationService authenticationService;
 
     @InjectMocks
     private OrganizationUseCase organizationUseCase;
+
+    @InjectMocks
+    private CustomRoleUseCase customRoleUseCase;
+
 
     // ----------------------------------------------------------
     // 1. updateOrganizationDetails() - SUCCESS CASE
@@ -60,5 +79,9 @@ class OrganizationUseCaseTest {
 
         verify(organizationRepository).save(org);
     }
+
+
+
+
 
 }

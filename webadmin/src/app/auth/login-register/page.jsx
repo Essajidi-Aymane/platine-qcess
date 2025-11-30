@@ -65,7 +65,7 @@ function LoginForm() {
 
 
             const params = new URLSearchParams(window.location.search);
-            const next = params.get("next") || "/dashboard";
+            const next = params.get("next") || "/admin/dashboard";
             window.location.assign(next);
         } catch (err) {
             setError(err.message);
@@ -189,7 +189,7 @@ function RegisterForm() {
             }
             const data = await res.json();
             console.log("Register success:", data);
-            window.location.assign("/dashboard");
+            window.location.assign("/admin/dashboard");
 
         } catch (err) {
             setError(err.message);

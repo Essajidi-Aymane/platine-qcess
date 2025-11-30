@@ -73,10 +73,35 @@ public class UserRepositoryAdapter implements UserRepository {
                 .map(mapper::toDomain);
     }
 
+    /**
+     * @param organizationId
+     * @param customRoleId
+     * @return
+     */
+    @Override
+    public List<User> findByOrganizationIdAndCustomRoleId(Long organizationId, Long customRoleId) {
+        return userJpaRepository.findByOrganizationIdAndCustomRole(organizationId, customRoleId)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
 
     @Override
     public void deleteUser(User user) {
         userJpaRepository.delete(mapper.toEntity(user));
+
+    }
+
+    /**
+     * @param users
+     */
+    @Override
+    public void saveAll(List<User> users) {
+        List<UserEntity> entities = users.stream()
+                .map(mapper::toEntity)
+                .toList();
+        userJpaRepository.saveAll(entities);
 
     }
 }

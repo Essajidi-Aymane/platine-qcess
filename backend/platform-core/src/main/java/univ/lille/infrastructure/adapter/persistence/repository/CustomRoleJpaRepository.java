@@ -15,6 +15,8 @@ public interface CustomRoleJpaRepository extends JpaRepository<CustomRoleEntity 
 
     List<CustomRoleEntity> findByIdInAndOrganization_Id(List<Long> ids, Long organizationId);
     Optional<CustomRoleEntity> findByNameAndOrganization_Id(String name, Long organizationId);
+    Optional<CustomRoleEntity> findByIdAndOrganizationId(Long roleId, Long organizationId) ;
+
     @Query("SELECT COUNT(u) FROM UserEntity u WHERE u.customRole.id = :roleId")
     long countUsersByRoleId(@Param("roleId") Long roleId) ;
 
