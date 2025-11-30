@@ -21,6 +21,11 @@ public class UserMapper {
         userDTO.setOrganisationId(user.getOrganization().getId());
         userDTO.setCreatedAt(user.getCreatedAt());
 
+
+        if(user.getCustomRole() != null) {
+            userDTO.setCustomRoleName(user.getCustomRole().getName());
+        }
+
         return userDTO;
     }
 }

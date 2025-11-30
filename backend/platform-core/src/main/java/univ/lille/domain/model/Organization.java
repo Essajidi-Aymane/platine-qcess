@@ -41,6 +41,19 @@ public class Organization {
         zone.setOrganization(this);
     }
 
+    public void removeZone(Zone zone) {
+        zones.remove(zone);
+        zone.setOrganization(null);
+    }
+    public void removeUser(User user) {
+        users.remove(user);
+        user.setOrganization(null);
+    }
+    public void removeCustomRole(CustomRole role) {
+        customRoles.remove(role);
+        role.setOrganization(null);
+    }
+
     public void addCustomRole(CustomRole role) {
         customRoles.add(role);
         role.setOrganization(this);

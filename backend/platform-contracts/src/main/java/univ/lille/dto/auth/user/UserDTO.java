@@ -19,6 +19,7 @@ UserDTO {
     private String lastName ;
     private UserRole role ;
     private UserStatus userStatus ;
+    private String customRoleName ;
     private Long organisationId ;
     private LocalDateTime createdAt ;
 

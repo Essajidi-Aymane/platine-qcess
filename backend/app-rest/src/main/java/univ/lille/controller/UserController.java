@@ -11,6 +11,8 @@ import univ.lille.application.usecase.UserUseCase;
 import univ.lille.domain.port.in.UserPort;
 import univ.lille.dto.auth.user.CreateUserRequest;
 import univ.lille.dto.auth.user.UserDTO;
+import univ.lille.dto.role.AssignRolesToUserRequest;
+import univ.lille.dto.role.UnassignCustomRoleRequest;
 import univ.lille.dto.users.UserResponse;
 import univ.lille.infrastructure.adapter.security.QcessUserPrincipal;
 
@@ -48,6 +50,32 @@ public class UserController {
             .data(users)
             .meta(meta)
             .build());
+    }
+
+    @PostMapping("/assign-role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> assignRoleToUsers(@Valid @RequestBody AssignRolesToUserRequest request , @AuthenticationPrincipal QcessUserPrincipal principal) {
+            Long adminId = principal.getId();
+            Long orgId = principal.getOrganizationId();
+            userPort.assignCustomRoleToUsers(request.getRoleIds(),request.getUserIds(), adminId, orgId);
+
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+    @PostMapping("/unassign")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> unassignCustomRole(
+            @Valid @RequestBody UnassignCustomRoleRequest request,
+            @AuthenticationPrincipal QcessUserPrincipal principal
+    ) {
+        userPort.unassignCustomRoleFromUsers(
+                request.getRoleId(),
+                request.getUserIds(),
+                principal.getOrganizationId(),
+                principal.getId()
+        );
+
+        return ResponseEntity.ok().build();
     }
 
 

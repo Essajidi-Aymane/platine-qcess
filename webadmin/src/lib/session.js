@@ -9,5 +9,12 @@ export async function getUserSession() {
         return null;
     }
 
-    return { token };
+    const payloadBase64 = token.split(".")[1];
+    const json = Buffer.from(payloadBase64, "base64").toString("utf8");
+    const payload = JSON.parse(json);
+
+    return {
+        token,
+        ...payload,
+    };
 }

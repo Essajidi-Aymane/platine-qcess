@@ -21,7 +21,6 @@ import univ.lille.enums.UserStatus;
 import univ.lille.infrastructure.adapter.security.JwtService;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service

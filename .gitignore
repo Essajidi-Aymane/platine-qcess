@@ -7,7 +7,7 @@ Thumbs.db
 .vscode/
 *.iml
 
-.env
+.env*
 # --- Java / Maven (backend/*) ---
 backend/**/target/
 backend/**/.mvn/
@@ -45,7 +45,7 @@ mobile/windows/flutter/ephemeral/
 .scannerwork/
 
 # --- Docker ---
-**/.env
+webadmin/.env.local
 **/tmp/
 **/dist/
 
