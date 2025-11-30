@@ -1,0 +1,172 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:mobile/features/maintenance/data/dto/ticket_dto.dart';
+import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repository.dart';
+import 'tickets_event.dart';
+import 'tickets_state.dart';
+
+class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
+  final IMaintenanceRepository maintenanceRepository;
+
+  EventTransformer<T> debounce<T>(Duration duration) {
+  return (events, mapper) =>
+      events.debounceTime(duration).switchMap(mapper);
+}
+
+  List<TicketDTO> _applySearchFilter(List<TicketDTO> source, String? rawQuery) {
+    final query = (rawQuery ?? '').trim().toLowerCase();
+    if (query.isEmpty) return source;
+
+    return source.where((t) {
+      final title = t.title.toLowerCase();
+      final desc = t.description.toLowerCase();
+      final idStr = t.id.toString();
+      final createdBy = (t.createdByUserName ?? '').toLowerCase();
+      return title.contains(query) ||
+          desc.contains(query) ||
+          idStr.contains(query) ||
+          createdBy.contains(query);
+    }).toList();
+  }
+
+  List<TicketDTO> _sortByCreatedDesc(List<TicketDTO> source) {
+    final list = [...source];
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+
+  TicketsBloc({required this.maintenanceRepository}) : super(TicketsState()) {
+    on<TicketsRequested>(_onTicketsRequested);
+    on<TicketDetailRequested>(_onTicketDetailRequested);
+    on<TicketCreated>(_onTicketCreated);
+    on<TicketUpdated>(_onTicketUpdated);
+    on<TicketCancelled>(_onTicketCancelled);
+    on<UserCommentAdded>(_onUserCommentAdded);
+    on<TicketSearchChanged>(
+      _onSearchChanged,
+      transformer: debounce(const Duration(milliseconds: 300)),
+    );
+  }
+
+  Future<void> _onTicketsRequested(
+    TicketsRequested event,
+    Emitter<TicketsState> emit,
+  ) async {
+    emit(state.copyWith(
+      status: TicketsStatus.loading,
+      error: null,
+      filterStatus: event.status,
+      filterPriority: event.priority,
+    ));
+    try {
+      final rawTickets = await maintenanceRepository.getMyTickets(
+        status: event.status,
+        priority: event.priority,
+      );
+      final sorted = _sortByCreatedDesc(rawTickets);
+      final visible = _applySearchFilter(sorted, state.searchQuery);
+      emit(state.copyWith(status: TicketsStatus.loaded, tickets: sorted, visibleTickets: visible));
+    } catch (e) {
+      emit(state.copyWith(status: TicketsStatus.failure, error: e.toString()));
+    }
+  }
+
+  Future<void> _onTicketDetailRequested(
+    TicketDetailRequested event,
+    Emitter<TicketsState> emit,
+  ) async {
+    emit(state.copyWith(isDetailLoading: true, error: null));
+    try {
+      final ticket = await maintenanceRepository.getTicketById(event.id);
+      emit(state.copyWith(selectedTicket: ticket, isDetailLoading: false));
+    } catch (e) {
+      emit(state.copyWith(isDetailLoading: false, error: e.toString()));
+    }
+  }
+
+  Future<void> _onTicketCreated(
+    TicketCreated event,
+    Emitter<TicketsState> emit,
+  ) async {
+    emit(state.copyWith(status: TicketsStatus.submitting, error: null));
+    try {
+      final created = await maintenanceRepository.createTicket(event.request);
+      final updatedTickets = _sortByCreatedDesc(<TicketDTO>[...state.tickets, created]);
+      final visible = _applySearchFilter(updatedTickets, state.searchQuery);
+      emit(state.copyWith(status: TicketsStatus.success, tickets: updatedTickets, visibleTickets: visible));
+      emit(state.copyWith(status: TicketsStatus.loaded));
+    } catch (e) {
+      emit(state.copyWith(status: TicketsStatus.failure, error: e.toString()));
+    }
+  }
+
+  Future<void> _onTicketUpdated(
+    TicketUpdated event,
+    Emitter<TicketsState> emit,
+  ) async {
+    emit(state.copyWith(status: TicketsStatus.submitting, error: null));
+    try {
+      final updated = await maintenanceRepository.updateTicket(event.id, event.request);
+      final updatedTickets = _sortByCreatedDesc(
+        state.tickets.map((t) => t.id == event.id ? updated : t).toList(),
+      );
+      final visible = _applySearchFilter(updatedTickets, state.searchQuery);
+      emit(state.copyWith(status: TicketsStatus.success, tickets: updatedTickets, visibleTickets: visible));
+      emit(state.copyWith(status: TicketsStatus.loaded));
+    } catch (e) {
+      emit(state.copyWith(status: TicketsStatus.failure, error: e.toString()));
+    }
+  }
+
+  Future<void> _onTicketCancelled(
+    TicketCancelled event,
+    Emitter<TicketsState> emit,
+  ) async {
+    emit(state.copyWith(status: TicketsStatus.submitting, error: null));
+    try {
+      final cancelled = await maintenanceRepository.cancelTicket(event.id);
+      final updatedTickets = _sortByCreatedDesc(
+        state.tickets.map((t) => t.id == event.id ? cancelled : t).toList(),
+      );
+      final visible = _applySearchFilter(updatedTickets, state.searchQuery);
+      emit(state.copyWith(status: TicketsStatus.success, tickets: updatedTickets, visibleTickets: visible));
+      emit(state.copyWith(status: TicketsStatus.loaded));
+    } catch (e) {
+      emit(state.copyWith(status: TicketsStatus.failure, error: e.toString()));
+    }
+  }
+
+  Future<void> _onUserCommentAdded(
+    UserCommentAdded event,
+    Emitter<TicketsState> emit,
+  ) async {
+    emit(state.copyWith(status: TicketsStatus.submitting, error: null));
+    try {
+      final updatedTicket = await maintenanceRepository.addUserComment(event.ticketId, event.request);
+
+      final updatedTickets = _sortByCreatedDesc(
+        state.tickets.map((t) => t.id == event.ticketId ? updatedTicket : t).toList(),
+      );
+
+      TicketDTO? refreshedSelected = state.selectedTicket;
+      if (state.selectedTicket?.id == event.ticketId) {
+        refreshedSelected = updatedTicket;
+      }
+
+      final visible = _applySearchFilter(updatedTickets, state.searchQuery);
+      emit(state.copyWith(status: TicketsStatus.success, tickets: updatedTickets, visibleTickets: visible, selectedTicket: refreshedSelected));
+      emit(state.copyWith(status: TicketsStatus.loaded));
+    } catch (e) {
+      emit(state.copyWith(status: TicketsStatus.failure, error: e.toString()));
+    }
+  }
+
+  Future<void> _onSearchChanged(
+    TicketSearchChanged event,
+    Emitter<TicketsState> emit,
+  ) async {
+    final visible = _applySearchFilter(state.tickets, event.query);
+    emit(state.copyWith(searchQuery: event.query, visibleTickets: visible));
+  }
+}

@@ -14,6 +14,7 @@ public class QcessUserPrincipal implements UserDetails {
     private final Long organizationId;
     private final String email;
     private final String password;
+    private final String displayName;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public QcessUserPrincipal(
@@ -21,12 +22,14 @@ public class QcessUserPrincipal implements UserDetails {
             Long organizationId,
             String email,
             String password,
+            String displayName,
             Collection<? extends GrantedAuthority> authorities
     ) {
         this.id = id;
         this.organizationId = organizationId;
         this.email = email;
         this.password = password;
+        this.displayName = displayName;
         this.authorities = authorities;
     }
 

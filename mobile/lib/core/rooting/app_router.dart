@@ -12,6 +12,10 @@ import 'package:mobile/features/home/logic/bloc/dashboard_bloc.dart';
 import 'package:mobile/features/home/logic/bloc/dashboard_event.dart';
 import 'package:mobile/features/home/logic/bloc/dashboard_state.dart';
 import 'package:mobile/features/home/presentation/screens/home_page.dart';
+import 'package:mobile/features/maintenance/presentation/screens/tickets_page.dart';
+import 'package:mobile/features/maintenance/data/dto/ticket_dto.dart';
+import 'package:mobile/features/maintenance/presentation/screens/ticket_detail_page.dart';
+import 'package:mobile/features/maintenance/presentation/screens/ticket_form_page.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_state.dart';
 import 'package:mobile/features/splash/presentation/screens/splash_page.dart';
@@ -39,27 +43,33 @@ class AppRouter {
     final isAuthPage = state.matchedLocation == AppRoutes.auth;
     final isSplashPage = state.matchedLocation == AppRoutes.splash;
 
-    if (isSplashPage && splashState is! SplashCompleted) {
-      return null;
+    if (splashState is! SplashCompleted) {
+      return isSplashPage ? null : AppRoutes.splash;
     }
 
-    if (splashState is SplashCompleted && isSplashPage) {
-      context.read<AuthBloc>().add(AppStarted());
-      if (authState is AuthAuthenticated) {
+    if (authState is AuthInitial) {
+      _authBloc.add(AppStarted());
+      return AppRoutes.splash;
+    }
+
+    if (authState is AuthLoading) {
+      return AppRoutes.splash;
+    }
+
+    if (authState is AuthUnauthenticated) {
+      return isAuthPage ? null : AppRoutes.auth;
+    }
+
+    if (authState is AuthAuthenticated) {
+      if (isAuthPage || isSplashPage) {
         _triggerDashboardLoad(context);
         return AppRoutes.home;
-      } else {
-        return AppRoutes.auth;
       }
+      return null;
     }
 
     if (authState is! AuthAuthenticated && !isAuthPage && !isSplashPage) {
       return AppRoutes.auth;
-    }
-
-    if (authState is AuthAuthenticated && isAuthPage) {
-      _triggerDashboardLoad(context);
-      return AppRoutes.home;
     }
 
     return null;
@@ -76,6 +86,49 @@ class AppRouter {
           path: AppRoutes.splash,
           name: AppRoutes.splashName,
           builder: (_, _) => const SplashPage()),
+        GoRoute(
+          path: AppRoutes.maintenanceTickets,
+          name: AppRoutes.maintenanceTicketsName,
+          redirect: (context, state) {
+            final authState = _authBloc.state;
+            if (authState is! AuthAuthenticated) {
+              return AppRoutes.auth;
+            }
+            return null;
+          },
+          builder: (context, state) => const TicketsPage(),
+          routes: [
+            GoRoute(
+              path: 'create',
+              name: AppRoutes.maintenanceTicketCreateName,
+              redirect: (context, state) {
+                final authState = _authBloc.state;
+                if (authState is! AuthAuthenticated) {
+                  return AppRoutes.auth;
+                }
+                return null;
+              },
+              builder: (context, state) => const TicketFormPage(),
+            ),
+            GoRoute(
+              path: ':id',
+              name: AppRoutes.maintenanceTicketDetailName,
+              redirect: (context, state) {
+                final authState = _authBloc.state;
+                if (authState is! AuthAuthenticated) {
+                  return AppRoutes.auth;
+                }
+                return null;
+              },
+              builder: (context, state) {
+                final idParam = state.pathParameters['id'];
+                final ticket = state.extra as TicketDTO?;
+                final id = int.tryParse(idParam ?? '');
+                return TicketDetailPage(ticketId: id, initialTicket: ticket);
+              },
+            ),
+          ],
+        ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
             return ScaffoldWithNavBar(navigationShell: navigationShell);

@@ -7,6 +7,8 @@ import 'package:mobile/features/auth/data/repositories/i_auth_repository.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_bloc.dart';
 import 'package:mobile/features/home/data/repositories/I_dashboard_user_repository.dart';
 import 'package:mobile/features/home/logic/bloc/dashboard_bloc.dart';
+import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repository.dart';
+import 'package:mobile/features/maintenance/logic/bloc/tickets_bloc.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 
 class MyApp extends StatelessWidget {
@@ -25,6 +27,10 @@ class MyApp extends StatelessWidget {
         BlocProvider<DashboardBloc>(
           create: (_) => DashboardBloc(
               dashboardUserRepository: sl<IDashboardUserRepository>()),
+        ),
+        BlocProvider<TicketsBloc>(
+          create: (_) => TicketsBloc(
+              maintenanceRepository: sl<IMaintenanceRepository>()),
         ),
       ],
       child: Builder(
