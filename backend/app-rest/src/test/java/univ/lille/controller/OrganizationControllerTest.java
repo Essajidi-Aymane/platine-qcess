@@ -196,4 +196,55 @@ class OrganizationControllerTest {
         verify(customRolePort, times(1))
                 .deleteCustomRole(9L, 6L, 30L);
     }
+
+    @Test
+    void getMyCustomRole_should_return_role_when_user_has_custom_role() {
+        // Given
+        QcessUserPrincipal principal = mock(QcessUserPrincipal.class);
+        when(principal.getId()).thenReturn(42L);
+        when(principal.getOrganizationId()).thenReturn(3L);
+
+        CustomRoleDTO dto = CustomRoleDTO.builder()
+                .id(10L)
+                .name("Résident")
+                .description("Locataire de la résidence")
+                .build();
+
+        when(customRolePort.getCustomRoleForUser(42L, 3L))
+                .thenReturn(dto);
+
+        // When
+        ResponseEntity<CustomRoleDTO> response =
+                controller.getMyCustomRole(principal);
+
+        // Then
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).isEqualTo(dto);
+
+        verify(customRolePort, times(1))
+                .getCustomRoleForUser(42L, 3L);
+    }
+
+    @Test
+    void getMyCustomRole_should_return_no_content_when_user_has_no_custom_role() {
+        // Given
+        QcessUserPrincipal principal = mock(QcessUserPrincipal.class);
+        when(principal.getId()).thenReturn(42L);
+        when(principal.getOrganizationId()).thenReturn(3L);
+
+        when(customRolePort.getCustomRoleForUser(42L, 3L))
+                .thenReturn(null);
+
+        // When
+        ResponseEntity<CustomRoleDTO> response =
+                controller.getMyCustomRole(principal);
+
+        // Then
+        assertThat(response.getStatusCodeValue()).isEqualTo(204);
+        assertThat(response.getBody()).isNull();
+
+        verify(customRolePort, times(1))
+                .getCustomRoleForUser(42L, 3L);
+    }
+
 }

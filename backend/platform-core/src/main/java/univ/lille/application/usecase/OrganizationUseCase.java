@@ -28,7 +28,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class OrganizationUseCase implements  OrganizationManagementPort , CustomRolePort {
+public class OrganizationUseCase implements  OrganizationManagementPort {
     private final OrganizationRepository organizationRepository;
     private final AuthenticationService authenticationService;
     private final UserRepository userRepository;
@@ -57,9 +57,6 @@ public class OrganizationUseCase implements  OrganizationManagementPort , Custom
         org.setDescription(request.getDescription());
         organizationRepository.save(org);
 
-
-
-
     }
 
     @Override
@@ -71,157 +68,5 @@ public class OrganizationUseCase implements  OrganizationManagementPort , Custom
     public void deactivateModule(Long organizationId, String moduleKey) {
 //TODO implement deactivation method for modules
     }
-
-    /**
-     * create a custom role
-    * @param adminId
-     * @param customRoleRequest
-     * @param organizationId
-    * */
-    @Override
-    @Transactional
-    public CustomRoleDTO createCustomRole(CreateCustomRoleRequest customRoleRequest, Long organizationId, Long adminId) {
-       Organization org = getOrganizationOrThrow(organizationId);
-        User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> new UserNotFoundException(
-                        "Admin user not found with ID: " + adminId
-                ));
-        if (!admin.getOrganization().getId().equals(organizationId)) {
-            throw new AccessDeniedException(
-                    "Admin user does not belong to the specified organization."
-            );
-        }
-
-        if ( customRoleRepository.existsByNameAndOrganizationId(customRoleRequest.getName(), organizationId)){
-            throw new IllegalArgumentException(
-                    "A custom role with the name '" + customRoleRequest.getName() +
-                            "' already exists in the organization."
-            );
-        }
-        CustomRole role = CustomRole.builder()
-                .organization(org)
-                .createdAt(LocalDateTime.now())
-                .name(customRoleRequest.getName())
-                .description(customRoleRequest.getDescription())
-                .build();
-        org.addCustomRole(role);
-        organizationRepository.save(org);
-        CustomRole roleSaved = customRoleRepository.save(role);
-
-        return CustomRoleMapper.toDTO(roleSaved);
-    }
-
-    /**
-     * @param roleId
-     * @param orgId
-     * @param adminId
-     * @param request
-     * @return
-     */
-    @Override
-    @Transactional
-    public CustomRoleDTO updateCustomRole(Long roleId, Long orgId, Long adminId, UpdateCustomRoleRequest request) {
-        CustomRole role = customRoleRepository.findByIdAndOrganizationId(roleId, orgId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Custom role not found with ID: " + roleId
-                ));
-        if (request.getName() != null && !request.getName().isBlank()) {
-            role.setName(request.getName());
-        }
-        if (request.getDescription() != null && !request.getDescription().isBlank()) {
-            role.setDescription(request.getDescription());
-        }
-        CustomRole updatedRole = customRoleRepository.save(role);
-        return CustomRoleMapper.toDTO(updatedRole);
-    }
-
-    /**
-     * delete a custom role by id
-     * @param roleId
-     * @param organizationId
-     * @param adminId
-     */
-    @Override
-    @Transactional
-    public void deleteCustomRole(Long roleId, Long organizationId, Long adminId) {
-        Organization org = getOrganizationOrThrow(organizationId);
-
-        User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> new UserNotFoundException(
-                        "Admin user not found with ID: " + adminId
-                ));
-
-        if ( admin.getOrganization()== null || !admin.getOrganization().getId().equals(organizationId)) {
-            throw new AccessDeniedException(
-                    "Admin user does not belong to the specified organization."
-            );
-        }
-
-        CustomRole role = customRoleRepository.findById(roleId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Custom role not found with ID: " + roleId
-                ));
-
-        if (role.getOrganization()== null || !role.getOrganization().getId().equals(organizationId)) {
-            throw new AccessDeniedException(
-                    "Custom role does not belong to the specified organization."
-            );
-        }
-        List<User> userWithRole = userRepository.findByOrganizationIdAndCustomRoleId(organizationId, roleId);
-        for (User user : userWithRole) {
-            user.removeRole(role);
-            userRepository.save(user);
-        }
-        org.removeCustomRole(role);
-        organizationRepository.save(org);
-        customRoleRepository.delete(role);
-
-    }
-
-    /**
-     * @param organizationId
-     * @return
-     */
-    @Override
-    public List<CustomRoleDTO> getCustomRolesByOrganization(Long organizationId) {
-        List<CustomRole> roles = customRoleRepository.getCustomRolesByOrganizationId(organizationId);
-        return roles.stream()
-                .map(CustomRoleMapper::toDTO)
-                .toList();
-    }
-
-    /**
-     * @param userId
-     * @param organizationId
-     * @return
-     */
-    @Override
-    public CustomRoleDTO getCustomRoleForUser(Long userId, Long organizationId) {
-        User user = userRepository.findById(userId).orElseThrow(()->
-                new UserNotFoundException("User not found with ID: " + userId
-                ));
-
-
-        if (user.getOrganization() == null ||
-                !user.getOrganization().getId().equals(organizationId)) {
-            throw new AccessDeniedException(
-                    "User does not belong to the specified organization."
-            );
-        }
-        CustomRole role = user.getCustomRole();
-
-        if (role == null) return null ;
-
-        return  CustomRoleMapper.toDTO(role);
-    }
-
-
-    private  Organization getOrganizationOrThrow(Long organizationId) {
-        return organizationRepository.findById(organizationId)
-                .orElseThrow(() -> new OrganizationNotFoundException(
-                        "Organization not found with ID: " + organizationId
-                ));
-    }
-
 
 }
