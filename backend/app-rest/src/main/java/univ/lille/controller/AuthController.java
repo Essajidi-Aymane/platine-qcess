@@ -5,14 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import org.springframework.web.bind.annotation.*;
 import univ.lille.application.service.AuthenticationService;
-import univ.lille.application.usecase.LoginUseCase;
 import univ.lille.application.usecase.LogoutUseCase;
-import univ.lille.application.usecase.RegisterAdminUseCase;
-import univ.lille.domain.port.out.UserRepository;
+import univ.lille.domain.port.in.LoginUserPort;
+import univ.lille.domain.port.in.RegisterAdminPort;
 import univ.lille.dto.auth.*;
 import univ.lille.infrastructure.adapter.security.QcessUserPrincipal;
 
@@ -21,14 +19,14 @@ import univ.lille.infrastructure.adapter.security.QcessUserPrincipal;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final RegisterAdminUseCase registerAdminUseCase;
-    private final LoginUseCase loginUseCase;
+    private final RegisterAdminPort registerAdminPort;
+    private final LoginUserPort loginUserPort;
     private final LogoutUseCase logoutUseCase;
     private final AuthenticationService authenticationService;
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
 
-        AuthResponse res = registerAdminUseCase.register(request);
+        AuthResponse res = registerAdminPort.register(request);
         ResponseCookie cookie = ResponseCookie.from("qcess_token", res.getToken())
                 .httpOnly(true)
                 .secure(false) // true in production with HTTPS
@@ -43,7 +41,7 @@ public class AuthController {
 
     @PostMapping("/login/web")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
-        AuthResponse res = loginUseCase.login(loginRequest);
+        AuthResponse res = loginUserPort.login(loginRequest);
         ResponseCookie cookie = ResponseCookie.from("qcess_token", res.getToken())
                 .httpOnly(true)
                 .secure(false) // true in production with HTTPS
@@ -67,7 +65,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> loginMobile(@Valid @RequestBody LoginRequest loginRequest) {
-        AuthResponse res = loginUseCase.login(loginRequest);
+        AuthResponse res = loginUserPort.login(loginRequest);
         return ResponseEntity.ok(res);
     }
 
@@ -95,13 +93,13 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        loginUseCase.forgotPassword(request);
+        loginUserPort.forgotPassword(request);
         return ResponseEntity.ok("Un email de réinitialisation a été envoyé si le compte existe.");
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        loginUseCase.resetPassword(request);
+        loginUserPort.resetPassword(request);
         return ResponseEntity.ok("Mot de passe réinitialisé avec succès.");
     }
 

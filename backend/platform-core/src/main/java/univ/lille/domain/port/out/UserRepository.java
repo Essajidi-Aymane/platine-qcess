@@ -1,6 +1,8 @@
 package univ.lille.domain.port.out;
 
 import univ.lille.domain.model.User;
+import univ.lille.enums.UserRole;
+
 import java.util.Optional;
 import java.util.List;
 
@@ -11,6 +13,7 @@ public interface UserRepository {
     boolean existsByEmail(String email);
     List<User> findAll();
     List<User> findByOrganizationId(Long organizationId);
+    List<User> findByOrganizationIdAndRole(Long organizationId, UserRole role);
     Optional<User> findByResetPasswordToken(String token);
 
 

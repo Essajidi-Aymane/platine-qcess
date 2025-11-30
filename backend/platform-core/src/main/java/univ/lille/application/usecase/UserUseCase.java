@@ -12,20 +12,22 @@ import univ.lille.domain.exception.EmailAlreadyExistsException;
 import univ.lille.domain.exception.OrganizationNotFoundException;
 import univ.lille.domain.model.Organization;
 import univ.lille.domain.model.User;
-import univ.lille.domain.port.in.CreateUserPort;
+import univ.lille.domain.port.in.UserPort;
 import univ.lille.domain.port.out.EmailPort;
 import univ.lille.domain.port.out.OrganizationRepository;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.dto.auth.user.CreateUserRequest;
 import univ.lille.dto.auth.user.UserDTO;
+import univ.lille.enums.UserRole;
 import univ.lille.enums.UserStatus;
 import univ.lille.infrastructure.utils.CodeGenerator;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CreateUserUseCase  implements CreateUserPort {
+public class UserUseCase implements UserPort {
 
     private final UserRepository userRepository;
     private final OrganizationRepository organizationRepository;
@@ -71,5 +73,16 @@ public class CreateUserUseCase  implements CreateUserPort {
         return UserMapper.toDTO(user);
 
 
+    }
+
+    @Override
+    public List<UserDTO> getUsersByOrganizationId(Long organizationId) {
+        if(!organizationRepository.existsById(organizationId)) {
+            throw new OrganizationNotFoundException(
+                    "Organization not found with ID: " + organizationId
+            );
+        }
+        List<User> users = userRepository.findByOrganizationIdAndRole(organizationId, UserRole.USER);
+        return users.stream().map(UserMapper::toDTO).toList();
     }
 }

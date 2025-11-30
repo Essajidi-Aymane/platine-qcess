@@ -7,7 +7,8 @@ import univ.lille.enums.UserStatus;
 import java.time.LocalDateTime;
 
 @Data
-public class UserDTO {
+public class
+UserDTO {
     private  Long id ;
     private String email ;
 
