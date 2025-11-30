@@ -34,15 +34,6 @@ public class CustomRoleUseCase implements CustomRolePort {
     @Transactional
     public CustomRoleDTO createCustomRole(CreateCustomRoleRequest customRoleRequest, Long organizationId, Long adminId) {
         Organization org = getOrganizationOrThrow(organizationId);
-        User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> new UserNotFoundException(
-                        "Admin user not found with ID: " + adminId
-                ));
-        if (!admin.getOrganization().getId().equals(organizationId)) {
-            throw new AccessDeniedException(
-                    "Admin user does not belong to the specified organization."
-            );
-        }
 
         if ( customRoleRepository.existsByNameAndOrganizationId(customRoleRequest.getName(), organizationId)){
             throw new IllegalArgumentException(
