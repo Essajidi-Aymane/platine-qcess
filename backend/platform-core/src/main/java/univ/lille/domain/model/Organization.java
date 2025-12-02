@@ -38,12 +38,12 @@ public class Organization {
 
     public void addZone(Zone zone) {
         zones.add(zone);
-        zone.setOrganization(this);
+        zone.setOrgId(this.id);
     }
 
     public void removeZone(Zone zone) {
         zones.remove(zone);
-        zone.setOrganization(null);
+        zone.setOrgId(null);
     }
     public void removeUser(User user) {
         users.remove(user);

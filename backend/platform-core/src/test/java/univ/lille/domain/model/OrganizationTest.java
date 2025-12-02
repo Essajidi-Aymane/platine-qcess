@@ -42,7 +42,7 @@ class OrganizationTest {
         org.addZone(zone);
 
         assertThat(org.getZones()).containsExactly(zone);
-        verify(zone).setOrganization(org);
+        verify(zone).setOrgId(org.getId());
     }
 
     @Test
@@ -56,8 +56,8 @@ class OrganizationTest {
 
         assertThat(org.getZones()).containsExactly(z1, z2);
 
-        verify(z1).setOrganization(org);
-        verify(z2).setOrganization(org);
+        verify(z1).setOrgId(org.getId());
+        verify(z2).setOrgId(org.getId());
     }
 
 

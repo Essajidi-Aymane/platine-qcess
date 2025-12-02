@@ -2,6 +2,7 @@ package univ.lille.dto.zone;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import univ.lille.enums.ZoneType;
 
 import java.util.List;
 
@@ -10,6 +11,6 @@ public class CreateZoneRequest {
     @NotBlank
     private  String name ;
     private String description ;
-
+    //private ZoneType type;
 
 }

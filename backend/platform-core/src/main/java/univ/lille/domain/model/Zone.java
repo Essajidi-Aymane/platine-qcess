@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import univ.lille.enums.ZoneStatus;
+import univ.lille.enums.ZoneType;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,13 +20,12 @@ public class Zone {
     private Long id ;
     private String name ;
     private String description ;
-    private String qrCode ;
-    private Organization organization ;
+   private Long orgId ;
     @Builder.Default
     private List<CustomRole> allowedRoles = new ArrayList<>();
-
-    private LocalDateTime createdAt ;
-
+   // private ZoneType type ;
+    private ZoneStatus status ;
+    private  LocalDateTime createdAt;
 
     public boolean isAccessibleBy(User user) {
         if (user.isAdmin()) {
