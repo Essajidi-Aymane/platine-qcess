@@ -1,26 +1,27 @@
 package univ.lille.application.usecase.mapper;
 
+import org.springframework.stereotype.Component;
 import univ.lille.domain.model.User;
 import univ.lille.dto.auth.user.UserDTO;
-import univ.lille.enums.UserRole;
 
+@Component
 public class UserMapper {
-    public static UserDTO toDTO (User user) {
-        if(user == null ) return null;
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(user.getId());
-        userDTO.setEmail(user.getEmail());
-        if(user.getRole() == UserRole.ADMIN ) {
-            userDTO.setFullName(user.getFullName());
-        } else {
-            userDTO.setFirstName(user.getFirstName());
-            userDTO.setLastName(user.getLastName());
-        }
-        userDTO.setRole(user.getRole());
-        userDTO.setUserStatus(user.getUserStatus());
-        userDTO.setOrganisationId(user.getOrganization().getId());
-        userDTO.setCreatedAt(user.getCreatedAt());
 
-        return userDTO;
+    public UserDTO toDTO(User user) {
+        if (user == null) return null;
+
+        return UserDTO.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(user.getRole())
+                .userStatus(user.getUserStatus())
+                .organisationId(user.getOrganization() != null ? user.getOrganization().getId() : null)
+                .organizationName(user.getOrganization() != null ? user.getOrganization().getName() : null)
+                .createdAt(user.getCreatedAt())
+                .profilePictureUrl(user.getProfilePictureUrl())
+                .build();
     }
 }

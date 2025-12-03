@@ -29,6 +29,7 @@ public class UserEntityMapper {
                 .lastLogin(domain.getLastLoginAt())
                 .resetPasswordToken(domain.getPasswordResetToken())
                 .resetPasswordTokenExpiry(domain.getPasswordResetTokenExpiry())
+                .profilePictureUrl(domain.getProfilePictureUrl())
                 .build();
 
 
@@ -54,6 +55,7 @@ public class UserEntityMapper {
                 .lastLoginAt(entity.getLastLogin())
                 .passwordResetToken(entity.getResetPasswordToken())
                 .passwordResetTokenExpiry(entity.getResetPasswordTokenExpiry())
+                .profilePictureUrl(entity.getProfilePictureUrl())
                 .build();
 
     }

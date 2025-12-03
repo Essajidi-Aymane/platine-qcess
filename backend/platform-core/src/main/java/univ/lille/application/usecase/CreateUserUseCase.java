@@ -31,13 +31,12 @@ public class CreateUserUseCase  implements CreateUserPort {
     private final OrganizationRepository organizationRepository;
     private final EmailPort emailPort;
     private final AuthenticationService authenticationService;
-
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
     public UserDTO createUser(CreateUserRequest createUserRequest) {
         Long organizationId = authenticationService.getCurrentUserOrganizationId();
-        Long adminId = authenticationService.getCurrentUserId();
         String fullName = NameUtils.buildFullName(
                 createUserRequest.getFirstName(),
                 createUserRequest.getLastName()
@@ -69,8 +68,6 @@ public class CreateUserUseCase  implements CreateUserPort {
         user = userRepository.save(user);
 
         emailPort.sendWelcomeEmail(user.getEmail(), user.getFullName(), loginCode);
-        return UserMapper.toDTO(user);
-
-
+        return userMapper.toDTO(user);
     }
 }

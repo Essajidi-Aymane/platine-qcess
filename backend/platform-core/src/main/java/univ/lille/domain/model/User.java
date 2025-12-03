@@ -37,6 +37,8 @@ public class User {
     private String passwordResetToken ;
     private LocalDateTime passwordResetTokenExpiry ;
 
+    private String profilePictureUrl;
+
     @Builder.Default
     private List<CustomRole> customRoles = new ArrayList<>();
     public String getDisplayName() {
