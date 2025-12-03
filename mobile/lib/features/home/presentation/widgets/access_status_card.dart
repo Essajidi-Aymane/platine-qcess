@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/utils/responsive_utils.dart';
 
@@ -22,7 +21,7 @@ class AccessStatusCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         boxShadow: AppTheme.shadowSmall,
       ),
@@ -35,7 +34,7 @@ class AccessStatusCard extends StatelessWidget {
                 Text(
                   'Accès autorisé',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    color: AppColors.success,
+                    color: Colors.green,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -43,7 +42,7 @@ class AccessStatusCard extends StatelessWidget {
                 Text(
                   _formatLastAccess(),
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -52,12 +51,12 @@ class AccessStatusCard extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(iconPadding),
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
+              color: Colors.green.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
             ),
             child: Icon(
               Icons.key,
-              color: AppColors.success,
+              color: Colors.green,
               size: iconSize,
             ),
           ),

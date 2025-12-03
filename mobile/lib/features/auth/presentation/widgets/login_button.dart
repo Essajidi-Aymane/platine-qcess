@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile/core/presentation/widgets/custom_snackbar.dart';
 import 'package:mobile/core/presentation/widgets/loading_widget.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_bloc.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_event.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_state.dart';
@@ -25,6 +24,7 @@ class LoginButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BlocConsumer<AuthBloc, AuthState>(
       listenWhen: (previous, current) {
         return previous is AuthLoading &&
@@ -57,16 +57,12 @@ class LoginButton extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: isLoading
-                  ? [AppColors.primary.withOpacity(0.8), AppColors.primaryDark.withOpacity(0.8)]
-                  : [AppColors.primary, AppColors.primaryDark],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: isLoading
+                ? theme.colorScheme.primary.withOpacity(0.8)
+                : theme.colorScheme.primary,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(isLoading ? 0.2 : 0.3),
+                color: theme.colorScheme.primary.withOpacity(isLoading ? 0.2 : 0.3),
                 blurRadius: isLoading ? 8 : 12,
                 offset: Offset(0, isLoading ? 2 : 4),
               ),
@@ -98,8 +94,8 @@ class LoginButton extends StatelessWidget {
                       ? const InlineLoadingWidget()
                       : Text(
                           buttonText,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: theme.colorScheme.onPrimary,
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.2,

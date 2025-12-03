@@ -16,6 +16,11 @@ import 'package:mobile/features/maintenance/presentation/screens/tickets_page.da
 import 'package:mobile/features/maintenance/data/dto/ticket_dto.dart';
 import 'package:mobile/features/maintenance/presentation/screens/ticket_detail_page.dart';
 import 'package:mobile/features/maintenance/presentation/screens/ticket_form_page.dart';
+import 'package:mobile/features/profile/presentation/pages/profile_page.dart';
+import 'package:mobile/features/settings/presentation/screens/settings_page.dart';
+import 'package:mobile/features/settings/presentation/screens/notifications_page.dart';
+import 'package:mobile/features/settings/presentation/screens/help_page.dart';
+import 'package:mobile/features/settings/presentation/screens/about_page.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_state.dart';
 import 'package:mobile/features/splash/presentation/screens/splash_page.dart';
@@ -49,11 +54,11 @@ class AppRouter {
 
     if (authState is AuthInitial) {
       _authBloc.add(AppStarted());
-      return AppRoutes.splash;
+      return null;
     }
 
     if (authState is AuthLoading) {
-      return AppRoutes.splash;
+      return null;
     }
 
     if (authState is AuthUnauthenticated) {
@@ -67,11 +72,7 @@ class AppRouter {
       }
       return null;
     }
-
-    if (authState is! AuthAuthenticated && !isAuthPage && !isSplashPage) {
-      return AppRoutes.auth;
-    }
-
+    
     return null;
   }
 
@@ -129,6 +130,41 @@ class AppRouter {
             ),
           ],
         ),
+
+        GoRoute(
+          path: AppRoutes.settings,
+          name: AppRoutes.settingsName,
+          redirect: (context, state) {
+            final authState = _authBloc.state;
+            if (authState is! AuthAuthenticated) {
+              return AppRoutes.auth;
+            }
+            return null;
+          },
+          builder: (context, state) => const SettingsPage(),
+          routes: [
+            GoRoute(
+              path: 'profile',
+              name: AppRoutes.settingsProfileName,
+              builder: (context, state) => const ProfilePage(),
+            ),
+            GoRoute(
+              path: 'notifications',
+              name: AppRoutes.settingsNotificationsName,
+              builder: (context, state) => const NotificationsPage(),
+            ),
+            GoRoute(
+              path: 'help',
+              name: AppRoutes.settingsHelpName,
+              builder: (context, state) => const HelpPage(),
+            ),
+            GoRoute(
+              path: 'about',
+              name: AppRoutes.settingsAboutName,
+              builder: (context, state) => const AboutPage(),
+            ),
+          ],
+        ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
             return ScaffoldWithNavBar(navigationShell: navigationShell);
@@ -148,6 +184,35 @@ class AppRouter {
                     },
                     child: const HomePage(),
                   ),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/profile',
+                  name: 'profile',
+                  builder: (context, state) => const ProfilePage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/scanner',
+                  name: 'scanner',
+                  builder: (context, state) => const Scaffold(
+                    body: Center(child: Text('Scanner - À venir')),
+                  ),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/settings-tab',
+                  name: 'settingsTab',
+                  builder: (context, state) => const SettingsPage(),
                 ),
               ],
             ),

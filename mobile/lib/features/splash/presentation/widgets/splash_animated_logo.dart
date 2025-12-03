@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/responsive_utils.dart';
 
 class SplashAnimatedLogo extends StatefulWidget {
@@ -88,7 +87,7 @@ class _SplashAnimatedLogoState extends State<SplashAnimatedLogo>
               child: Icon(
                 Icons.key,
                 size: logoSize,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             SizedBox(height: spacing * 1.5),

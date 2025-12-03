@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/maintenance/data/models/status.dart';
 
 class StatusChip extends StatelessWidget {
@@ -9,7 +8,8 @@ class StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, icon) = _getStatusData();
+    final theme = Theme.of(context);
+    final (color, icon) = _getStatusData(theme);
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -46,18 +46,18 @@ class StatusChip extends StatelessWidget {
     );
   }
 
-  (Color, IconData) _getStatusData() {
+  (Color, IconData) _getStatusData(ThemeData theme) {
     switch (status) {
       case Status.open:
-        return (AppColors.warning, Icons.pending);
+        return (Colors.orange, Icons.pending);
       case Status.inProgress:
-        return (AppColors.info, Icons.autorenew);
+        return (Colors.blue, Icons.autorenew);
       case Status.resolved:
-        return (AppColors.success, Icons.check_circle);
+        return (Colors.green, Icons.check_circle);
       case Status.rejected:
-        return (AppColors.error, Icons.cancel);
+        return (Colors.red, Icons.cancel);
       case Status.cancelled:
-        return (AppColors.textSecondary, Icons.block);
+        return (theme.colorScheme.onSurfaceVariant, Icons.block);
     }
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile/core/presentation/widgets/error_widget.dart';
 import 'package:mobile/core/presentation/widgets/loading_widget.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/responsive_utils.dart';
 import 'package:mobile/features/home/data/models/user_dashboard.dart';
 import 'package:mobile/features/home/logic/bloc/dashboard_bloc.dart';
@@ -18,8 +17,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: colorScheme.primary,
       body: SafeArea(
         child: BlocBuilder<DashboardBloc, DashboardState>(
           builder: (context, state) {
@@ -60,7 +60,7 @@ class HomePage extends StatelessWidget {
     final spacing = context.spacing;
 
     return RefreshIndicator(
-      color: AppColors.primary,
+      color: Theme.of(context).colorScheme.primary,
       onRefresh: () async {
         dashboardBloc.add(RefreshDashboard());
         await Future.delayed(const Duration(seconds: 1));
@@ -97,7 +97,7 @@ class HomePage extends StatelessWidget {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(spacing * 2),
                   topRight: Radius.circular(spacing * 2),

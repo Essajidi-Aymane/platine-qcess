@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/rooting/app_routes.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/maintenance/logic/bloc/tickets_bloc.dart';
 import 'package:mobile/features/maintenance/logic/bloc/tickets_event.dart';
@@ -41,17 +40,19 @@ class _TicketsPageState extends State<TicketsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: theme.colorScheme.primary,
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+            _buildHeader(context, theme),
             
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: theme.colorScheme.surface,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(32),
                     topRight: Radius.circular(32),
@@ -60,9 +61,9 @@ class _TicketsPageState extends State<TicketsPage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 24),
-                    _buildSearchBar(),
+                    _buildSearchBar(theme),
                     const SizedBox(height: 16),
-                    Expanded(child: _buildTicketsList()),
+                    Expanded(child: _buildTicketsList(theme)),
                   ],
                 ),
               ),
@@ -70,11 +71,11 @@ class _TicketsPageState extends State<TicketsPage> {
           ],
         ),
       ),
-      floatingActionButton: _buildFAB(context),
+      floatingActionButton: _buildFAB(context, theme),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Column(
@@ -82,12 +83,12 @@ class _TicketsPageState extends State<TicketsPage> {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.cardBackground),
+                icon: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),
                 onPressed: () => context.pop(),
               ),
               const Spacer(),
               IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: AppColors.cardBackground),
+                icon: Icon(Icons.notifications_outlined, color: theme.colorScheme.onPrimary),
                 onPressed: () {},
               ),
             ],
@@ -98,12 +99,12 @@ class _TicketsPageState extends State<TicketsPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.cardBackground.withOpacity(0.2),
+                  color: theme.colorScheme.onPrimary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.confirmation_number_outlined,
-                  color: AppColors.cardBackground,
+                  color: theme.colorScheme.onPrimary,
                   size: 28,
                 ),
               ),
@@ -112,12 +113,12 @@ class _TicketsPageState extends State<TicketsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Mes Tickets',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.cardBackground,
+                        color: theme.colorScheme.onPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -125,7 +126,7 @@ class _TicketsPageState extends State<TicketsPage> {
                       'Gérez vos demandes de support',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textSecondary.withOpacity(0.7),
+                        color: theme.colorScheme.onPrimary.withOpacity(0.7),
                       ),
                     ),
                   ],
@@ -138,7 +139,7 @@ class _TicketsPageState extends State<TicketsPage> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: ValueListenableBuilder<TextEditingValue>(
@@ -148,26 +149,26 @@ class _TicketsPageState extends State<TicketsPage> {
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Rechercher votre ticket',
-              prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+              prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (value.text.isNotEmpty)
                     IconButton(
-                      icon: Icon(Icons.clear, color: AppColors.textSecondary),
+                      icon: Icon(Icons.clear, color: theme.colorScheme.onSurfaceVariant),
                       onPressed: () {
                         _searchController.clear();
                         context.read<TicketsBloc>().add(const TicketSearchChanged(''));
                       },
                     ),
                   IconButton(
-                    icon: Icon(Icons.tune, color: AppColors.primary),
+                    icon: Icon(Icons.tune, color: theme.colorScheme.primary),
                     onPressed: _openFilters,
                   ),
                 ],
               ),
               filled: true,
-              fillColor: AppColors.cardBackground,
+              fillColor: theme.colorScheme.surface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                 borderSide: BorderSide.none,
@@ -182,9 +183,10 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   void _openFilters() {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.cardBackground,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -274,17 +276,18 @@ class _TicketsPageState extends State<TicketsPage> {
     );
   }
 
-  Widget _buildTicketsList() {
+  Widget _buildTicketsList(ThemeData theme) {
     return BlocBuilder<TicketsBloc, TicketsState>(
       builder: (context, state) {
         if (state.status == TicketsStatus.loading) {
           return Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
+            child: CircularProgressIndicator(color: theme.colorScheme.primary),
           );
         }
 
         if (state.status == TicketsStatus.failure) {
           return _buildEmptyState(
+            theme: theme,
             icon: Icons.error_outline,
             title: 'Erreur',
             message: state.error ?? 'Une erreur est survenue',
@@ -299,6 +302,7 @@ class _TicketsPageState extends State<TicketsPage> {
 
         if (tickets.isEmpty) {
           return _buildEmptyState(
+            theme: theme,
             icon: state.tickets.isEmpty ? Icons.inbox_outlined : Icons.search_off,
             title: state.tickets.isEmpty ? 'Aucun ticket' : 'Aucun résultat',
             message: state.tickets.isEmpty
@@ -315,7 +319,7 @@ class _TicketsPageState extends State<TicketsPage> {
         }
 
         return RefreshIndicator(
-          color: AppColors.primary,
+          color: theme.colorScheme.primary,
           onRefresh: () async => context.read<TicketsBloc>().add(const TicketsRequested()),
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
@@ -341,6 +345,7 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   Widget _buildEmptyState({
+    required ThemeData theme,
     required IconData icon,
     required String title,
     required String message,
@@ -355,22 +360,22 @@ class _TicketsPageState extends State<TicketsPage> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: theme.colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 64,
-                color: AppColors.primary,
+                color: theme.colorScheme.primary,
               ),
             ),
             const SizedBox(height: 24),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -379,7 +384,7 @@ class _TicketsPageState extends State<TicketsPage> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textSecondary,
+                color: theme.colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
             ),
@@ -393,18 +398,18 @@ class _TicketsPageState extends State<TicketsPage> {
     );
   }
 
-  Widget _buildFAB(BuildContext context) {
+  Widget _buildFAB(BuildContext context, ThemeData theme) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryDark],
+          colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.4),
+            color: theme.colorScheme.primary.withOpacity(0.4),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -413,17 +418,17 @@ class _TicketsPageState extends State<TicketsPage> {
       child: FloatingActionButton.extended(
         onPressed: () => context.push(AppRoutes.maintenanceTicketCreate),
         backgroundColor: Colors.transparent,
-        foregroundColor: AppColors.cardBackground,
+        foregroundColor: theme.colorScheme.onPrimary,
         elevation: 0,
         hoverElevation: 0,
         focusElevation: 0,
         highlightElevation: 0,
         splashColor: Colors.white.withOpacity(0.1),
-        icon: const Icon(Icons.add, color: AppColors.cardBackground),
-        label: const Text(
+        icon: Icon(Icons.add, color: theme.colorScheme.onPrimary),
+        label: Text(
           'Créer un ticket',
           style: TextStyle(
-            color: AppColors.cardBackground,
+            color: theme.colorScheme.onPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -431,5 +436,4 @@ class _TicketsPageState extends State<TicketsPage> {
     );
   }
 }
-
 

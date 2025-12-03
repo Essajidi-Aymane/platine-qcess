@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 
 enum SnackBarType {
   success,
@@ -16,19 +15,19 @@ class CustomSnackBar {
     Duration duration = const Duration(seconds: 3),
   }) {
     final theme = Theme.of(context);
-    final config = _getConfig(type);
+    final config = _getConfig(type, theme);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(config.icon, color: theme.colorScheme.onPrimary),
+            Icon(config.icon, color: Colors.white),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 message,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onPrimary,
+                  color: Colors.white,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -98,27 +97,27 @@ class CustomSnackBar {
     );
   }
 
-  static _SnackBarConfig _getConfig(SnackBarType type) {
+  static _SnackBarConfig _getConfig(SnackBarType type, ThemeData theme) {
     switch (type) {
       case SnackBarType.success:
         return _SnackBarConfig(
           icon: Icons.check_circle_outline,
-          backgroundColor: AppColors.success,
+          backgroundColor: Colors.green,
         );
       case SnackBarType.error:
         return _SnackBarConfig(
           icon: Icons.error_outline,
-          backgroundColor: AppColors.error,
+          backgroundColor: Colors.red,
         );
       case SnackBarType.info:
         return _SnackBarConfig(
           icon: Icons.info_outline,
-          backgroundColor: AppColors.primary,
+          backgroundColor: theme.colorScheme.primary,
         );
       case SnackBarType.warning:
         return _SnackBarConfig(
           icon: Icons.warning_amber_outlined,
-          backgroundColor: AppColors.warning,
+          backgroundColor: Colors.orange,
         );
     }
   }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/utils/responsive_utils.dart';
 import 'package:mobile/features/home/data/models/user_dashboard.dart';
@@ -11,6 +10,7 @@ class StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final spacing = context.spacing;
 
     return Row(
@@ -19,7 +19,7 @@ class StatsRow extends StatelessWidget {
           child: _StatCard(
             value: dashboard.totalAccess.toString(),
             label: 'accès ce mois',
-            color: AppColors.primary,
+            color: theme.colorScheme.primary,
           ),
         ),
         SizedBox(width: spacing),
@@ -27,7 +27,7 @@ class StatsRow extends StatelessWidget {
           child: _StatCard(
             value: dashboard.totalZones.toString(),
             label: 'zones',
-            color: AppColors.primary,
+            color: theme.colorScheme.primary,
           ),
         ),
       ],
@@ -61,7 +61,7 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         boxShadow: AppTheme.shadowSmall,
       ),
@@ -79,7 +79,7 @@ class _StatCard extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],

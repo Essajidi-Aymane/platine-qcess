@@ -17,4 +17,7 @@ class SplashAnimating extends SplashState {
 
 class SplashCompleted extends SplashState {
   const SplashCompleted();
+    
+  @override
+  List<Object?> get props => [];
 }
