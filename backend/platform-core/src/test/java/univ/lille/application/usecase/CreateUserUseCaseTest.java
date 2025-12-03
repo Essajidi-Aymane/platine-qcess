@@ -16,6 +16,7 @@ import univ.lille.domain.port.out.OrganizationRepository;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.dto.auth.user.CreateUserRequest;
 import univ.lille.dto.auth.user.UserDTO;
+import univ.lille.application.usecase.mapper.UserMapper;
 
 import java.util.Optional;
 
@@ -38,6 +39,9 @@ class CreateUserUseCaseTest {
     @Mock
     private AuthenticationService authenticationService;
 
+    @Mock
+    private UserMapper userMapper;
+
     @InjectMocks
     private CreateUserUseCase createUserUseCase;
 
@@ -45,13 +49,11 @@ class CreateUserUseCaseTest {
     void createUser_shouldCreateUserAndSendEmail_whenDataIsValid() {
         // GIVEN
         Long orgId = 1L;
-        Long adminId = 42L;
 
         CreateUserRequest request = new CreateUserRequest();
         request.setEmail("user@test.com");
         request.setFirstName("John");
         request.setLastName("Doe");
-        // request.setRole(...); // optionnel selon ton enum
 
         Organization org = Organization.builder()
                 .id(orgId)
@@ -72,12 +74,19 @@ class CreateUserUseCaseTest {
                 .organization(org) // IMPORTANT pour éviter le NPE dans UserMapper.toDTO
                 .build();
 
+        UserDTO expectedDto = new UserDTO();
+        expectedDto.setId(10L);
+        expectedDto.setEmail(request.getEmail());
+        expectedDto.setFirstName(request.getFirstName());
+        expectedDto.setLastName(request.getLastName());
+        expectedDto.setFullName(fullName);
+
         // Stubs
         when(authenticationService.getCurrentUserOrganizationId()).thenReturn(orgId);
-        when(authenticationService.getCurrentUserId()).thenReturn(adminId);
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(org));
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userMapper.toDTO(any(User.class))).thenReturn(expectedDto);
 
         // WHEN
         UserDTO result = createUserUseCase.createUser(request);
@@ -101,7 +110,6 @@ class CreateUserUseCaseTest {
     void createUser_shouldThrow_whenOrganizationNotFound() {
         // GIVEN
         Long orgId = 999L;
-        Long adminId = 42L;
 
         CreateUserRequest request = new CreateUserRequest();
         request.setEmail("user@test.com");
@@ -109,7 +117,6 @@ class CreateUserUseCaseTest {
         request.setLastName("Doe");
 
         when(authenticationService.getCurrentUserOrganizationId()).thenReturn(orgId);
-        when(authenticationService.getCurrentUserId()).thenReturn(adminId);
         when(organizationRepository.findById(orgId)).thenReturn(Optional.empty());
 
         // WHEN
@@ -127,7 +134,6 @@ class CreateUserUseCaseTest {
     void createUser_shouldThrow_whenEmailAlreadyExists() {
         // GIVEN
         Long orgId = 1L;
-        Long adminId = 42L;
 
         CreateUserRequest request = new CreateUserRequest();
         request.setEmail("existing@test.com");
@@ -140,7 +146,6 @@ class CreateUserUseCaseTest {
                 .build();
 
         when(authenticationService.getCurrentUserOrganizationId()).thenReturn(orgId);
-        when(authenticationService.getCurrentUserId()).thenReturn(adminId);
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(org));
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
