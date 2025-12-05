@@ -1,6 +1,5 @@
 package univ.lille.application.usecase.mapper;
 
-import lombok.NoArgsConstructor;
 import univ.lille.domain.model.User;
 import univ.lille.dto.auth.user.UserDTO;
 import univ.lille.enums.UserRole;
