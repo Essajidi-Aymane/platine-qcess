@@ -38,12 +38,25 @@ public class Organization {
 
     public void addZone(Zone zone) {
         zones.add(zone);
-        zone.setOrganization(this);
+        zone.setOrgId(this.id);
+    }
+
+    public void removeZone(Zone zone) {
+        zones.remove(zone);
+        zone.setOrgId(null);
+    }
+    public void removeUser(User user) {
+        users.remove(user);
+        user.setOrganization(null);
+    }
+    public void removeCustomRole(CustomRole role) {
+        customRoles.remove(role);
+        role.setOrgId(null);
     }
 
     public void addCustomRole(CustomRole role) {
         customRoles.add(role);
-        role.setOrganization(this);
+        role.setOrgId(this.id);
     }
 
 }

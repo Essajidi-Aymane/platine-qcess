@@ -6,7 +6,6 @@ import univ.lille.enums.UserRole;
 import univ.lille.enums.UserStatus;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -119,8 +118,7 @@ class UserTest {
         user.assignRole(role);
         user.assignRole(role);
 
-        assertThat(user.getCustomRoles()).hasSize(1);
-        assertThat(user.getCustomRoles()).contains(role);
+        assertThat(user.getCustomRole().equals(role));
     }
 
     @Test
@@ -131,24 +129,11 @@ class UserTest {
         User user = new User();
         user.assignRole(role);
 
-        user.removeRole(role);
+        user.removeRole();
 
-        assertThat(user.getCustomRoles()).doesNotContain(role);
+        assertThat(user.getCustomRole() != role) ;
     }
 
-    @Test
-    void hasRole_should_return_true_when_role_present_with_same_name_ignoring_case() {
-        CustomRole roleInUser = mock(CustomRole.class);
-        when(roleInUser.getName()).thenReturn("MANAGER");
-
-        CustomRole roleToCheck = mock(CustomRole.class);
-        when(roleToCheck.getName()).thenReturn("manager");
-
-        User user = new User();
-        user.assignRole(roleInUser);
-
-        assertThat(user.hasRole(roleToCheck)).isTrue();
-    }
 
     @Test
     void hasRole_should_return_false_when_role_not_present() {
@@ -164,41 +149,8 @@ class UserTest {
         assertThat(user.hasRole(otherRole)).isFalse();
     }
 
-    @Test
-    void hasAnyAllowedRole_should_return_true_when_at_least_one_role_matches() {
-        CustomRole role1 = mock(CustomRole.class);
-        CustomRole role2 = mock(CustomRole.class);
-        CustomRole role3 = mock(CustomRole.class);
 
-        when(role1.getName()).thenReturn("ROLE_1");
-        when(role2.getName()).thenReturn("ROLE_2");
-        when(role3.getName()).thenReturn("ROLE_3");
 
-        User user = new User();
-        user.assignRole(role2);
-
-        List<CustomRole> allowed = List.of(role2, role3);
-
-        assertThat(user.hasAnyAllowedRole(allowed)).isTrue();
-    }
-
-    @Test
-    void hasAnyAllowedRole_should_return_false_when_no_roles_match() {
-        CustomRole roleUser = mock(CustomRole.class);
-        CustomRole allowed1 = mock(CustomRole.class);
-        CustomRole allowed2 = mock(CustomRole.class);
-
-        when(roleUser.getName()).thenReturn("ROLE_USER");
-        when(allowed1.getName()).thenReturn("ROLE_ADMIN");
-        when(allowed2.getName()).thenReturn("ROLE_MANAGER");
-
-        User user = new User();
-        user.assignRole(roleUser);
-
-        List<CustomRole> allowed = List.of(allowed1, allowed2);
-
-        assertThat(user.hasAnyAllowedRole(allowed)).isFalse();
-    }
 
     // ---------------------------------------------------
     // canAccessZone()

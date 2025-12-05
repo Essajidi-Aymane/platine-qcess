@@ -2,22 +2,34 @@ package univ.lille.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import univ.lille.application.service.AuthenticationService;
 import univ.lille.application.usecase.LoginUseCase;
 import univ.lille.application.usecase.LogoutUseCase;
 import univ.lille.application.usecase.RegisterAdminUseCase;
+import univ.lille.domain.model.User;
 import univ.lille.dto.auth.*;
 
 import org.springframework.http.ResponseEntity;
+import univ.lille.enums.UserRole;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
-
+@ExtendWith(MockitoExtension.class)
 class AuthControllerUnitTest {
 
     private RegisterAdminUseCase registerAdminUseCase;
     private LoginUseCase loginUseCase;
     private LogoutUseCase logoutUseCase;
+    private AuthenticationService authenticationService;
 
     private AuthController authController;
 
@@ -26,11 +38,11 @@ class AuthControllerUnitTest {
         registerAdminUseCase = mock(RegisterAdminUseCase.class);
         loginUseCase = mock(LoginUseCase.class);
         logoutUseCase = mock(LogoutUseCase.class);
+        authenticationService = mock(AuthenticationService.class);
 
-        authController = new AuthController(registerAdminUseCase, loginUseCase, logoutUseCase);
+        authController = new AuthController(registerAdminUseCase, loginUseCase, logoutUseCase, authenticationService);
     }
 
-    // ----------------------- /register -----------------------
 
     @Test
     void register_should_return_ok_with_auth_response() {
@@ -50,7 +62,6 @@ class AuthControllerUnitTest {
         verify(registerAdminUseCase).register(request);
     }
 
-    // ----------------------- /login -----------------------
 
     @Test
     void login_should_return_ok_with_auth_response() {
@@ -58,47 +69,106 @@ class AuthControllerUnitTest {
         request.setEmail("user@test.com");
         request.setPassword("pwd");
 
-        AuthResponse authResponse = new AuthResponse("jwt", "user@test.com", null, 1L, "User");
-        when(loginUseCase.login(request)).thenReturn(authResponse);
+        AuthResponse authResponse = AuthResponse.builder()
+                .email("user@test.com")
+                .fullName("User")
+                .organisationId(1L)
+                .role(null)
+                .build();
+
+        when(loginUseCase.login(request)).thenReturn(
+                new AuthResponse("jwt", "user@test.com", null, 1L, "User")
+        );
 
         ResponseEntity<AuthResponse> response = authController.login(request);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
-        assertThat(response.getBody()).isSameAs(authResponse);
+
+        AuthResponse responseBody = response.getBody();
+        assertThat(responseBody).isNotNull();
+        assertThat(responseBody.getToken()).isNull();
+        assertThat(responseBody.getEmail()).isEqualTo(authResponse.getEmail());
+        assertThat(responseBody.getFullName()).isEqualTo(authResponse.getFullName());
+        assertThat(responseBody.getOrganisationId()).isEqualTo(authResponse.getOrganisationId());
+        assertThat(responseBody.getRole()).isEqualTo(authResponse.getRole());
+
+        String setCookieHeader = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+        assertThat(setCookieHeader).isNotNull();
+        assertThat(setCookieHeader).contains("qcess_token=jwt");
+        assertThat(setCookieHeader).contains("HttpOnly");
+    }
+    @Test
+    void loginMobile_should_return_ok_with_auth_response() {
+        // Arrange
+        LoginRequest request = new LoginRequest();
+        request.setEmail("mobileuser@test.com");
+        request.setPassword("password");
+
+        AuthResponse authResponse = AuthResponse.builder()
+                .token("jwt-token")
+                .email("mobileuser@test.com")
+                .fullName("Mobile User")
+                .organisationId(2L)
+                .role(UserRole.USER)
+                .build();
+
+        when(loginUseCase.login(request)).thenReturn(authResponse);
+
+        // Act
+        ResponseEntity<AuthResponse> response = authController.loginMobile(request);
+
+        // Assert
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+
+        AuthResponse responseBody = response.getBody();
+        assertThat(responseBody).isNotNull();
+        assertThat(responseBody.getToken()).isEqualTo("jwt-token");
+        assertThat(responseBody.getEmail()).isEqualTo("mobileuser@test.com");
+        assertThat(responseBody.getFullName()).isEqualTo("Mobile User");
+        assertThat(responseBody.getOrganisationId()).isEqualTo(2L);
+        assertThat(responseBody.getRole()).isEqualTo(UserRole.USER);
+
         verify(loginUseCase).login(request);
     }
 
-    // ----------------------- /logout -----------------------
-
     @Test
-    void logout_should_return_bad_request_when_header_invalid() {
-        ResponseEntity<String> response1 = authController.logout(null);
-        ResponseEntity<String> response2 = authController.logout("Bad token");
+    void logout_should_clear_cookie_and_blacklist_token_when_token_exists() {
+        String token = "valid-jwt-token";
 
-        assertThat(response1.getStatusCode().value()).isEqualTo(400);
-        assertThat(response1.getBody()).isEqualTo("Invalid token");
-
-        assertThat(response2.getStatusCode().value()).isEqualTo(400);
-        assertThat(response2.getBody()).isEqualTo("Invalid token");
-
-        verifyNoInteractions(logoutUseCase);
-    }
-
-    @Test
-    void logout_should_extract_jwt_and_call_usecase_and_return_ok() {
-        String header = "Bearer my-jwt-token";
-
-        ResponseEntity<String> response = authController.logout(header);
+        ResponseEntity<Void> response = authController.logout(token);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
-        assertThat(response.getBody()).isEqualTo("Logged out successfully");
 
-        ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
-        verify(logoutUseCase).logout(tokenCaptor.capture());
-        assertThat(tokenCaptor.getValue()).isEqualTo("my-jwt-token");
+        verify(logoutUseCase).logout(token);
+
+        String setCookieHeader = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+        assertThat(setCookieHeader).isNotNull();
+        assertThat(setCookieHeader).contains("qcess_token=");
+        assertThat(setCookieHeader).contains("Max-Age=0");
+        assertThat(setCookieHeader).contains("HttpOnly");
     }
 
-    // ----------------------- /forgot-password -----------------------
+    @Test
+    void logout_should_clear_cookie_when_token_is_missing() {
+        ResponseEntity<Void> response = authController.logout(null);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+
+        verifyNoInteractions(logoutUseCase);
+
+        String setCookieHeader = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+        assertThat(setCookieHeader).isNotNull();
+        assertThat(setCookieHeader).contains("qcess_token=");
+        assertThat(setCookieHeader).contains("Max-Age=0");
+        assertThat(setCookieHeader).contains("HttpOnly");
+    }
+
+
+
+
+
+
+
 
     @Test
     void forgotPassword_should_call_usecase_and_return_ok() {
@@ -114,7 +184,6 @@ class AuthControllerUnitTest {
         verify(loginUseCase).forgotPassword(request);
     }
 
-    // ----------------------- /reset-password -----------------------
 
     @Test
     void resetPassword_should_call_usecase_and_return_ok() {
@@ -133,9 +202,14 @@ class AuthControllerUnitTest {
 
     @Test
     void getCurrentUser_should_return_authenticated() {
-        ResponseEntity<String> response = authController.getCurrentUser();
+        User fakeUser = User.builder().id(1L).email("aymane@test.com").fullName("Aymane").build();
 
-        assertThat(response.getStatusCodeValue()).isEqualTo(200);
-        assertThat(response.getBody()).isEqualTo("Authenticated");
+        Mockito.when(authenticationService.getCurrentUser())
+                .thenReturn(fakeUser);
+
+        var response = authController.getCurrentUser();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Token is valid for user: aymane@test.com", response.getBody());
     }
 }

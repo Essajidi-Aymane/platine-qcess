@@ -10,7 +10,6 @@ import univ.lille.infrastructure.adapter.persistence.repository.CustomRoleJpaRep
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -37,7 +36,7 @@ public class CustomRoleRepositoryAdapter implements CustomRoleRepository {
         List<CustomRoleEntity> entities = customRoleJpaRepository.findByOrganization_Id(organizationId);
         return entities.stream()
                 .map(mapper::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -45,13 +44,34 @@ public class CustomRoleRepositoryAdapter implements CustomRoleRepository {
         List<CustomRoleEntity> entities = customRoleJpaRepository.findByIdInAndOrganization_Id(ids, organizationId);
         return entities.stream()
                 .map(mapper::toDomain)
-                .collect(Collectors.toList());
+                .toList();
         }
+
+    /**
+     * @param roleId
+     * @param organizationId
+     * @return
+     */
+    @Override
+    public Optional<CustomRole> findByIdAndOrganizationId(Long roleId, Long organizationId) {
+        return customRoleJpaRepository.findByIdAndOrganizationId(roleId, organizationId)
+                .map(mapper::toDomain);
+    }
 
     @Override
     public boolean existsByNameAndOrganizationId(String name, Long organizationId) {
         return customRoleJpaRepository.findByNameAndOrganization_Id(name, organizationId).isPresent();
 
+    }
+
+    /**
+     * @param roleId
+     * @param orgId
+     * @return
+     */
+    @Override
+    public boolean existsByIdAndOrganizationId(Long roleId, Long orgId) {
+        return customRoleJpaRepository.existsByIdAndOrganizationId(roleId,orgId);
     }
 
     @Override
@@ -61,7 +81,9 @@ public class CustomRoleRepositoryAdapter implements CustomRoleRepository {
     }
 
     @Override
-    public void delete(CustomRole role) {
-        customRoleJpaRepository.delete(mapper.toEntity(role));
+    public void deleteById(Long roleId) {
+        customRoleJpaRepository.deleteById(roleId);
     }
+
+  
 }

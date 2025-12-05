@@ -30,6 +30,10 @@ public class OrganizationRepositoryAdapter implements OrganizationRepository {
     }
 
     @Override
+    public boolean existsById(Long id) {
+        return organizationJpaRepository.existsById(id);
+    }
+    @Override
     public Optional<Organization> findByName(String name) {
         return organizationJpaRepository.findByName(name)
                 .map(mapper::toDomain);

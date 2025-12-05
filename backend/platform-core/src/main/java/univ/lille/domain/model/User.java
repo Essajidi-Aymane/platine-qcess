@@ -4,11 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import univ.lille.enums.UserRole;
 import univ.lille.enums.UserStatus;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -16,31 +16,29 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 public class User {
-    private Long id ;
-    private String email ;
+    private Long id;
+    private String email;
     private String password;
-    private String loginCode ;
+    private String loginCode;
 
     //Admin
-    private String fullName ;
+    private String fullName;
 
     //User
-    private String firstName ;
-    private String lastName ;
+    private String firstName;
+    private String lastName;
 
-    private UserStatus userStatus ;
+    private UserStatus userStatus;
     private UserRole role;
-    private CustomRole customRole ;
-    private Organization organization ;
-    private LocalDateTime createdAt ;
-    private LocalDateTime lastLoginAt ;
-    private String passwordResetToken ;
-    private LocalDateTime passwordResetTokenExpiry ;
+    private CustomRole customRole;
+    private Organization organization;
+    private LocalDateTime createdAt;
+    private LocalDateTime lastLoginAt;
+    private String passwordResetToken;
+    private LocalDateTime passwordResetTokenExpiry;
 
     private String profilePictureUrl;
 
-    @Builder.Default
-    private List<CustomRole> customRoles = new ArrayList<>();
     public String getDisplayName() {
         if (role == UserRole.ADMIN && fullName != null) {
             return fullName;
@@ -67,21 +65,35 @@ public class User {
         this.lastLoginAt = LocalDateTime.now();
     }
 
-    public  void assignRole( CustomRole role) {
-        if (!customRoles.contains(role)) {
-            customRoles.add(role);
+    public void assignRole(CustomRole role) {
+        if (role == null) {
+            throw new IllegalArgumentException("CustomRole cannot be null");
         }
-    }
-    public void removeRole( CustomRole role) {
-        customRoles.remove(role);
-    }
-    public boolean hasRole(CustomRole role) {
-        return customRoles.stream().anyMatch(r-> r.getName().equalsIgnoreCase(role.getName()));
-    }
-    public boolean hasAnyAllowedRole(List<CustomRole> allowedRoles) {
-        return  customRoles.stream().anyMatch(allowedRoles::contains);
 
+        if (organization != null && role.getOrgId() != null &&
+                !organization.getId().equals(role.getOrgId())) {
+            throw new AccessDeniedException("Role does not belong to the same organization");
+        }
+
+        this.customRole = role;
     }
+
+    public void removeRole() {
+        this.customRole = null;
+    }
+
+    public boolean hasRole(CustomRole role) {
+        if (customRole == null || role == null) return false;
+        return customRole.equals(role);
+    }
+
+    public boolean hasAnyAllowedRole(List<Long> allowedRoleIds) {
+        if (customRole == null || allowedRoleIds == null) {
+            return false;
+        }
+        return allowedRoleIds.contains(customRole.getId());
+    }
+
     public boolean canAccessZone(Zone zone) {
         return zone.isAccessibleBy(this);
     }

@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import univ.lille.domain.exception.InvalidCredentialsException;
@@ -21,7 +22,6 @@ import univ.lille.enums.UserStatus;
 import univ.lille.infrastructure.adapter.security.JwtService;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -48,6 +48,9 @@ public class LoginUseCase implements LoginUserPort {
         log.info("RememberMe recu = {}", loginRequest.isRememberMe());
         User user = getUserByEmail(loginRequest.getEmail());
 
+        if(user.getUserStatus()== UserStatus.SUSPENDED || user.getUserStatus() == UserStatus.DELETED){
+            throw  new AccessDeniedException("User Suspended, can't login to your Account, Please contact the admin");
+        }
         loginByRole(user, loginRequest);
 
         user.updateLastLogin();

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import univ.lille.domain.exception.InvalidCredentialsException;
 import univ.lille.domain.exception.UserNotFoundException;
@@ -72,6 +73,10 @@ class LoginUseCaseTest {
 
         assertThat(response.getEmail()).isEqualTo("admin@test.com");
         assertThat(response.getToken()).isEqualTo("jwt-token");
+        assertThat(response.getRole()).isEqualTo(UserRole.ADMIN);
+        assertThat(response.getOrganisationId()).isEqualTo(10L);
+        assertThat(response.getFullName()).isEqualTo("Admin Name");
+        verify(userRepository).save(admin);
     }
 
     @Test
@@ -103,6 +108,7 @@ class LoginUseCaseTest {
         LoginRequest request = new LoginRequest();
         request.setEmail("user@test.com");
         request.setLoginCode("123456");
+        request.setRememberMe(false);
         Organization org = Organization.builder()
                 .id(20L)
                 .name("Org 2")
@@ -113,6 +119,7 @@ class LoginUseCaseTest {
                 .role(UserRole.USER)
                 .loginCode("123456")
                 .organization(org)
+                .fullName("User Name")
                 .userStatus(UserStatus.PENDING)
                 .build();
 
@@ -123,7 +130,10 @@ class LoginUseCaseTest {
 
         assertThat(response.getEmail()).isEqualTo("user@test.com");
         assertThat(response.getToken()).isEqualTo("jwt-user-token");
+        assertThat(response.getRole()).isEqualTo(UserRole.USER);
+        assertThat(response.getOrganisationId()).isEqualTo(20L);
         assertThat(user.getUserStatus()).isEqualTo(UserStatus.ACTIVE); // activation automatique
+        verify(userRepository).save(user);
     }
 
     @Test
@@ -158,6 +168,124 @@ class LoginUseCaseTest {
 
         assertThatThrownBy(() -> loginUseCase.login(request))
                 .isInstanceOf(UserNotFoundException.class);
+    }
+
+    @Test
+    void login_should_fail_when_user_is_suspended() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("suspended@test.com");
+        request.setPassword("password");
+
+        Organization org = Organization.builder()
+                .id(5L)
+                .name("Org Test")
+                .build();
+
+        User suspendedUser = User.builder()
+                .id(3L)
+                .email("suspended@test.com")
+                .role(UserRole.ADMIN)
+                .password("encoded")
+                .organization(org)
+                .userStatus(UserStatus.SUSPENDED)
+                .build();
+
+        when(userRepository.findByEmail("suspended@test.com")).thenReturn(Optional.of(suspendedUser));
+
+        assertThatThrownBy(() -> loginUseCase.login(request))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("User Suspended");
+    }
+
+    @Test
+    void login_should_fail_when_user_is_deleted() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("deleted@test.com");
+        request.setLoginCode("123456");
+
+        Organization org = Organization.builder()
+                .id(5L)
+                .name("Org Test")
+                .build();
+
+        User deletedUser = User.builder()
+                .id(4L)
+                .email("deleted@test.com")
+                .role(UserRole.USER)
+                .loginCode("123456")
+                .organization(org)
+                .userStatus(UserStatus.DELETED)
+                .build();
+
+        when(userRepository.findByEmail("deleted@test.com")).thenReturn(Optional.of(deletedUser));
+
+        assertThatThrownBy(() -> loginUseCase.login(request))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("User Suspended");
+    }
+
+    @Test
+    void admin_login_with_remember_me_should_generate_long_token() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("admin@test.com");
+        request.setPassword("password");
+        request.setRememberMe(true);
+
+        Organization org = Organization.builder()
+                .id(10L)
+                .name("Org 1")
+                .build();
+
+        User admin = User.builder()
+                .id(1L)
+                .email("admin@test.com")
+                .role(UserRole.ADMIN)
+                .password("encoded")
+                .organization(org)
+                .fullName("Admin Name")
+                .userStatus(UserStatus.ACTIVE)
+                .build();
+
+        when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(admin));
+        when(passwordEncoder.matches("password", "encoded")).thenReturn(true);
+        when(jwtService.generateToken(admin, true)).thenReturn("jwt-long-token");
+
+        AuthResponse response = loginUseCase.login(request);
+
+        assertThat(response.getToken()).isEqualTo("jwt-long-token");
+        verify(jwtService).generateToken(admin, true);
+    }
+
+    @Test
+    void user_login_should_succeed_when_already_active() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("active.user@test.com");
+        request.setLoginCode("654321");
+        request.setRememberMe(false);
+
+        Organization org = Organization.builder()
+                .id(20L)
+                .name("Org 2")
+                .build();
+
+        User user = User.builder()
+                .id(5L)
+                .email("active.user@test.com")
+                .role(UserRole.USER)
+                .loginCode("654321")
+                .organization(org)
+                .fullName("Active User")
+                .userStatus(UserStatus.ACTIVE)
+                .build();
+
+        when(userRepository.findByEmail("active.user@test.com")).thenReturn(Optional.of(user));
+        when(jwtService.generateToken(user, false)).thenReturn("jwt-token");
+
+        AuthResponse response = loginUseCase.login(request);
+
+        assertThat(response.getEmail()).isEqualTo("active.user@test.com");
+        assertThat(user.getUserStatus()).isEqualTo(UserStatus.ACTIVE);
+        verify(userRepository).save(user);
     }
 
     // --------------------------------------------------------------------

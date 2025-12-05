@@ -10,7 +10,7 @@ public class UserMapper {
     public UserDTO toDTO(User user) {
         if (user == null) return null;
 
-        return UserDTO.builder()
+        UserDTO userDTO = UserDTO.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
@@ -23,5 +23,11 @@ public class UserMapper {
                 .createdAt(user.getCreatedAt())
                 .profilePictureUrl(user.getProfilePictureUrl())
                 .build();
+
+        if (user.getCustomRole() != null) {
+            userDTO.setCustomRoleName(user.getCustomRole().getName());
+        }
+
+        return userDTO;
     }
 }

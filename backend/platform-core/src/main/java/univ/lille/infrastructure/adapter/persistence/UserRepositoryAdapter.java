@@ -5,20 +5,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import univ.lille.domain.model.User;
 import univ.lille.domain.port.out.UserRepository;
+import univ.lille.enums.UserRole;
 import univ.lille.infrastructure.adapter.persistence.entity.UserEntity;
 import univ.lille.infrastructure.adapter.persistence.mapper.UserEntityMapper;
-import univ.lille.infrastructure.adapter.persistence.repository.OrganizationJpaRepository;
 import univ.lille.infrastructure.adapter.persistence.repository.UserJpaRepository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+
 @Component
 @RequiredArgsConstructor
 public class UserRepositoryAdapter implements UserRepository {
-    public final UserJpaRepository userJpaRepository;
-    public final UserEntityMapper mapper;
+    private final UserJpaRepository userJpaRepository;
+    private final UserEntityMapper mapper;
     @Override
     public User save(User user) {
         UserEntity entity = mapper.toEntity(user);
@@ -30,6 +31,16 @@ public class UserRepositoryAdapter implements UserRepository {
     public Optional<User> findById(Long id) {
         return userJpaRepository.findById(id)
                 .map(mapper::toDomain);
+    }
+
+    /**
+     * @param id
+     * @param organizationId
+     * @return
+     */
+    @Override
+    public Optional<User> findByIdAndOrganizationId(Long id, Long organizationId) {
+        return userJpaRepository.findByIdAndOrganizationId(id,organizationId).map(mapper::toDomain);
     }
 
     @Override
@@ -48,7 +59,7 @@ public class UserRepositoryAdapter implements UserRepository {
         return userJpaRepository.findAll()
                 .stream()
                 .map(mapper::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -56,7 +67,25 @@ public class UserRepositoryAdapter implements UserRepository {
         return userJpaRepository.findByOrganization_Id(organizationId)
                 .stream()
                 .map(mapper::toDomain)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    /**
+     * @param ids
+     * @param orgId
+     * @return
+     */
+    @Override
+    public List<User> findByIdInAndOrganizationId(List<Long> ids, Long orgId) {
+        return userJpaRepository.findByIdInAndOrganizationId(ids , orgId).stream().map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> findByOrganizationIdAndRole(Long organizationId, UserRole role) {
+        return userJpaRepository.findByOrganization_IdAndRole(organizationId, role)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 
     @Override
@@ -65,10 +94,35 @@ public class UserRepositoryAdapter implements UserRepository {
                 .map(mapper::toDomain);
     }
 
+    /**
+     * @param organizationId
+     * @param customRoleId
+     * @return
+     */
+    @Override
+    public List<User> findByOrganizationIdAndCustomRoleId(Long organizationId, Long customRoleId) {
+        return userJpaRepository.findByOrganizationIdAndCustomRole(organizationId, customRoleId)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
 
     @Override
     public void deleteUser(User user) {
         userJpaRepository.delete(mapper.toEntity(user));
+
+    }
+
+    /**
+     * @param users
+     */
+    @Override
+    public void saveAll(List<User> users) {
+        List<UserEntity> entities = users.stream()
+                .map(mapper::toEntity)
+                .toList();
+        userJpaRepository.saveAll(entities);
 
     }
 }

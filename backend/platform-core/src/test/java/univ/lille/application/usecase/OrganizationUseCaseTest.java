@@ -6,9 +6,10 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import univ.lille.application.service.AuthenticationService;
 import univ.lille.domain.model.Organization;
+import univ.lille.domain.port.out.CustomRoleRepository;
 import univ.lille.domain.port.out.OrganizationRepository;
+import univ.lille.domain.port.out.UserRepository;
 import univ.lille.dto.org.OrganizationUpdateRequest;
-
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -21,14 +22,20 @@ class OrganizationUseCaseTest {
     private OrganizationRepository organizationRepository;
 
     @Mock
+    private CustomRoleRepository   customRoleRepository;
+    @Mock
+    private UserRepository userRepository ;
+
+    @Mock
     private AuthenticationService authenticationService;
 
     @InjectMocks
     private OrganizationUseCase organizationUseCase;
 
-    // ----------------------------------------------------------
-    // 1. updateOrganizationDetails() - SUCCESS CASE
-    // ----------------------------------------------------------
+    @InjectMocks
+    private CustomRoleUseCase customRoleUseCase;
+
+
     @Test
     void updateOrganizationDetails_should_update_fields_and_save() {
 
@@ -60,5 +67,9 @@ class OrganizationUseCaseTest {
 
         verify(organizationRepository).save(org);
     }
+
+
+
+
 
 }

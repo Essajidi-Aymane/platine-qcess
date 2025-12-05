@@ -2,7 +2,6 @@ package univ.lille.domain.model;
 
 import org.junit.jupiter.api.Test;
 
-
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,13 +9,23 @@ import static org.mockito.Mockito.*;
 
 class ZoneTest {
 
+    @Test
+    void isAccessibleBy_should_return_false_when_user_is_null() {
+        Zone zone = Zone.builder()
+                .allowedRoleIds(List.of(1L, 2L))
+                .build();
+
+        assertThat(zone.isAccessibleBy(null)).isFalse();
+    }
 
     @Test
     void isAccessibleBy_should_return_true_for_admin_user() {
         User admin = mock(User.class);
         when(admin.isAdmin()).thenReturn(true);
 
-        Zone zone = new Zone();
+        Zone zone = Zone.builder()
+                .allowedRoleIds(List.of())
+                .build();
 
         assertThat(zone.isAccessibleBy(admin)).isTrue();
     }
@@ -26,70 +35,104 @@ class ZoneTest {
         User user = mock(User.class);
         when(user.isAdmin()).thenReturn(false);
 
-        Zone zone = new Zone();
+        Zone zone = Zone.builder()
+                .allowedRoleIds(List.of())
+                .build();
 
         assertThat(zone.isAccessibleBy(user)).isFalse();
     }
 
     @Test
     void isAccessibleBy_should_return_true_when_user_has_allowed_role() {
-        // GIVEN
-        CustomRole allowedRole = mock(CustomRole.class);
-        CustomRole userRole = mock(CustomRole.class);
-
-        when(allowedRole.getName()).thenReturn("MANAGER");
-        when(userRole.getName()).thenReturn("MANAGER");
-
         User user = mock(User.class);
         when(user.isAdmin()).thenReturn(false);
-        when(user.hasAnyAllowedRole(List.of(allowedRole))).thenReturn(true);
+        when(user.hasAnyAllowedRole(List.of(1L, 2L))).thenReturn(true);
 
-        Zone zone = new Zone();
-        zone.addAllowedRole(allowedRole);
+        Zone zone = Zone.builder()
+                .allowedRoleIds(List.of(1L, 2L))
+                .build();
 
-        boolean access = zone.isAccessibleBy(user);
-
-        assertThat(access).isTrue();
+        assertThat(zone.isAccessibleBy(user)).isTrue();
+        verify(user).hasAnyAllowedRole(List.of(1L, 2L));
     }
 
     @Test
-    void isAccessibleBy_should_return_false_when_user_does_not_have_allowed_role() {
-        CustomRole allowedRole = mock(CustomRole.class);
-        when(allowedRole.getName()).thenReturn("MANAGER");
-
+    void isAccessibleBy_should_return_false_when_user_has_no_allowed_role() {
         User user = mock(User.class);
         when(user.isAdmin()).thenReturn(false);
-        when(user.hasAnyAllowedRole(List.of(allowedRole))).thenReturn(false);
+        when(user.hasAnyAllowedRole(List.of(1L, 2L))).thenReturn(false);
 
-        Zone zone = new Zone();
-        zone.addAllowedRole(allowedRole);
+        Zone zone = Zone.builder()
+                .allowedRoleIds(List.of(1L, 2L))
+                .build();
 
         assertThat(zone.isAccessibleBy(user)).isFalse();
+        verify(user).hasAnyAllowedRole(List.of(1L, 2L));
     }
 
-
     @Test
-    void addAllowedRole_should_add_role_only_once() {
-        CustomRole role = mock(CustomRole.class);
+    void addAllowedRole_should_add_role_when_not_present() {
+        Zone zone = Zone.builder()
+                .allowedRoleIds(new java.util.ArrayList<>(List.of(1L)))
+                .build();
 
-        Zone zone = new Zone();
+        zone.addAllowedRole(2L);
 
-        zone.addAllowedRole(role);
-        zone.addAllowedRole(role); // called twice
-
-        assertThat(zone.getAllowedRoles()).hasSize(1);
+        assertThat(zone.getAllowedRoleIds()).containsExactly(1L, 2L);
     }
 
+    @Test
+    void addAllowedRole_should_not_duplicate_existing_role() {
+        Zone zone = Zone.builder()
+                .allowedRoleIds(new java.util.ArrayList<>(List.of(1L, 2L)))
+                .build();
+
+        zone.addAllowedRole(2L);
+
+        assertThat(zone.getAllowedRoleIds()).containsExactly(1L, 2L);
+    }
 
     @Test
-    void removeAllowedRole_should_remove_role() {
-        CustomRole role = mock(CustomRole.class);
+    void addAllowedRole_should_ignore_null_roleId() {
+        Zone zone = Zone.builder()
+                .allowedRoleIds(new java.util.ArrayList<>(List.of(1L)))
+                .build();
 
-        Zone zone = new Zone();
-        zone.addAllowedRole(role);
+        zone.addAllowedRole(null);
 
-        zone.removeAllowedRole(role);
+        assertThat(zone.getAllowedRoleIds()).containsExactly(1L);
+    }
 
-        assertThat(zone.getAllowedRoles()).doesNotContain(role);
+    @Test
+    void removeAllowedRole_should_remove_role_when_present() {
+        Zone zone = Zone.builder()
+                .allowedRoleIds(new java.util.ArrayList<>(List.of(1L, 2L, 3L)))
+                .build();
+
+        zone.removeAllowedRole(2L);
+
+        assertThat(zone.getAllowedRoleIds()).containsExactly(1L, 3L);
+    }
+
+    @Test
+    void removeAllowedRole_should_ignore_null_roleId() {
+        Zone zone = Zone.builder()
+                .allowedRoleIds(new java.util.ArrayList<>(List.of(1L, 2L)))
+                .build();
+
+        zone.removeAllowedRole(null);
+
+        assertThat(zone.getAllowedRoleIds()).containsExactly(1L, 2L);
+    }
+
+    @Test
+    void removeAllowedRole_should_do_nothing_when_role_not_present() {
+        Zone zone = Zone.builder()
+                .allowedRoleIds(new java.util.ArrayList<>(List.of(1L, 2L)))
+                .build();
+
+        zone.removeAllowedRole(99L);
+
+        assertThat(zone.getAllowedRoleIds()).containsExactly(1L, 2L);
     }
 }

@@ -24,6 +24,7 @@ public class UserDTO {
     private String lastName;
     private UserRole role;
     private UserStatus userStatus;
+    private String customRoleName;
     private Long organisationId;
     private String organizationName;
     private LocalDateTime createdAt;
