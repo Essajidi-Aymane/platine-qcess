@@ -59,7 +59,19 @@ class _MyAppState extends State<MyApp> {
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
-          debugPrint('[MyApp] Building with theme: ${themeState.themeMode}');
+          debugPrint('[MyApp] Building with theme: ${themeState.themeMode}, isLoading: ${themeState.isLoading}');
+          
+          if (themeState.isLoading) {
+            return const MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              debugShowCheckedModeBanner: false,
+            );
+          }
+          
           return MaterialApp.router(
             title: 'Qcess',
             theme: AppTheme.lightTheme,

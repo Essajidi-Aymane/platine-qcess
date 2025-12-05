@@ -1,13 +1,15 @@
 package univ.lille.application.usecase.mapper;
 
-import org.springframework.stereotype.Component;
 import univ.lille.domain.model.User;
 import univ.lille.dto.auth.user.UserDTO;
 
-@Component
-public class UserMapper {
 
-    public UserDTO toDTO(User user) {
+public final class UserMapper {
+
+    private UserMapper() {
+    }
+
+    public static UserDTO toDTO(User user) {
         if (user == null) return null;
 
         UserDTO userDTO = UserDTO.builder()

@@ -21,6 +21,7 @@ import univ.lille.domain.port.out.EmailPort;
 import univ.lille.domain.port.out.OrganizationRepository;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.dto.auth.user.CreateUserRequest;
+import univ.lille.dto.auth.user.UpdateProfileRequest;
 import univ.lille.dto.auth.user.UserDTO;
 import univ.lille.enums.UserRole;
 import univ.lille.enums.UserStatus;
@@ -39,7 +40,7 @@ public class UserUseCase implements UserPort {
     private final OrganizationRepository organizationRepository;
     private final EmailPort emailPort;
     private final AuthenticationService authenticationService;
-    private final  CustomRoleRepository customRoleRepository;
+    private final CustomRoleRepository customRoleRepository;
 
 
     @Override
@@ -178,5 +179,42 @@ public class UserUseCase implements UserPort {
 
     }
 
+    @Override
+    public UserDTO getCurrentUserProfile() {
+        User currentUser = authenticationService.getCurrentUser();
+        return UserMapper.toDTO(currentUser);
+    }
 
+    @Override
+    @Transactional
+    public UserDTO updateProfile(UpdateProfileRequest request) {
+        User currentUser = authenticationService.getCurrentUser();
+
+        if (request.getFirstName() != null && !request.getFirstName().isBlank()) {
+            currentUser.setFirstName(request.getFirstName().trim());
+        }
+
+        if (request.getLastName() != null && !request.getLastName().isBlank()) {
+            currentUser.setLastName(request.getLastName().trim());
+        }
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            String newEmail = request.getEmail().trim().toLowerCase();
+            if (!newEmail.equals(currentUser.getEmail())) {
+                if (userRepository.existsByEmail(newEmail)) {
+                    throw new EmailAlreadyExistsException("Email already in use: " + newEmail);
+                }
+                currentUser.setEmail(newEmail);
+            }
+        }
+        return UserMapper.toDTO(userRepository.save(currentUser));
+    }
+
+    @Override
+    @Transactional
+    public UserDTO updateProfilePicture(String pictureUrl) {
+        User currentUser = authenticationService.getCurrentUser();
+        currentUser.setProfilePictureUrl(pictureUrl);
+        return UserMapper.toDTO(userRepository.save(currentUser));
+    }
 }

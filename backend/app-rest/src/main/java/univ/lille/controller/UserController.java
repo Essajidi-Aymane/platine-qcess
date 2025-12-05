@@ -10,11 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import univ.lille.application.service.AuthenticationService;
 import univ.lille.application.service.FileStorageService;
-import univ.lille.application.usecase.UpdateProfileUseCase;
-import univ.lille.application.usecase.mapper.UserMapper;
-import univ.lille.domain.model.User;
 import univ.lille.domain.port.in.UserPort;
 import univ.lille.dto.auth.user.CreateUserRequest;
 import univ.lille.dto.auth.user.UpdateProfileRequest;
@@ -34,9 +30,6 @@ import java.util.Map;
 public class UserController {
 
     private final UserPort userPort;
-    private final UpdateProfileUseCase updateProfileUseCase;
-    private final AuthenticationService authenticationService;
-    private final UserMapper userMapper;
     private final FileStorageService fileStorageService;
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -103,36 +96,34 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser() {
-        User user = authenticationService.getCurrentUser();
-        UserDTO userDTO = userMapper.toDTO(user);
+        UserDTO userDTO = userPort.getCurrentUserProfile();
         return ResponseEntity.ok(userDTO);
     }
 
     @PutMapping("/me")
     public ResponseEntity<UserDTO> updateCurrentUser(@Valid @RequestBody UpdateProfileRequest request) {
-        User updatedUser = updateProfileUseCase.updateProfile(request);
-        UserDTO userDTO = userMapper.toDTO(updatedUser);
+        UserDTO userDTO = userPort.updateProfile(request);
         return ResponseEntity.ok(userDTO);
     }
 
     @PutMapping("/me/profile-picture")
-    public ResponseEntity<UserDTO> updateProfilePicture(@Valid @RequestPart("file") MultipartFile file) {
-        try {
-            if (file == null || file.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            }
-            long maxBytes = 10L * 1024L * 1024L;
-            if (file.getSize() > maxBytes) {
-                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).build();
-            }
+    public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart("file") MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        long maxBytes = 10L * 1024L * 1024L;
+        if (file.getSize() > maxBytes) {
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).build();
+        }
 
-            User currentUser = authenticationService.getCurrentUser();
-            String publicUrl = fileStorageService.saveUserAvatar(currentUser.getId(), file);
-            User updated = updateProfileUseCase.updateProfilePicture(publicUrl);
-            UserDTO userDTO = userMapper.toDTO(updated);
+        try {
+            String publicUrl = fileStorageService.saveUserAvatar(
+                    userPort.getCurrentUserProfile().getId(), 
+                    file
+            );
+            UserDTO userDTO = userPort.updateProfilePicture(publicUrl);
             return ResponseEntity.ok(userDTO);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
