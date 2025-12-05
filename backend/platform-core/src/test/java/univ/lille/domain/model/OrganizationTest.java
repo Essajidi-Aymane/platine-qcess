@@ -42,7 +42,7 @@ class OrganizationTest {
         org.addZone(zone);
 
         assertThat(org.getZones()).containsExactly(zone);
-        verify(zone).setOrganization(org);
+        verify(zone).setOrgId(org.getId());
     }
 
     @Test
@@ -56,8 +56,8 @@ class OrganizationTest {
 
         assertThat(org.getZones()).containsExactly(z1, z2);
 
-        verify(z1).setOrganization(org);
-        verify(z2).setOrganization(org);
+        verify(z1).setOrgId(org.getId());
+        verify(z2).setOrgId(org.getId());
     }
 
 
@@ -69,7 +69,7 @@ class OrganizationTest {
         org.addCustomRole(role);
 
         assertThat(org.getCustomRoles()).containsExactly(role);
-        verify(role).setOrganization(org);
+        verify(role).setOrgId(org.getId());
     }
 
     @Test
@@ -83,7 +83,7 @@ class OrganizationTest {
 
         assertThat(org.getCustomRoles()).containsExactly(r1, r2);
 
-        verify(r1).setOrganization(org);
-        verify(r2).setOrganization(org);
+        verify(r1).setOrgId(org.getId());
+        verify(r2).setOrgId(org.getId());
     }
 }

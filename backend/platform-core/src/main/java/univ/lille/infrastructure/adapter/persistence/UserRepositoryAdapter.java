@@ -12,6 +12,7 @@ import univ.lille.infrastructure.adapter.persistence.repository.UserJpaRepositor
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -30,6 +31,16 @@ public class UserRepositoryAdapter implements UserRepository {
     public Optional<User> findById(Long id) {
         return userJpaRepository.findById(id)
                 .map(mapper::toDomain);
+    }
+
+    /**
+     * @param id
+     * @param organizationId
+     * @return
+     */
+    @Override
+    public Optional<User> findByIdAndOrganizationId(Long id, Long organizationId) {
+        return userJpaRepository.findByIdAndOrganizationId(id,organizationId).map(mapper::toDomain);
     }
 
     @Override
@@ -57,6 +68,16 @@ public class UserRepositoryAdapter implements UserRepository {
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    /**
+     * @param ids
+     * @param orgId
+     * @return
+     */
+    @Override
+    public List<User> findByIdInAndOrganizationId(List<Long> ids, Long orgId) {
+        return userJpaRepository.findByIdInAndOrganizationId(ids , orgId).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override

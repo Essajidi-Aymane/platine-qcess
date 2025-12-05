@@ -7,12 +7,18 @@ import java.util.List;
 
 @Data
 public class ZoneDTO {
-private Long id ;
-private String name ;
-private String description ;
-private String qrCode ;
-private List<String> allowedRolesNames;
-private Long organizationId ;
-private LocalDateTime createdAt;
 
+    private Long id;
+    private String name;
+    private String description;
+
+    // ex: ["Security", "Cleaner", "Admin"]
+    private List<String> allowedRolesNames;
+    private List<Long> allowedRoleIds;
+
+    private Long organizationId;
+
+    private LocalDateTime createdAt;
+
+    private String status; // ACTIVE / INACTIVE
 }

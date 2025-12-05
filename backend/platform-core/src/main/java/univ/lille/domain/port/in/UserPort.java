@@ -11,6 +11,8 @@ public interface UserPort {
 
     //UserDTO assignRoleToUser(Long userId, Long adminId , Long organizationId , Long roleId);
 
-    void  assignCustomRoleToUsers(Long roleId, List<Long> userIds, Long orgId, Long adminId);
+    void activateUser(Long userId, Long orgId);
+    void suspendUser( Long userId, Long orgId) ;
+    void  assignCustomRoleToUsers(Long roleId, List<Long> userIds, Long orgId);
     void unassignCustomRoleFromUsers(Long roleId, List<Long> userIds, Long orgId, Long adminId);
 }

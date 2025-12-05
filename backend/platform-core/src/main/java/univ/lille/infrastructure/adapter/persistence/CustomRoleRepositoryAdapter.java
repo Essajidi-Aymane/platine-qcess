@@ -10,7 +10,6 @@ import univ.lille.infrastructure.adapter.persistence.repository.CustomRoleJpaRep
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -65,6 +64,16 @@ public class CustomRoleRepositoryAdapter implements CustomRoleRepository {
 
     }
 
+    /**
+     * @param roleId
+     * @param orgId
+     * @return
+     */
+    @Override
+    public boolean existsByIdAndOrganizationId(Long roleId, Long orgId) {
+        return customRoleJpaRepository.existsByIdAndOrganizationId(roleId,orgId);
+    }
+
     @Override
     public int countUsersByRoleId(Long roleId) {
         long count = customRoleJpaRepository.countUsersByRoleId(roleId);
@@ -72,7 +81,9 @@ public class CustomRoleRepositoryAdapter implements CustomRoleRepository {
     }
 
     @Override
-    public void delete(CustomRole role) {
-        customRoleJpaRepository.delete(mapper.toEntity(role));
+    public void deleteById(Long roleId) {
+        customRoleJpaRepository.deleteById(roleId);
     }
+
+  
 }

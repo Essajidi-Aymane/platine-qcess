@@ -161,12 +161,12 @@ class CustomRoleRepositoryAdapterTest {
 
 
     @Test
-    void delete_should_map_domain_to_entity_and_call_delete() {
-        when(mapper.toEntity(domainRole)).thenReturn(entity);
+    void delete_should_call_deleteById_directly() {
+        Long roleId = 1L;
 
-        adapter.delete(domainRole);
+        adapter.deleteById(roleId);
 
-        verify(mapper).toEntity(domainRole);
-        verify(customRoleJpaRepository).delete(entity);
+        verify(customRoleJpaRepository).deleteById(roleId);
+        verifyNoInteractions(mapper);
     }
 }

@@ -20,13 +20,11 @@ class LogoutUseCaseTest {
 
     @Test
     void logout_should_save_token_in_blacklist() {
-        // GIVEN
+        
         String token = "jwt-token-123";
 
-        // WHEN
         logoutUseCase.logout(token);
 
-        // THEN
         ArgumentCaptor<BlackListedToken> captor = ArgumentCaptor.forClass(BlackListedToken.class);
         verify(blacklistedTokenRepository).save(captor.capture());
 

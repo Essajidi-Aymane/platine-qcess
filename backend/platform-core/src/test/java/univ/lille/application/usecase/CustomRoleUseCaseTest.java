@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
 import univ.lille.domain.exception.OrganizationNotFoundException;
 import univ.lille.domain.exception.UserNotFoundException;
 import univ.lille.domain.model.CustomRole;
@@ -63,7 +62,7 @@ class CustomRoleUseCaseTest {
                 .id(100L)
                 .name("Résident")
                 .description("Locataire de la résidence")
-                .organization(org)
+                .orgId(org.getId())
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -138,9 +137,7 @@ class CustomRoleUseCaseTest {
         verify(customRoleRepository, never()).save(any());
     }
 
-    // ----------------------------------------------------------
-    // updateCustomRole
-    // ----------------------------------------------------------
+
 
     @Test
     void updateCustomRole_should_update_name_and_description() {
@@ -158,14 +155,14 @@ class CustomRoleUseCaseTest {
                 .id(roleId)
                 .name("Ancien nom")
                 .description("Ancienne description")
-                .organization(Organization.builder().id(orgId).build())
+                .orgId(orgId)
                 .build();
 
         CustomRole saved = CustomRole.builder()
                 .id(roleId)
                 .name("Technicien")
                 .description("Responsable de la maintenance")
-                .organization(existing.getOrganization())
+                .orgId(existing.getOrgId())
                 .build();
 
         when(customRoleRepository.findByIdAndOrganizationId(roleId, orgId))
@@ -206,9 +203,7 @@ class CustomRoleUseCaseTest {
         verify(customRoleRepository, never()).save(any());
     }
 
-    // ----------------------------------------------------------
-    // deleteCustomRole
-    // ----------------------------------------------------------
+
 
     @Test
     void deleteCustomRole_should_remove_role_and_detach_from_users() {
@@ -216,15 +211,10 @@ class CustomRoleUseCaseTest {
         Long roleId = 5L;
         Long adminId = 10L;
 
-        Organization org = Organization.builder()
-                .id(orgId)
-                .name("Résidence A")
-                .build();
-
         CustomRole role = CustomRole.builder()
                 .id(roleId)
                 .name("Résident")
-                .organization(org)
+                .orgId(orgId)
                 .build();
 
         User user1 = User.builder()
@@ -239,9 +229,7 @@ class CustomRoleUseCaseTest {
                 .customRole(role)
                 .build();
 
-        when(organizationRepository.findById(orgId))
-                .thenReturn(Optional.of(org));
-        when(customRoleRepository.findById(roleId))
+        when(customRoleRepository.findByIdAndOrganizationId(roleId, orgId))
                 .thenReturn(Optional.of(role));
         when(userRepository.findByOrganizationIdAndCustomRoleId(orgId, roleId))
                 .thenReturn(List.of(user1, user2));
@@ -249,8 +237,8 @@ class CustomRoleUseCaseTest {
         useCase.deleteCustomRole(roleId, orgId, adminId);
 
         verify(userRepository, times(2)).save(any(User.class));
-        verify(organizationRepository).save(org);
-        verify(customRoleRepository).delete(role);
+        verify(customRoleRepository).deleteById(roleId);
+        verify(organizationRepository, never()).save(any());
     }
 
     @Test
@@ -259,50 +247,38 @@ class CustomRoleUseCaseTest {
         Long roleId = 5L;
         Long adminId = 10L;
 
-        Organization org = Organization.builder()
-                .id(orgId)
-                .build();
-
-        CustomRole role = CustomRole.builder()
-                .id(roleId)
-                .organization(Organization.builder().id(99L).build())
-                .build();
-
-        when(organizationRepository.findById(orgId))
-                .thenReturn(Optional.of(org));
-        when(customRoleRepository.findById(roleId))
-                .thenReturn(Optional.of(role));
-
-        assertThatThrownBy(() ->
-                useCase.deleteCustomRole(roleId, orgId, adminId)
-        )
-                .isInstanceOf(AccessDeniedException.class)
-                .hasMessageContaining("Custom role does not belong to the specified organization.");
-
-        verify(userRepository, never()).findByOrganizationIdAndCustomRoleId(anyLong(), anyLong());
-        verify(customRoleRepository, never()).delete(any());
-    }
-
-    @Test
-    void deleteCustomRole_should_throw_when_org_not_found() {
-        Long orgId = 1L;
-        Long roleId = 5L;
-        Long adminId = 10L;
-
-        when(organizationRepository.findById(orgId))
+        when(customRoleRepository.findByIdAndOrganizationId(roleId, orgId))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
                 useCase.deleteCustomRole(roleId, orgId, adminId)
         )
-                .isInstanceOf(OrganizationNotFoundException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Custom role not found with ID: " + roleId + " in organization: " + orgId);
 
-        verify(customRoleRepository, never()).delete(any());
+        verify(userRepository, never()).findByOrganizationIdAndCustomRoleId(anyLong(), anyLong());
+        verify(customRoleRepository, never()).deleteById(roleId);
     }
 
-    // ----------------------------------------------------------
-    // getCustomRolesByOrganization
-    // ----------------------------------------------------------
+    @Test
+    void deleteCustomRole_should_throw_when_role_not_found() {
+        Long orgId = 1L;
+        Long roleId = 5L;
+        Long adminId = 10L;
+
+        when(customRoleRepository.findByIdAndOrganizationId(roleId, orgId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                useCase.deleteCustomRole(roleId, orgId, adminId)
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Custom role not found with ID: " + roleId + " in organization: " + orgId);
+
+        verify(customRoleRepository, never()).deleteById(roleId);
+    }
+
+
 
     @Test
     void getCustomRolesByOrganization_should_return_mapped_list() {
@@ -316,14 +292,14 @@ class CustomRoleUseCaseTest {
                 .id(10L)
                 .name("Résident")
                 .description("Locataire")
-                .organization(org)
+                .orgId(org.getId())
                 .build();
 
         CustomRole r2 = CustomRole.builder()
                 .id(11L)
                 .name("Gestionnaire")
                 .description("Gère la résidence")
-                .organization(org)
+                .orgId(org.getId())
                 .build();
 
         when(customRoleRepository.getCustomRolesByOrganizationId(orgId))
@@ -355,7 +331,7 @@ class CustomRoleUseCaseTest {
                 .id(10L)
                 .name("Résident")
                 .description("Locataire")
-                .organization(org)
+                .orgId(org.getId())
                 .build();
 
         User user = User.builder()

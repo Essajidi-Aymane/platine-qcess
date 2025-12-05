@@ -15,7 +15,7 @@ public class CustomRole {
     private Long id ;
     private String name ;
     private  String description ;
-    private Organization organization ;
+    private Long orgId ;
     private LocalDateTime createdAt;
 
 

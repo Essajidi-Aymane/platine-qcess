@@ -11,7 +11,7 @@ public class CustomRoleMapper {
                 .id(customRole.getId())
                 .name(customRole.getName())
                 .description(customRole.getDescription())
-                .organizationId(customRole.getOrganization().getId())
+                .organizationId(customRole.getOrgId())
                 .createdAt(customRole.getCreatedAt())
                 .build();
 

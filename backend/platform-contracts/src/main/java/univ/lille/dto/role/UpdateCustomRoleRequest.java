@@ -1,10 +1,14 @@
 package univ.lille.dto.role;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateCustomRoleRequest {
 
         private String name;
