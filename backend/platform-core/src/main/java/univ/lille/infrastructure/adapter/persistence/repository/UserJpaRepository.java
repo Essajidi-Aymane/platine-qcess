@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import univ.lille.domain.model.User;
 import univ.lille.enums.UserRole;
 import univ.lille.infrastructure.adapter.persistence.entity.UserEntity;
 
@@ -24,6 +25,9 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
     @Query("SELECT u FROM UserEntity u WHERE u.customRole.name = :roleName")
     List<UserEntity> findByCustomRoleName(@Param("roleName") String roleName);
 
+    List<UserEntity> findByIdInAndOrganizationId(List<Long> ids, Long orgId);
+
+    Optional<UserEntity> findByIdAndOrganizationId(Long id , Long organizationId) ;
     Optional<UserEntity> findByResetPasswordToken(String token);
     List<UserEntity> findByCustomRole_Id(Long customRoleId);
     @Query("""

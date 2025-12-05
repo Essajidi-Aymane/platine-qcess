@@ -3,7 +3,6 @@ package univ.lille.infrastructure.adapter.security;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import univ.lille.enums.UserRole;
 
 import java.util.Collection;
 

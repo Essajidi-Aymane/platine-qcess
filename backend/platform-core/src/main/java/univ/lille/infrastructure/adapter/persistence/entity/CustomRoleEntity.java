@@ -21,8 +21,8 @@ public class CustomRoleEntity {
     private String description ;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organization_id")
-    private OrganizationEntity organization ;
+    @JoinColumn(name = "organization_id", nullable = false)
+    private OrganizationEntity organization;
 
     @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)

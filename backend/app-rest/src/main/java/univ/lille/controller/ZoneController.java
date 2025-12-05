@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import univ.lille.domain.port.in.ZoneManagementPort;
+import univ.lille.dto.zone.AllowedRolesRequest;
 import univ.lille.dto.zone.CreateZoneRequest;
 import univ.lille.dto.zone.UpdateZoneRequest;
 import univ.lille.dto.zone.ZoneDTO;
@@ -55,10 +56,44 @@ public class ZoneController {
 
     @PatchMapping("/{zoneId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ZoneDTO> updateZone (@PathVariable("zoneId") Long zoneId , UpdateZoneRequest request, @AuthenticationPrincipal QcessUserPrincipal principal) {
+    public ResponseEntity<ZoneDTO> updateZone (@PathVariable("zoneId") Long zoneId ,@Valid @RequestBody UpdateZoneRequest request, @AuthenticationPrincipal QcessUserPrincipal principal) {
         Long orgId = principal.getOrganizationId();
         ZoneDTO updated = zonePort.updateZone(zoneId,request,orgId ) ;
         return  ResponseEntity.ok(updated);
     }
+    @PostMapping("/{zoneId}/allowed-roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> addAllowedRolesToZone(@PathVariable("zoneId") Long zoneId ,@Valid @RequestBody AllowedRolesRequest request , @AuthenticationPrincipal QcessUserPrincipal principal
+    ){
+        Long orgId = principal.getOrganizationId();
+        zonePort.addAllowedRolesToZone(zoneId,request.getRoleIds(),orgId);
+        return ResponseEntity.ok("Roles added successfully to zone");
+    }
 
+    /**
+     * Remplacer complètement la liste des allowedRoles d'une zone.
+     * Si la liste est vide -> la zone devient inaccessible (sauf admin).
+     */
+    @PutMapping("/{zoneId}/allowed-roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> replaceAllowedRolesForZone(@PathVariable("zoneId") Long zoneId,
+                                                           @Valid @RequestBody AllowedRolesRequest request,
+                                                           @AuthenticationPrincipal QcessUserPrincipal principal) {
+            Long orgId = principal.getOrganizationId();
+            zonePort.replaceAllowedRolesForZone(zoneId,request.getRoleIds(),orgId);
+            return  ResponseEntity.ok("Roles replaced successfully") ;
+
+    }
+
+    @DeleteMapping("/{zoneId}/allowed-roles/{roleId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> removeAllowedRoleFromZone(@PathVariable("zoneId") Long zoneId,
+                                                          @PathVariable("roleId") Long roleId,
+                                                          @AuthenticationPrincipal QcessUserPrincipal principal) {
+        Long orgId = principal.getOrganizationId();
+
+        zonePort.removeAllowedRoleFromZone(zoneId, roleId, orgId);
+
+        return ResponseEntity.ok("Role removed successfully");
+    }
 }

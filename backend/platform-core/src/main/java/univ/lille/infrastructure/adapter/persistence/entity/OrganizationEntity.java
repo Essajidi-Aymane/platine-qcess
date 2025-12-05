@@ -34,8 +34,14 @@ public class OrganizationEntity {
     @Column(nullable = true)
     private String description ;
 
-    @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "organization",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE},
+            orphanRemoval = false
+    )
     private List<ZoneEntity> zones = new ArrayList<>();
+    @OneToMany(mappedBy = "organization", orphanRemoval = false)
+    private List<CustomRoleEntity> customRoles;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

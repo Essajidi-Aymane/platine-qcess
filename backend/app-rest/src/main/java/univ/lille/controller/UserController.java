@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import univ.lille.application.usecase.UserUseCase;
 import univ.lille.domain.port.in.UserPort;
 import univ.lille.dto.auth.user.CreateUserRequest;
 import univ.lille.dto.auth.user.UserDTO;
@@ -36,6 +35,21 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
     }
 
+    @PostMapping("/suspend-user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> suspendUser (@PathVariable("userId") Long userId, @AuthenticationPrincipal QcessUserPrincipal principal) {
+        Long orgId = principal.getOrganizationId();
+        userPort.suspendUser(userId,orgId);
+        return ResponseEntity.ok("User suspended successfully");
+    }
+
+    @PostMapping("/activate/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> activateUser (@PathVariable("userId") Long userId , @AuthenticationPrincipal QcessUserPrincipal principal) {
+        Long orgId = principal.getOrganizationId();
+        userPort.activateUser(userId,orgId);
+        return ResponseEntity.ok("User activated successfully");
+    }
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> getUsersOfOrganization(@AuthenticationPrincipal QcessUserPrincipal principal) {
@@ -57,7 +71,7 @@ public class UserController {
     public ResponseEntity<Void> assignRoleToUsers(@Valid @RequestBody AssignRolesToUserRequest request , @AuthenticationPrincipal QcessUserPrincipal principal) {
             Long adminId = principal.getId();
             Long orgId = principal.getOrganizationId();
-            userPort.assignCustomRoleToUsers(request.getRoleIds(),request.getUserIds(), adminId, orgId);
+            userPort.assignCustomRoleToUsers(request.getRoleId(),request.getUserIds(),orgId);
 
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

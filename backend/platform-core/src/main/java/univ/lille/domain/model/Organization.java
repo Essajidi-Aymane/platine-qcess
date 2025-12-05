@@ -51,12 +51,12 @@ public class Organization {
     }
     public void removeCustomRole(CustomRole role) {
         customRoles.remove(role);
-        role.setOrganization(null);
+        role.setOrgId(null);
     }
 
     public void addCustomRole(CustomRole role) {
         customRoles.add(role);
-        role.setOrganization(this);
+        role.setOrgId(this.id);
     }
 
 }

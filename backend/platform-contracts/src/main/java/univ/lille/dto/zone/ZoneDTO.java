@@ -14,6 +14,7 @@ public class ZoneDTO {
 
     // ex: ["Security", "Cleaner", "Admin"]
     private List<String> allowedRolesNames;
+    private List<Long> allowedRoleIds;
 
     private Long organizationId;
 

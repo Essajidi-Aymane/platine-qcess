@@ -11,6 +11,7 @@ import univ.lille.application.utils.NameUtils;
 import univ.lille.domain.exception.CustomRoleException;
 import univ.lille.domain.exception.EmailAlreadyExistsException;
 import univ.lille.domain.exception.OrganizationNotFoundException;
+import univ.lille.domain.exception.UserNotFoundException;
 import univ.lille.domain.model.CustomRole;
 import univ.lille.domain.model.Organization;
 import univ.lille.domain.model.User;
@@ -38,7 +39,7 @@ public class UserUseCase implements UserPort {
     private final OrganizationRepository organizationRepository;
     private final EmailPort emailPort;
     private final AuthenticationService authenticationService;
-    private CustomRoleRepository customRoleRepository;
+    private final  CustomRoleRepository customRoleRepository;
 
 
     @Override
@@ -81,6 +82,8 @@ public class UserUseCase implements UserPort {
 
     }
 
+
+
     @Override
     public List<UserDTO> getUsersByOrganizationId(Long organizationId) {
         if(!organizationRepository.existsById(organizationId)) {
@@ -92,30 +95,62 @@ public class UserUseCase implements UserPort {
         return users.stream().map(UserMapper::toDTO).toList();
     }
 
+    /**
+     * @param userId
+     * @param orgId
+     */
+    @Override
+    public void activateUser(Long userId, Long orgId) {
+        User user = userRepository.findByIdAndOrganizationId(userId,orgId).orElseThrow(()->
+                new  UserNotFoundException("Cet utilisateur n'existe pas dans cette organisation"));
+        if (user.getUserStatus() == UserStatus.DELETED) {
+            return;
+        }
+        user.setUserStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+    }
+
+    /**
+     * @param userId
+     * @param orgId
+     */
+    @Override
+    public void suspendUser(Long userId, Long orgId) {
+        User user = userRepository.findByIdAndOrganizationId(userId,orgId).orElseThrow(()->
+                new  UserNotFoundException("Cet utilisateur n'existe pas dans cette organisation"));
+
+        user.setUserStatus(UserStatus.SUSPENDED);
+
+        userRepository.save(user);
+
+    }
+
 
     /**
      * @param roleId
      * @param userIds
      * @param orgId
-     * @param adminId
      */
     @Override
     @Transactional
-    public void assignCustomRoleToUsers(Long roleId, List<Long> userIds, Long orgId, Long adminId) {
+    public void assignCustomRoleToUsers(Long roleId, List<Long> userIds, Long orgId) {
 
         CustomRole role = customRoleRepository.findByIdAndOrganizationId(roleId , orgId)
                 .orElseThrow(() -> new CustomRoleException(
                         "Custom role not found with ID: " + roleId + " in organization ID: " + orgId
                 ));
-        List<User> users = userRepository.findByOrganizationId(orgId) ;
+        List<User> users = userRepository.findByIdInAndOrganizationId(userIds,orgId) ;
 
+        if (users.size() != userIds.size()) {
+            throw new UserNotFoundException("Some users do not belong to the organization or do not exist.");
+        }
         for (User user :users){
             user.setCustomRole(role);
         }
 
         userRepository.saveAll(users);
     log.info("Assigned custom role ID {} to users {} in organization ID {} by admin ID {}",
-        roleId, userIds, orgId, adminId);
+        roleId, userIds, orgId);
 
     }
 
@@ -131,10 +166,10 @@ public class UserUseCase implements UserPort {
                 .orElseThrow(() -> new CustomRoleException(
                         "Custom role not found with ID: " + roleId + " in organization ID: " + orgId
                 ));
-        List<User> users = userRepository.findByOrganizationId(orgId) ;
+        List<User> users = userRepository.findByIdInAndOrganizationId(userIds,orgId) ;
 
         for (User user :users){
-            user.setCustomRole(null);
+            user.removeRole();
         }
 
         userRepository.saveAll(users);

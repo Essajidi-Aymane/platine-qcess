@@ -15,4 +15,5 @@ public interface ZoneJpaRepository extends JpaRepository<ZoneEntity,Long> {
 
 
 
+
 }

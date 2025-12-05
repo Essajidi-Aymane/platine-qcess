@@ -14,6 +14,9 @@ public interface ZoneManagementPort {
     void deleteZone (Long zoneId , Long orgId) ;
 
     ZoneDTO updateZone (Long zoneId , UpdateZoneRequest request, Long orgId) ;
+     void replaceAllowedRolesForZone(Long zoneId, List<Long> roleIds, Long orgId) ;
+     void removeAllowedRoleFromZone(Long zoneId, Long roleId, Long orgId) ;
+    void addAllowedRolesToZone(Long zoneId, List<Long> roleIds, Long orgId);
 
     List<ZoneDTO> getZonesForOrg(Long orgId) ;
     //ZoneDTO updateZone( );

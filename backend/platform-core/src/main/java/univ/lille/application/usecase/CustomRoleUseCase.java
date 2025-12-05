@@ -1,9 +1,7 @@
 package univ.lille.application.usecase;
 
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import univ.lille.application.usecase.mapper.CustomRoleMapper;
 import univ.lille.domain.exception.OrganizationNotFoundException;
@@ -42,7 +40,7 @@ public class CustomRoleUseCase implements CustomRolePort {
             );
         }
         CustomRole role = CustomRole.builder()
-                .organization(org)
+                .orgId(org.getId())
                 .createdAt(LocalDateTime.now())
                 .name(customRoleRequest.getName())
                 .description(customRoleRequest.getDescription())
@@ -87,27 +85,22 @@ public class CustomRoleUseCase implements CustomRolePort {
     @Override
     @Transactional
     public void deleteCustomRole(Long roleId, Long organizationId, Long adminId) {
-        Organization org = getOrganizationOrThrow(organizationId);
-
-        CustomRole role = customRoleRepository.findById(roleId)
+        // Vérifier que le rôle existe et appartient à l'organisation
+        customRoleRepository.findByIdAndOrganizationId(roleId, organizationId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Custom role not found with ID: " + roleId
+                        "Custom role not found with ID: " + roleId + " in organization: " + organizationId
                 ));
 
-        if (role.getOrganization()== null || !role.getOrganization().getId().equals(organizationId)) {
-            throw new AccessDeniedException(
-                    "Custom role does not belong to the specified organization."
-            );
-        }
-        List<User> userWithRole = userRepository.findByOrganizationIdAndCustomRoleId(organizationId, roleId);
-        for (User user : userWithRole) {
-            user.removeRole(role);
+        // 1. Retirer le rôle de tous les utilisateurs qui l'ont
+        List<User> usersWithRole = userRepository.findByOrganizationIdAndCustomRoleId(organizationId, roleId);
+        for (User user : usersWithRole) {
+            user.removeRole();
             userRepository.save(user);
         }
-        org.removeCustomRole(role);
-        organizationRepository.save(org);
-        customRoleRepository.delete(role);
 
+        // 2. Supprimer le rôle directement - Pas besoin de manipuler l'organisation
+        // La suppression au niveau base de données retirera automatiquement le rôle de l'organisation
+        customRoleRepository.deleteById(roleId);
     }
 
     /**
