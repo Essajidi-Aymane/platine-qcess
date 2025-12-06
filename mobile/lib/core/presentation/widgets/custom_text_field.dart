@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -27,13 +26,14 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowLight,
+            color: theme.shadowColor.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -45,21 +45,21 @@ class CustomTextField extends StatelessWidget {
         obscureText: obscureText,
         textCapitalization: textCapitalization,
         style: style ??
-            const TextStyle(
+            TextStyle(
               fontSize: 16,
-              color: AppColors.text,
+              color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.w500,
             ),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(
-            color: AppColors.textHint,
+          hintStyle: TextStyle(
+            color: theme.colorScheme.outline,
             fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
           prefixIcon: Icon(
             prefixIcon,
-            color: AppColors.textHint,
+            color: theme.colorScheme.outline,
             size: 22,
           ),
           suffixIcon: suffixIcon,
@@ -68,13 +68,13 @@ class CustomTextField extends StatelessWidget {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: AppColors.cardBackground,
+          fillColor: theme.colorScheme.surface,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
             vertical: 18,
           ),
-          errorStyle: const TextStyle(
-            color: AppColors.error,
+          errorStyle: TextStyle(
+            color: theme.colorScheme.error,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),

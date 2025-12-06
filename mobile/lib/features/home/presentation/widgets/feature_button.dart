@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 
 class FeatureButton extends StatelessWidget {
@@ -27,7 +26,7 @@ class FeatureButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.cardBackground,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
             boxShadow: AppTheme.shadowSmall,
           ),
@@ -59,7 +58,7 @@ class FeatureButton extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: AppColors.text,
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
                     height: 1.2,
                   ),

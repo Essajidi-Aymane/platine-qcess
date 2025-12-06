@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/maintenance/data/dto/add_comment_request.dart';
 import 'package:mobile/features/maintenance/data/dto/ticket_dto.dart';
 import 'package:mobile/features/maintenance/data/models/status.dart';
@@ -49,13 +48,15 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<TicketsBloc>();
+    final theme = Theme.of(context);
+    
     return BlocBuilder<TicketsBloc, TicketsState>(
       builder: (context, state) {
         final effectiveTicket = _getTicket(state) ?? widget.initialTicket;
 
         if (effectiveTicket == null) {
           return Scaffold(
-            backgroundColor: AppColors.primary,
+            backgroundColor: theme.colorScheme.primary,
             body: SafeArea(
               child: _buildNotFound(context),
             ),
@@ -65,7 +66,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
         final isCancelled = effectiveTicket.status == Status.cancelled;
 
         return Scaffold(
-          backgroundColor: AppColors.primary,
+          backgroundColor: theme.colorScheme.primary,
           body: SafeArea(
             child: Column(
               children: [
@@ -73,7 +74,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.background,
+                      color: theme.colorScheme.surface,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(32),
                         topRight: Radius.circular(32),

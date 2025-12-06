@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/maintenance/data/models/priority.dart';
 
 class PriorityChip extends StatelessWidget {
@@ -42,11 +41,11 @@ class PriorityChip extends StatelessWidget {
   (Color, IconData) _getPriorityData() {
     switch (priority) {
       case Priority.low:
-        return (AppColors.success, Icons.arrow_downward);
+        return (Colors.green, Icons.arrow_downward);
       case Priority.normal:
-        return (AppColors.warning, Icons.remove);
+        return (Colors.orange, Icons.remove);
       case Priority.high:
-        return (AppColors.error, Icons.arrow_upward);
+        return (Colors.red, Icons.arrow_upward);
     }
   }
 }

@@ -14,4 +14,15 @@ class AppRoutes {
   static const maintenanceTicketDetailName = 'maintenanceTicketDetail';
   static const maintenanceTicketCreate = '/maintenance/tickets/create';
   static const maintenanceTicketCreateName = 'maintenanceTicketCreate';
+
+  static const settings = '/settings';
+  static const settingsName = 'settings';
+  static const settingsProfile = '/settings/profile';
+  static const settingsProfileName = 'settingsProfile';
+  static const settingsNotifications = '/settings/notifications';
+  static const settingsNotificationsName = 'settingsNotifications';
+  static const settingsHelp = '/settings/help';
+  static const settingsHelpName = 'settingsHelp';
+  static const settingsAbout = '/settings/about';
+  static const settingsAboutName = 'settingsAbout';
 }

@@ -16,26 +16,28 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 public class User {
-    private Long id ;
-    private String email ;
+    private Long id;
+    private String email;
     private String password;
-    private String loginCode ;
+    private String loginCode;
 
     //Admin
-    private String fullName ;
+    private String fullName;
 
     //User
-    private String firstName ;
-    private String lastName ;
+    private String firstName;
+    private String lastName;
 
-    private UserStatus userStatus ;
+    private UserStatus userStatus;
     private UserRole role;
-    private CustomRole customRole ;
-    private Organization organization ;
-    private LocalDateTime createdAt ;
-    private LocalDateTime lastLoginAt ;
-    private String passwordResetToken ;
-    private LocalDateTime passwordResetTokenExpiry ;
+    private CustomRole customRole;
+    private Organization organization;
+    private LocalDateTime createdAt;
+    private LocalDateTime lastLoginAt;
+    private String passwordResetToken;
+    private LocalDateTime passwordResetTokenExpiry;
+
+    private String profilePictureUrl;
 
     public String getDisplayName() {
         if (role == UserRole.ADMIN && fullName != null) {
@@ -75,9 +77,11 @@ public class User {
 
         this.customRole = role;
     }
+
     public void removeRole() {
-        this.customRole= null ;
+        this.customRole = null;
     }
+
     public boolean hasRole(CustomRole role) {
         if (customRole == null || role == null) return false;
         return customRole.equals(role);
