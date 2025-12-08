@@ -18,6 +18,7 @@ import univ.lille.module_maintenance.domain.model.Priority;
 import univ.lille.module_maintenance.domain.model.Status;
 import univ.lille.module_maintenance.domain.model.Ticket;
 import univ.lille.module_maintenance.domain.port.TicketRepositoryPort;
+import univ.lille.domain.port.in.UserPort;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,9 @@ class TicketServiceTest {
 
     @Mock
     private TicketRepositoryPort ticketRepository;
+
+    @Mock
+    private UserPort userPort;
 
     @InjectMocks
     private TicketService service;
@@ -52,6 +56,8 @@ class TicketServiceTest {
                 .createdAt(LocalDateTime.now().minusMinutes(5))
                 .updatedAt(LocalDateTime.now().minusMinutes(5))
                 .build();
+
+        lenient().when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArguments()[0]);
     }
 
     @Test
