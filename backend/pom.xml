@@ -14,6 +14,7 @@
     <module>platform-core</module>
     <module>module-acess</module>
     <module>module-maintenance</module>
+    <module>module-notification</module>
     <module>app-rest</module>
   </modules>
 

@@ -8,14 +8,14 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 
 
 @SpringBootApplication
 @EnableJpaRepositories(basePackages = "univ.lille")
 @EntityScan(basePackages = "univ.lille")
-// @EnableKafka
-// @EnableScheduling
+@EnableAsync
 public class QcessApplication {
 
     private static final Logger log = LoggerFactory.getLogger(QcessApplication.class);
