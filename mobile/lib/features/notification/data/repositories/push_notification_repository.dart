@@ -4,13 +4,12 @@ import 'i_push_notification_repository.dart';
 
 class PushNotificationRepository implements IPushNotificationRepository {
   final Dio _dio;
-  final FirebaseMessaging _firebaseMessaging;
 
   PushNotificationRepository({
     required Dio dio,
-    FirebaseMessaging? firebaseMessaging,
-  })  : _dio = dio,
-        _firebaseMessaging = firebaseMessaging ?? FirebaseMessaging.instance;
+  }) : _dio = dio;
+
+  FirebaseMessaging get _firebaseMessaging => FirebaseMessaging.instance;
 
   @override
   Future<void> registerToken(String fcmToken) async {

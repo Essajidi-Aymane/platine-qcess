@@ -15,10 +15,13 @@ import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repository.dart';
 import 'package:mobile/features/maintenance/data/repositories/maintenance_repository.dart';
 import 'package:mobile/features/maintenance/logic/bloc/tickets_bloc.dart';
+import 'package:mobile/features/notification/data/repositories/i_push_notification_repository.dart';
+import 'package:mobile/features/notification/data/repositories/push_notification_repository.dart';
+import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
 
 final sl = GetIt.instance;
 
-const String apiBaseUrl = 'http://localhost:8080';
+const String apiBaseUrl = 'http://10.0.2.2:8080';
 const Duration httpTimeout = Duration(seconds: 30);
 
 Future<void> initDependencies() async {
@@ -27,6 +30,7 @@ Future<void> initDependencies() async {
   await initSplashFeature();
   await initHomeFeature();
   await initMaintenanceFeature();
+  await initNotificationFeature();
 }
 
 Future<void> initNetworkDependencies() async {
@@ -102,5 +106,15 @@ Future<void> initMaintenanceFeature() async {
 
   sl.registerFactory<TicketsBloc>(
     () => TicketsBloc(maintenanceRepository: sl<IMaintenanceRepository>()),
+  );
+}
+
+Future<void> initNotificationFeature() async {
+  sl.registerLazySingleton<IPushNotificationRepository>(
+    () => PushNotificationRepository(dio: sl<Dio>()),
+  );
+
+  sl.registerFactory<PushNotificationBloc>(
+    () => PushNotificationBloc(repository: sl<IPushNotificationRepository>()),
   );
 }

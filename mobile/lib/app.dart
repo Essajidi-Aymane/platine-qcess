@@ -9,6 +9,9 @@ import 'package:mobile/features/home/data/repositories/I_dashboard_user_reposito
 import 'package:mobile/features/home/logic/bloc/dashboard_bloc.dart';
 import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repository.dart';
 import 'package:mobile/features/maintenance/logic/bloc/tickets_bloc.dart';
+import 'package:mobile/features/notification/data/repositories/i_push_notification_repository.dart';
+import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
+import 'package:mobile/features/notification/presentation/notification_initializer.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 
 class MyApp extends StatelessWidget {
@@ -32,20 +35,26 @@ class MyApp extends StatelessWidget {
           create: (_) => TicketsBloc(
               maintenanceRepository: sl<IMaintenanceRepository>()),
         ),
+        BlocProvider<PushNotificationBloc>(
+          create: (_) => sl<PushNotificationBloc>(),
+        ),
       ],
-      child: Builder(
-        builder: (context) {
-          final authBloc = context.read<AuthBloc>();
-          final splashBloc = context.read<SplashBloc>();
-          final appRouter = AppRouter(authBloc, splashBloc);
+      child: NotificationInitializer(
+        child: Builder(
+          builder: (context) {
+            final authBloc = context.read<AuthBloc>();
+            final splashBloc = context.read<SplashBloc>();
+            final appRouter = AppRouter(authBloc, splashBloc);
 
-          return MaterialApp.router(
-            title: 'Qcess',
-            theme: AppTheme.lightTheme,
-            debugShowCheckedModeBanner: false,
-            routerConfig: appRouter.router,
-          );
-        },
+            return MaterialApp.router(
+              scaffoldMessengerKey: rootScaffoldMessengerKey,
+              title: 'Qcess',
+              theme: AppTheme.lightTheme,
+              debugShowCheckedModeBanner: false,
+              routerConfig: appRouter.router,
+            );
+          },
+        ),
       ),
     );
   }
