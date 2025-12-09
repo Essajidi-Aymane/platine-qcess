@@ -29,6 +29,9 @@ public class CommentDao {
     
     @Column(nullable = false)
     private Long authorUserId;
+
+    @Column(name = "author_user_name")
+    private String authorUserName;
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
