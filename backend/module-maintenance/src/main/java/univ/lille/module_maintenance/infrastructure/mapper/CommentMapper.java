@@ -22,6 +22,7 @@ public class CommentMapper {
                 .id(comment.getId())
                 .content(comment.getContent())
                 .authorUserId(comment.getAuthorUserId())
+                .authorUserName(comment.getAuthorUserName())
                 .type(comment.getType())
                 .createdAt(comment.getCreatedAt())
                 .ticket(ticketDao)
@@ -37,6 +38,7 @@ public class CommentMapper {
                 .id(commentDao.getId())
                 .content(commentDao.getContent())
                 .authorUserId(commentDao.getAuthorUserId())
+                .authorUserName(commentDao.getAuthorUserName())
                 .type(commentDao.getType())
                 .createdAt(commentDao.getCreatedAt())
                 .build();

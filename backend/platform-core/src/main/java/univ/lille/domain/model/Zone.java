@@ -10,6 +10,7 @@ import univ.lille.enums.ZoneType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -21,10 +22,8 @@ public class Zone {
     private String name;
     private String description;
 
-    // 🔑 seulement l'id de l'organisation
     private Long orgId;
 
-    // 🔑 seulement les ids des rôles autorisés
     @Builder.Default
     private List<Long> allowedRoleIds = new ArrayList<>();
 

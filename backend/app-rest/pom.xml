@@ -26,6 +26,11 @@
             <version>${project.version}</version>
         </dependency>
 
+    <dependency>
+        <groupId>univ.lille</groupId>
+        <artifactId>module-acess</artifactId>
+        <version>${project.version}</version>
+    </dependency>
         <dependency>
             <groupId>univ.lille</groupId>
             <artifactId>module-notification</artifactId>

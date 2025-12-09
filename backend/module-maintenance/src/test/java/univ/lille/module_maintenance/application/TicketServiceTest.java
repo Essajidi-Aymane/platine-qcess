@@ -58,6 +58,8 @@ class TicketServiceTest {
                 .createdAt(LocalDateTime.now().minusMinutes(5))
                 .updatedAt(LocalDateTime.now().minusMinutes(5))
                 .build();
+
+        lenient().when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArguments()[0]);
     }
 
     @Test

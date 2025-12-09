@@ -16,10 +16,15 @@ import univ.lille.module_maintenance.domain.model.Status;
 import univ.lille.module_maintenance.domain.model.Ticket;
 import univ.lille.module_maintenance.domain.port.TicketRepositoryPort;
 import univ.lille.module_maintenance.domain.port.TicketServicePort;
+import univ.lille.domain.port.in.UserPort;
+import univ.lille.dto.auth.user.UserDTO;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +32,7 @@ public class TicketService implements TicketServicePort {
 
     private final TicketRepositoryPort ticketRepository;
     private final NotificationPublisher notificationPublisher;
+    private final UserPort userPort;
 
     @Transactional
     @NonNull
@@ -34,39 +40,99 @@ public class TicketService implements TicketServicePort {
         if (ticket.getStatus() == null) {
             ticket.setStatus(Status.OPEN);
         }
-        Ticket savedTicket = ticketRepository.save(ticket);
-        
-        return savedTicket;
+        if (ticket.getCreatedByUserName() == null) {
+            enrichTicketsWithUserNames(List.of(ticket), ticket.getOrganizationId());
+        }
+        return ticketRepository.save(ticket);
     }
 
     @NonNull
     public Ticket getTicketById(@NonNull Long ticketId) {
-        return Objects.requireNonNull(
+        Ticket ticket = Objects.requireNonNull(
             ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId))
         );
+
+        if (ticket.getCreatedByUserName() == null || hasMissingCommentAuthors(ticket)) {
+            enrichTicketsWithUserNames(List.of(ticket), ticket.getOrganizationId());
+        }
+
+        if (ticket.getComments() != null) {
+            ticket.getComments().sort(Comparator.comparing(Comment::getCreatedAt));
+        }
+
+        return ticket;
+    }
+
+    private boolean hasMissingCommentAuthors(Ticket ticket) {
+        if (ticket.getComments() == null) return false;
+        return ticket.getComments().stream().anyMatch(c -> c.getAuthorUserName() == null);
     }
 
     @NonNull
     public List<Ticket> getTicketsForUser(@NonNull Long userId) {
-        return ticketRepository.findByUserId(userId);
+        List<Ticket> tickets = ticketRepository.findByUserId(userId);
+        if (!tickets.isEmpty()) {
+            enrichTicketsWithUserNames(tickets, tickets.get(0).getOrganizationId());
+        }
+        return tickets;
     }
 
     @NonNull
     public List<Ticket> getTicketsForUser(@NonNull Long userId, Status status, Priority priority) {
         List<Ticket> base = ticketRepository.findByUserId(userId);
-        return Objects.requireNonNull(applyFilters(base, status, priority));
+        List<Ticket> filtered = Objects.requireNonNull(applyFilters(base, status, priority));
+        if (!filtered.isEmpty()) {
+            enrichTicketsWithUserNames(filtered, filtered.get(0).getOrganizationId());
+        }
+        return filtered;
     }
 
     @NonNull
     public List<Ticket> getTicketsForOrganization(@NonNull Long organizationId) {
-        return ticketRepository.findByOrganizationId(organizationId);
+        List<Ticket> tickets = ticketRepository.findByOrganizationId(organizationId);
+        enrichTicketsWithUserNames(tickets, organizationId);
+        return tickets;
     }
 
     @NonNull
     public List<Ticket> getTicketsForOrganization(@NonNull Long organizationId, Status status, Priority priority) {
         List<Ticket> base = ticketRepository.findByOrganizationId(organizationId);
-        return Objects.requireNonNull(applyFilters(base, status, priority));
+        List<Ticket> filtered = Objects.requireNonNull(applyFilters(base, status, priority));
+        enrichTicketsWithUserNames(filtered, organizationId);
+        return filtered;
+    }
+
+    private void enrichTicketsWithUserNames(List<Ticket> tickets, Long organizationId) {
+        boolean hasMissingNames = tickets.stream().anyMatch(t -> t.getCreatedByUserName() == null);
+        boolean hasMissingCommentAuthors = tickets.stream()
+            .filter(t -> t.getComments() != null)
+            .flatMap(t -> t.getComments().stream())
+            .anyMatch(c -> c.getAuthorUserName() == null);
+
+        if (!hasMissingNames && !hasMissingCommentAuthors) return;
+
+        try {
+            List<UserDTO> users = userPort.getUsersByOrganizationId(organizationId);
+            Map<Long, String> userNames = users.stream()
+                .collect(Collectors.toMap(UserDTO::getId, UserDTO::getDisplayName));
+
+            tickets.forEach(t -> {
+                if (t.getCreatedByUserName() == null) {
+                    t.setCreatedByUserName(userNames.get(t.getCreatedByUserId()));
+                }
+                if (t.getComments() != null) {
+                    t.getComments().forEach(c -> {
+                        if (c.getAuthorUserName() == null) {
+                            c.setAuthorUserName(userNames.get(c.getAuthorUserId()));
+                        }
+                    });
+                }
+            });
+        } catch (Exception e) {
+            // Log error but continue without names
+            System.err.println("Failed to fetch users for ticket enrichment: " + e.getMessage());
+        }
     }
 
     @Transactional
@@ -87,7 +153,6 @@ public class TicketService implements TicketServicePort {
         }
 
         Ticket savedTicket = ticketRepository.save(ticket);
-        
         Long ownerId = savedTicket.getCreatedByUserId();
         if (ownerId != null) {
             if (newStatus == Status.RESOLVED) {
@@ -112,6 +177,7 @@ public class TicketService implements TicketServicePort {
             }
         }
 
+        enrichTicketsWithUserNames(List.of(savedTicket), savedTicket.getOrganizationId());
         return savedTicket;
     }
 
@@ -135,7 +201,9 @@ public class TicketService implements TicketServicePort {
         ticket.setDescription(description);
         ticket.setUpdatedAt(LocalDateTime.now());
 
-        return ticketRepository.save(ticket);
+        Ticket savedTicket = ticketRepository.save(ticket);
+        enrichTicketsWithUserNames(List.of(savedTicket), savedTicket.getOrganizationId());
+        return savedTicket;
     }
 
     @Transactional
@@ -169,7 +237,13 @@ public class TicketService implements TicketServicePort {
 
         ticket.addComment(comment);
         ticket.setUpdatedAt(LocalDateTime.now());
-        return ticketRepository.save(ticket);
+        
+        Ticket savedTicket = ticketRepository.save(ticket);
+        enrichTicketsWithUserNames(List.of(savedTicket), savedTicket.getOrganizationId());
+        if (savedTicket.getComments() != null) {
+            savedTicket.getComments().sort(Comparator.comparing(Comment::getCreatedAt));
+        }
+        return savedTicket;
     }
 
     @Transactional
@@ -199,6 +273,7 @@ public class TicketService implements TicketServicePort {
 
         ticket.addComment(comment);
         ticket.setUpdatedAt(LocalDateTime.now());
+        
         Ticket savedTicket = ticketRepository.save(ticket);
         
         Long ownerId = savedTicket.getCreatedByUserId();
@@ -209,6 +284,11 @@ public class TicketService implements TicketServicePort {
                 savedTicket.getTitle(),
                 authorUserName != null ? authorUserName : "Un administrateur"
             );
+        }
+
+        enrichTicketsWithUserNames(List.of(savedTicket), savedTicket.getOrganizationId());
+        if (savedTicket.getComments() != null) {
+            savedTicket.getComments().sort(Comparator.comparing(Comment::getCreatedAt));
         }
         return savedTicket;
     }
@@ -232,7 +312,9 @@ public class TicketService implements TicketServicePort {
         }
 		
         ticket.updateStatus(Status.CANCELLED);
-        return ticketRepository.save(ticket);
+        Ticket savedTicket = ticketRepository.save(ticket);
+        enrichTicketsWithUserNames(List.of(savedTicket), savedTicket.getOrganizationId());
+        return savedTicket;
     }
 
     @Transactional

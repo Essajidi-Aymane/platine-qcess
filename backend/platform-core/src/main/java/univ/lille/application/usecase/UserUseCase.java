@@ -176,7 +176,6 @@ public class UserUseCase implements UserPort {
         userRepository.saveAll(users);
         log.info("Desassigned custom role ID {} from users {} in organization ID {} by admin ID {}",
                 roleId, userIds, orgId, adminId);
-
     }
 
     @Override

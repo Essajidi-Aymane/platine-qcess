@@ -35,6 +35,9 @@ public class TicketDao {
     
     @Column(nullable = false)
     private Long createdByUserId;
+
+    @Column(name = "created_by_user_name")
+    private String createdByUserName;
     
     @Column(nullable = false)
     private Long organizationId;
