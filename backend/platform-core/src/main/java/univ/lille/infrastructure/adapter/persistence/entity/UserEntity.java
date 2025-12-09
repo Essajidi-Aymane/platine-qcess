@@ -60,4 +60,7 @@ public class UserEntity {
     @Column(name = "reset_password_token_expiry")
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime resetPasswordTokenExpiry;
+
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;
 }

@@ -11,6 +11,7 @@ import 'package:mobile/features/auth/logic/bloc/auth_bloc.dart';
 import 'package:mobile/features/home/data/repositories/I_dashboard_user_repository.dart';
 import 'package:mobile/features/home/data/repositories/dashboard_user_repository_mock.dart';
 import 'package:mobile/features/home/logic/bloc/dashboard_bloc.dart';
+import 'package:mobile/features/profile/data/repositories/profile_repository.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repository.dart';
 import 'package:mobile/features/maintenance/data/repositories/maintenance_repository.dart';
@@ -20,6 +21,8 @@ import 'package:mobile/features/notification/data/repositories/device_token_repo
 import 'package:mobile/features/notification/data/repositories/i_notification_repository.dart';
 import 'package:mobile/features/notification/data/repositories/notification_repository.dart';
 import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
+import 'package:mobile/features/profile/data/repositories/i_profile_repository.dart';
+import 'package:mobile/features/profile/logic/bloc/profile_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -32,6 +35,7 @@ Future<void> initDependencies() async {
   await initSplashFeature();
   await initHomeFeature();
   await initMaintenanceFeature();
+  await initProfileFeature();
   await initNotificationFeature();
 }
 
@@ -68,7 +72,7 @@ Dio _buildDio(TokenStorageService tokenStorage) {
 
 Future<void> initSplashFeature() async {
   sl.registerLazySingleton<SplashBloc>(
-    () => SplashBloc(authRepository: sl<IAuthRepository>()),
+    () => SplashBloc(),
   );
 }
 
@@ -108,6 +112,16 @@ Future<void> initMaintenanceFeature() async {
 
   sl.registerFactory<TicketsBloc>(
     () => TicketsBloc(maintenanceRepository: sl<IMaintenanceRepository>()),
+  );
+}
+
+Future<void> initProfileFeature() async {
+  sl.registerLazySingleton<IProfileRepository>(
+    () => ProfileRepository(sl<Dio>()),
+  );
+
+  sl.registerFactory<ProfileBloc>(
+    () => ProfileBloc(profileRepository: sl<IProfileRepository>()),
   );
 }
 

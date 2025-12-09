@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/maintenance/data/dto/ticket_dto.dart';
 import 'package:mobile/features/maintenance/presentation/widgets/priority_chip.dart';
@@ -20,6 +19,8 @@ class TicketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -27,7 +28,7 @@ class TicketCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
             boxShadow: AppTheme.shadowSmall,
           ),
@@ -37,7 +38,7 @@ class TicketCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  _buildStatusIcon(),
+                  _buildStatusIcon(theme),
                   const SizedBox(width: 12),
                   
                   Expanded(
@@ -46,10 +47,10 @@ class TicketCard extends StatelessWidget {
                       children: [
                         Text(
                           ticket.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.text,
+                            color: theme.colorScheme.onSurface,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -59,7 +60,7 @@ class TicketCard extends StatelessWidget {
                           _formatDate(ticket.createdAt),
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textSecondary,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -68,9 +69,9 @@ class TicketCard extends StatelessWidget {
                   
                   if (onCancel != null)
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close,
-                        color: AppColors.error,
+                        color: Colors.red,
                         size: 20,
                       ),
                       onPressed: onCancel,
@@ -86,7 +87,7 @@ class TicketCard extends StatelessWidget {
                 ticket.description,
                 style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: theme.colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
                 maxLines: 2,
@@ -104,7 +105,7 @@ class TicketCard extends StatelessWidget {
                   Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: AppColors.textSecondary,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ],
               ),
@@ -115,8 +116,8 @@ class TicketCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusIcon() {
-    final (color, icon) = _getStatusIconData();
+  Widget _buildStatusIcon(ThemeData theme) {
+    final (color, icon) = _getStatusIconData(theme);
     
     return Container(
       width: 48,
@@ -133,20 +134,20 @@ class TicketCard extends StatelessWidget {
     );
   }
 
-  (Color, IconData) _getStatusIconData() {
+  (Color, IconData) _getStatusIconData(ThemeData theme) {
     switch (ticket.status.name.toLowerCase()) {
       case 'open':
-        return (AppColors.warning, Icons.pending_outlined);
+        return (Colors.orange, Icons.pending_outlined);
       case 'inprogress':
-        return (AppColors.info, Icons.autorenew);
+        return (Colors.blue, Icons.autorenew);
       case 'resolved':
-        return (AppColors.success, Icons.check_circle_outline);
+        return (Colors.green, Icons.check_circle_outline);
       case 'rejected':
-        return (AppColors.error, Icons.cancel_outlined);
+        return (Colors.red, Icons.cancel_outlined);
       case 'cancelled':
-        return (AppColors.textSecondary, Icons.block);
+        return (theme.colorScheme.onSurfaceVariant, Icons.block);
       default:
-        return (AppColors.primary, Icons.confirmation_number_outlined);
+        return (theme.colorScheme.primary, Icons.confirmation_number_outlined);
     }
   }
 

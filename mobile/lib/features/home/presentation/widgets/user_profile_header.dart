@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/responsive_utils.dart';
 import 'package:mobile/features/home/data/models/user_dashboard.dart';
 
@@ -36,7 +35,7 @@ class UserProfileHeader extends StatelessWidget {
                   ? Text(
                       _getInitials(dashboard.username),
                       style: theme.textTheme.displayLarge?.copyWith(
-                        color: AppColors.primary,
+                        color: theme.colorScheme.primary,
                         fontSize: initialsFontSize,
                       ),
                     )
@@ -54,7 +53,7 @@ class UserProfileHeader extends StatelessWidget {
                 child: Icon(
                   Icons.edit,
                   size: editIconSize,
-                  color: AppColors.primary,
+                  color: theme.colorScheme.primary,
                 ),
               ),
             ),

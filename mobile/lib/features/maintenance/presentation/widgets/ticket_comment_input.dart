@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 
 class TicketCommentInput extends StatelessWidget {
   final TextEditingController controller;
@@ -10,10 +9,11 @@ class TicketCommentInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
         ],
@@ -27,7 +27,7 @@ class TicketCommentInput extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Écrivez votre commentaire...',
                   filled: true,
-                  fillColor: AppColors.background,
+                  fillColor: theme.colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none,
@@ -41,15 +41,15 @@ class TicketCommentInput extends StatelessWidget {
             const SizedBox(width: 12),
             Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [AppColors.primary, AppColors.primaryDark]),
+                color: theme.colorScheme.primary,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                  BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4)),
                 ],
               ),
               child: IconButton(
                 onPressed: disabled ? null : onSend,
-                icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                icon: Icon(Icons.send, color: theme.colorScheme.onPrimary, size: 20),
                 padding: const EdgeInsets.all(12),
               ),
             ),

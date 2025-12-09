@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/auth/presentation/widgets/auth_form_fields.dart';
 import 'package:mobile/features/auth/presentation/widgets/login_button.dart';
 
@@ -18,6 +17,7 @@ class _AuthFormState extends State<AuthForm> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -39,10 +39,10 @@ class _AuthFormState extends State<AuthForm> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
+              color: theme.colorScheme.primary.withOpacity(0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.primary.withOpacity(0.2),
+                color: theme.colorScheme.primary.withOpacity(0.2),
                 width: 1,
               ),
             ),
@@ -50,7 +50,7 @@ class _AuthFormState extends State<AuthForm> {
               children: [
                 Icon(
                   Icons.info_outline,
-                  color: AppColors.primary,
+                  color: theme.colorScheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -58,7 +58,7 @@ class _AuthFormState extends State<AuthForm> {
                   child: Text(
                     'Votre code d\'accès vous a été fourni par votre administrateur',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 13,
                       height: 1.4,
                     ),

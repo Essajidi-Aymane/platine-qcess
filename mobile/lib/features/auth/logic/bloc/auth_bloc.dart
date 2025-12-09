@@ -18,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AppStarted event,
     Emitter<AuthState> emit,
   ) async {
+    emit(AuthLoading());
     try {
       final hasToken = await authRepository.checkToken();
       if (hasToken) {

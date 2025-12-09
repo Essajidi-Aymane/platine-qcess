@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/maintenance/data/dto/ticket_dto.dart';
 import 'package:mobile/features/maintenance/presentation/widgets/priority_chip.dart';
 import 'package:mobile/features/maintenance/presentation/widgets/status_chip.dart';
@@ -11,6 +10,8 @@ class TicketInfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Container(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -27,11 +28,11 @@ class TicketInfoSection extends StatelessWidget {
                 children: [
                   Text(
                     'Créé le',
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
                   ),
                   Text(
                     DateFormat('dd/MM/yyyy').format(ticket.createdAt),
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface),
                   ),
                 ],
               ),
@@ -41,24 +42,24 @@ class TicketInfoSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.cardBackground,
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderLight, width: 1),
+              border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  children: const [
-                    Icon(Icons.description_outlined, size: 18, color: AppColors.primary),
-                    SizedBox(width: 8),
-                    Text('Description', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.text)),
+                  children: [
+                    Icon(Icons.description_outlined, size: 18, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Text('Description', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface)),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
                   ticket.description,
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
+                  style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurfaceVariant, height: 1.5),
                 ),
               ],
             ),

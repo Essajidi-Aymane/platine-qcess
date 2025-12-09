@@ -11,21 +11,38 @@ import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repo
 import 'package:mobile/features/maintenance/logic/bloc/tickets_bloc.dart';
 import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
 import 'package:mobile/features/notification/presentation/notification_initializer.dart';
+import 'package:mobile/features/profile/data/repositories/i_profile_repository.dart';
+import 'package:mobile/features/profile/logic/bloc/profile_bloc.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
+import 'package:mobile/features/theme/logic/bloc/theme_bloc.dart';
+import 'package:mobile/features/theme/logic/bloc/theme_state.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final AuthBloc _authBloc;
+  late final SplashBloc _splashBloc;
+  late final AppRouter _appRouter;
+
+  @override
+  void initState() {
+    super.initState();
+    _authBloc = AuthBloc(authRepository: sl<IAuthRepository>());
+    _splashBloc = sl<SplashBloc>();
+    _appRouter = AppRouter(_authBloc, _splashBloc);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<SplashBloc>(
-          create: (_) => sl<SplashBloc>(),
-        ),
-        BlocProvider<AuthBloc>(
-          create: (_) => AuthBloc(authRepository: sl<IAuthRepository>()),
-        ),
+        BlocProvider<SplashBloc>.value(value: _splashBloc),
+        BlocProvider<AuthBloc>.value(value: _authBloc),
         BlocProvider<DashboardBloc>(
           create: (_) => DashboardBloc(
               dashboardUserRepository: sl<IDashboardUserRepository>()),
@@ -34,23 +51,40 @@ class MyApp extends StatelessWidget {
           create: (_) => TicketsBloc(
               maintenanceRepository: sl<IMaintenanceRepository>()),
         ),
+        BlocProvider<ProfileBloc>(
+          create: (_) => ProfileBloc(
+              profileRepository: sl<IProfileRepository>()),
+        ),
         BlocProvider<PushNotificationBloc>(
           create: (_) => sl<PushNotificationBloc>(),
         ),
+        BlocProvider<ThemeBloc>(
+          create: (_) => ThemeBloc(),
+        ),
       ],
       child: NotificationInitializer(
-        child: Builder(
-          builder: (context) {
-            final authBloc = context.read<AuthBloc>();
-            final splashBloc = context.read<SplashBloc>();
-            final appRouter = AppRouter(authBloc, splashBloc);
-
+        child: BlocBuilder<ThemeBloc, ThemeState>(
+          builder: (context, themeState) {
+            debugPrint('[MyApp] Building with theme: ${themeState.themeMode}, isLoading: ${themeState.isLoading}');
+            
+            if (themeState.isLoading) {
+              return const MaterialApp(
+                home: Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                debugShowCheckedModeBanner: false,
+              );
+            }
+            
             return MaterialApp.router(
-              scaffoldMessengerKey: rootScaffoldMessengerKey,
               title: 'Qcess',
               theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeState.themeMode,
               debugShowCheckedModeBanner: false,
-              routerConfig: appRouter.router,
+              routerConfig: _appRouter.router,
             );
           },
         ),

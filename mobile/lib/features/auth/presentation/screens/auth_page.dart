@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/responsive_utils.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_bloc.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_state.dart';
@@ -15,12 +14,13 @@ class AuthPage extends StatelessWidget {
       listener: (context, state) {
       },
       builder: (context, state) {
+        final theme = Theme.of(context);
         final horizontalPadding = context.horizontalPadding;
         final spacing = context.spacing;
         final maxContentWidth = ResponsiveUtils.getMaxContentWidth(context);
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: theme.colorScheme.surface,
           body: SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -36,7 +36,7 @@ class AuthPage extends StatelessWidget {
                         style: TextStyle(
                           fontSize: ResponsiveUtils.getScaledFontSize(context, 28),
                           fontWeight: FontWeight.bold,
-                          color: AppColors.text,
+                          color: theme.colorScheme.onSurface,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -45,7 +45,7 @@ class AuthPage extends StatelessWidget {
                         'Votre accès quotidien simplifié',
                         style: TextStyle(
                           fontSize: ResponsiveUtils.getScaledFontSize(context, 16),
-                          color: AppColors.textSecondary,
+                          color: theme.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w400,
                         ),
                       ),

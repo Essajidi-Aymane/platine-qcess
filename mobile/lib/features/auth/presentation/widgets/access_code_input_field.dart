@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/core/presentation/widgets/custom_text_field.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 
 class AccessCodeInputField extends StatefulWidget {
   final TextEditingController controller;
@@ -19,22 +18,23 @@ class _AccessCodeInputFieldState extends State<AccessCodeInputField> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return CustomTextField(
       controller: widget.controller,
       hintText: 'Entrez votre code d\'accès',
       prefixIcon: Icons.vpn_key_outlined,
       obscureText: !_isVisible,
       textCapitalization: TextCapitalization.characters,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
-        color: AppColors.text,
+        color: theme.colorScheme.onSurface,
         fontWeight: FontWeight.w500,
         letterSpacing: 1.5,
       ),
       suffixIcon: IconButton(
         icon: Icon(
           _isVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-          color: AppColors.textHint,
+          color: theme.colorScheme.outline,
           size: 22,
         ),
         onPressed: () {
