@@ -30,8 +30,11 @@ public class AccessController {
     // Endpoint pour le mobile : Scan QR
 
     @PostMapping("/scan") 
-    public ResponseEntity<AccessResponseDTO> scanQrCode(@RequestBody AccessRequestDTO request) { 
-        AccessResponseDTO response = accessControlPort.validateAccess(request.getUserId(),request.getZoneId() ); 
+    public ResponseEntity<AccessResponseDTO> scanQrCode(
+        @RequestBody AccessRequestDTO request, 
+        @AuthenticationPrincipal QcessUserPrincipal principal
+    ) { 
+        AccessResponseDTO response = accessControlPort.validateAccess(principal.getId(), request.getZoneId()); 
           
         if (response.isGranted()) {
             return ResponseEntity.ok(response);
