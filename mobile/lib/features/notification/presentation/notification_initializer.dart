@@ -29,6 +29,9 @@ class NotificationInitializer extends StatelessWidget {
               context.read<PushNotificationBloc>().add(
                     const PushNotificationInitRequested(),
                   );
+              context
+                  .read<PushNotificationBloc>()
+                  .add(const NotificationsUnreadCountRequested());
             }
           },
         ),

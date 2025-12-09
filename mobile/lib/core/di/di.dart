@@ -15,8 +15,10 @@ import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repository.dart';
 import 'package:mobile/features/maintenance/data/repositories/maintenance_repository.dart';
 import 'package:mobile/features/maintenance/logic/bloc/tickets_bloc.dart';
-import 'package:mobile/features/notification/data/repositories/i_push_notification_repository.dart';
-import 'package:mobile/features/notification/data/repositories/push_notification_repository.dart';
+import 'package:mobile/features/notification/data/repositories/i_device_token_repository.dart';
+import 'package:mobile/features/notification/data/repositories/device_token_repository.dart';
+import 'package:mobile/features/notification/data/repositories/i_notification_repository.dart';
+import 'package:mobile/features/notification/data/repositories/notification_repository.dart';
 import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
 
 final sl = GetIt.instance;
@@ -110,11 +112,18 @@ Future<void> initMaintenanceFeature() async {
 }
 
 Future<void> initNotificationFeature() async {
-  sl.registerLazySingleton<IPushNotificationRepository>(
+  sl.registerLazySingleton<IDeviceTokenRepository>(
     () => PushNotificationRepository(dio: sl<Dio>()),
   );
 
-  sl.registerFactory<PushNotificationBloc>(
-    () => PushNotificationBloc(repository: sl<IPushNotificationRepository>()),
+  sl.registerLazySingleton<INotificationRepository>(
+    () => NotificationRepository(sl<Dio>()),
+  );
+
+  sl.registerLazySingleton<PushNotificationBloc>(
+    () => PushNotificationBloc(
+      repository: sl<IDeviceTokenRepository>(),
+      notificationRepository: sl<INotificationRepository>(),
+    ),
   );
 }

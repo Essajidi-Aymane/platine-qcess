@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/core/presentation/widgets/error_widget.dart';
 import 'package:mobile/core/presentation/widgets/loading_widget.dart';
 import 'package:mobile/core/theme/app_colors.dart';
@@ -12,6 +13,10 @@ import 'package:mobile/features/home/presentation/widgets/access_status_card.dar
 import 'package:mobile/features/home/presentation/widgets/feature_grid.dart';
 import 'package:mobile/features/home/presentation/widgets/stats_row.dart';
 import 'package:mobile/features/home/presentation/widgets/user_profile_header.dart';
+import 'package:mobile/core/rooting/app_routes.dart';
+import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
+
+
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -81,10 +86,51 @@ class HomePage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                        onPressed: () {
-                          // TODO: Notifications
+                      BlocBuilder<PushNotificationBloc, PushNotificationState>(
+                        builder: (context, state) {
+                          final count = state.unreadCount;
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.notifications_outlined,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  context.push(AppRoutes.notifications);
+                                },
+                              ),
+                              if (count > 0)
+                                Positioned(
+                                  right: 6,
+                                  top: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 20,
+                                      minHeight: 20,
+                                    ),
+                                    child: Text(
+                                      count > 99 ? '99+' : '$count',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
                         },
                       ),
                     ],

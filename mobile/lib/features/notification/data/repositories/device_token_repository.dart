@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'i_push_notification_repository.dart';
+import 'i_device_token_repository.dart';
 
-class PushNotificationRepository implements IPushNotificationRepository {
+class PushNotificationRepository implements IDeviceTokenRepository {
   final Dio _dio;
 
   PushNotificationRepository({

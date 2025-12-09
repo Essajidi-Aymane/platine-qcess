@@ -16,6 +16,7 @@ import 'package:mobile/features/maintenance/presentation/screens/tickets_page.da
 import 'package:mobile/features/maintenance/data/dto/ticket_dto.dart';
 import 'package:mobile/features/maintenance/presentation/screens/ticket_detail_page.dart';
 import 'package:mobile/features/maintenance/presentation/screens/ticket_form_page.dart';
+import 'package:mobile/features/notification/presentation/screens/notifications_page.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_state.dart';
 import 'package:mobile/features/splash/presentation/screens/splash_page.dart';
@@ -128,6 +129,18 @@ class AppRouter {
               },
             ),
           ],
+        ),
+        GoRoute(
+          path: AppRoutes.notifications,
+          name: AppRoutes.notificationsName,
+          redirect: (context, state) {
+            final authState = _authBloc.state;
+            if (authState is! AuthAuthenticated) {
+              return AppRoutes.auth;
+            }
+            return null;
+          },
+          builder: (context, state) => const NotificationsPage(),
         ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {

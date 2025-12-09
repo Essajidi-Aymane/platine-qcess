@@ -14,4 +14,7 @@ class AppRoutes {
   static const maintenanceTicketDetailName = 'maintenanceTicketDetail';
   static const maintenanceTicketCreate = '/maintenance/tickets/create';
   static const maintenanceTicketCreateName = 'maintenanceTicketCreate';
+
+  static const notifications = '/notifications';
+  static const notificationsName = 'notifications';
 }

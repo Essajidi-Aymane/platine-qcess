@@ -9,7 +9,6 @@ import 'package:mobile/features/home/data/repositories/I_dashboard_user_reposito
 import 'package:mobile/features/home/logic/bloc/dashboard_bloc.dart';
 import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repository.dart';
 import 'package:mobile/features/maintenance/logic/bloc/tickets_bloc.dart';
-import 'package:mobile/features/notification/data/repositories/i_push_notification_repository.dart';
 import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
 import 'package:mobile/features/notification/presentation/notification_initializer.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';

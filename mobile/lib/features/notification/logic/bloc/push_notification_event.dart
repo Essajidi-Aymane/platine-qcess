@@ -25,3 +25,30 @@ final class PushNotificationReceived extends PushNotificationEvent {
     this.data,
   });
 }
+
+
+sealed class NotificationsEvent extends PushNotificationEvent {
+  const NotificationsEvent();
+}
+
+final class NotificationsRequested extends NotificationsEvent {
+  final bool refresh;
+  const NotificationsRequested({this.refresh = false});
+}
+
+final class NotificationsLoadMore extends NotificationsEvent {
+  const NotificationsLoadMore();
+}
+
+final class NotificationMarkAsRead extends NotificationsEvent {
+  final int notificationId;
+  const NotificationMarkAsRead(this.notificationId);
+}
+
+final class NotificationsMarkAllAsRead extends NotificationsEvent {
+  const NotificationsMarkAllAsRead();
+}
+
+final class NotificationsUnreadCountRequested extends NotificationsEvent {
+  const NotificationsUnreadCountRequested();
+}
