@@ -13,6 +13,7 @@ import 'package:mobile/features/home/presentation/widgets/feature_grid.dart';
 import 'package:mobile/features/home/presentation/widgets/stats_row.dart';
 import 'package:mobile/features/home/presentation/widgets/user_profile_header.dart';
 import 'package:mobile/core/rooting/app_routes.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
 
 
