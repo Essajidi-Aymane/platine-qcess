@@ -11,6 +11,8 @@ export default function UsersPage() {
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState(null);
     const [search, setSearch] = React.useState("");
+        const [roles, setRoles] = React.useState([]);
+    const [selectedUserIds, setSelectedUserIds] = React.useState([]);
 
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [modalVisible, setModalVisible] = React.useState(false); // <— new
@@ -29,6 +31,9 @@ export default function UsersPage() {
     const [actionLoading, setActionLoading] = React.useState(false);
     const [actionError, setActionError] = React.useState(null);
     const [actionSuccess, setActionSuccess] = React.useState(null);
+    const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
+    const [selectedRoleToAssign, setSelectedRoleToAssign] = React.useState("");
+    const [assigning, setAssigning] = React.useState(false);
 
     const copyEmail = async (email) => {
         try {
@@ -98,33 +103,30 @@ export default function UsersPage() {
             setActionLoading(false);
         }
     }
-
-    async function handleActivateUser() {
-        if (!selectedUser) return;
-        
-        try {
-            setActionLoading(true);
-            setActionError(null);
-            setActionSuccess(null);
-
-            const res = await fetch(`${API_BASE_URL}/users/activate/${selectedUser.id}`, {
-                method: "POST",
-                credentials: "include",
-            });
-
-            if (!res.ok) throw new Error("Erreur lors de l'activation");
-
-            setActionSuccess("Utilisateur activé avec succès");
-            await loadUsers();
-            setSelectedUser({...selectedUser, userStatus: "ACTIVE"});
-            
-        } catch (e) {
-            setActionError(e.message);
-        } finally {
-            setActionLoading(false);
+        const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedUserIds(filteredUsers.map(u => u.id));
+        } else {
+            setSelectedUserIds([]);
         }
-    }
+    };
 
+    const handleSelectUser = (id) => {
+        if (selectedUserIds.includes(id)) {
+            setSelectedUserIds(selectedUserIds.filter(userId => userId !== id));
+        } else {
+            setSelectedUserIds([...selectedUserIds, id]);
+        }
+    };
+        // Ouvrir la modale d'assignation (soit pour la sélection multiple, soit pour un user unique)
+    const openAssignModal = (userId = null) => {
+        if (userId) {
+            // Si on vient du bouton "Détails", on ne sélectionne que lui temporairement pour l'action
+            setSelectedUserIds([userId]);
+        }
+        // Si userId est null, on utilise les selectedUserIds déjà cochés dans le tableau
+        setIsAssignModalOpen(true);
+    };
     const loadUsers = React.useCallback(async () => {
         try {
             setLoading(true);
@@ -153,6 +155,166 @@ export default function UsersPage() {
 
 
     }, [loadUsers]);
+    const handleBulkUnassign = async () => {
+        if (selectedUserIds.length === 0) return;
+        
+        if (!confirm(`Voulez-vous vraiment retirer le rôle de ${selectedUserIds.length} utilisateur(s) ?`)) return;
+
+        try {
+            setAssigning(true);
+            
+            const usersToProcess = users.filter(u => selectedUserIds.includes(u.id) && u.customRoleId);
+            
+            if (usersToProcess.length === 0) {
+                alert("Aucun utilisateur sélectionné n'a de rôle à retirer.");
+                setAssigning(false);
+                return;
+            }
+
+            const usersByRole = {};
+            usersToProcess.forEach(u => {
+                if (!usersByRole[u.customRoleId]) {
+                    usersByRole[u.customRoleId] = [];
+                }
+                usersByRole[u.customRoleId].push(u.id);
+            });
+
+            const promises = Object.entries(usersByRole).map(([roleId, userIds]) => {
+                return fetch(`${API_BASE_URL}/users/unassign`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        roleId: parseInt(roleId),
+                        userIds: userIds
+                    })
+                });
+            });
+
+            await Promise.all(promises);
+
+            setIsAssignModalOpen(false);
+            setSelectedUserIds([]);
+            setSelectedRoleToAssign("");
+            closeDetailsModal();
+            await loadUsers();
+
+        } catch (err) {
+            console.error(err);
+            alert("Erreur lors du retrait des rôles");
+        } finally {
+            setAssigning(false);
+        }
+    };
+
+    // APPEL API : ASSIGNER
+    const handleAssignRoleSubmit = async (e) => {
+        e.preventDefault();
+        if (!selectedRoleToAssign || selectedUserIds.length === 0) return;
+
+        try {
+            setAssigning(true);
+            const body = {
+                roleId: parseInt(selectedRoleToAssign),
+                userIds: selectedUserIds
+            };
+
+            const res = await fetch(`${API_BASE_URL}/users/assign-role`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) throw new Error("Erreur lors de l'assignation");
+
+            setIsAssignModalOpen(false);
+            setSelectedUserIds([]); 
+            setSelectedRoleToAssign("");
+            closeDetailsModal(); // Si on était dans le détail
+            await loadUsers(); 
+            
+        } catch (err) {
+            alert(err.message); // Ou utiliser un state d'erreur plus joli
+        } finally {
+            setAssigning(false);
+        }
+    };
+
+    const handleUnassignRole = async () => {
+        if (!selectedUser || !selectedUser.customRoleId) return;
+
+        try {
+            setActionLoading(true);
+            
+            const body = {
+                roleId: selectedUser.customRoleId,
+                userIds: [selectedUser.id]
+            };
+
+            const res = await fetch(`${API_BASE_URL}/users/unassign`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) throw new Error("Erreur lors de la désassignation");
+
+            setActionSuccess("Rôle retiré avec succès");
+            await loadUsers();
+            setSelectedUser({ ...selectedUser, customRoleId: null, customRoleName: null });
+
+        } catch (e) {
+            setActionError(e.message);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    async function handleActivateUser() {
+        if (!selectedUser) return;
+        
+        try {
+            setActionLoading(true);
+            setActionError(null);
+            setActionSuccess(null);
+
+            const res = await fetch(`${API_BASE_URL}/users/activate/${selectedUser.id}`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            if (!res.ok) throw new Error("Erreur lors de l'activation");
+
+            setActionSuccess("Utilisateur activé avec succès");
+            await loadUsers();
+            setSelectedUser({...selectedUser, userStatus: "ACTIVE"});
+            
+        } catch (e) {
+            setActionError(e.message);
+        } finally {
+            setActionLoading(false);
+        }
+    }
+     const loadRoles = React.useCallback(async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/organizations/roles`, { credentials: "include" });
+            if (res.ok) {
+                const json = await res.json();
+                setRoles(Array.isArray(json) ? json : (json.data || [])); 
+            }
+        } catch (e) {
+            console.error("Erreur chargement rôles", e);
+        }
+    }, []);
+
+    React.useEffect(() => {
+        loadUsers();
+        loadRoles(); 
+    }, [loadUsers, loadRoles]);
+
+
 
     async function handleCreateUser(e) {
         e.preventDefault();
@@ -451,20 +613,43 @@ export default function UsersPage() {
                                         <p className="text-xs text-emerald-600">L'utilisateur pourra se connecter</p>
                                     </div>
                                 </button>
+                                
+                                
                             )}
 
+                            {/* Bouton Assigner / Changer de rôle */}
                             <button
+                                onClick={() => openAssignModal(selectedUser.id)}
                                 disabled={actionLoading}
-                                className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
+                                className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-50 group"
                             >
-                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 group-hover:bg-slate-200">
-                                    <HiOutlineUserRemove className="h-5 w-5" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 group-hover:bg-blue-200">
+                                    <HiOutlineUsers className="h-5 w-5" />
                                 </div>
                                 <div className="flex-1 text-left">
-                                    <p className="text-sm font-semibold text-slate-900">Retirer le rôle personnalisé</p>
-                                    <p className="text-xs text-slate-600">Supprimer le rôle attribué</p>
+                                    <p className="text-sm font-semibold text-blue-900">
+                                        {selectedUser.customRoleId ? "Changer le rôle" : "Assigner un rôle"}
+                                    </p>
+                                    <p className="text-xs text-blue-600">Modifier les permissions</p>
                                 </div>
                             </button>
+
+                            {/* Bouton Désassigner (Unassign) */}
+                            {selectedUser.customRoleId && (
+                                <button
+                                    onClick={handleUnassignRole}
+                                    disabled={actionLoading}
+                                    className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-50 group"
+                                >
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 group-hover:bg-slate-200">
+                                        <HiOutlineUserRemove className="h-5 w-5" />
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                        <p className="text-sm font-semibold text-slate-900">Retirer le rôle personnalisé</p>
+                                        <p className="text-xs text-slate-600">L'utilisateur perdra ses droits spécifiques</p>
+                                    </div>
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -477,6 +662,55 @@ export default function UsersPage() {
                             Fermer
                         </button>
                     </div>
+                </div>
+            </div>
+        )}
+                {/* Modal Assignation Rôle */}
+        {isAssignModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Assigner un rôle</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                        Sélectionnez le rôle à attribuer à {selectedUserIds.length} utilisateur(s).
+                    </p>
+                    
+                    <form onSubmit={handleAssignRoleSubmit}>
+                        <select
+                            className="w-full rounded-lg border border-slate-200 p-2.5 text-sm mb-6"
+                            value={selectedRoleToAssign}
+                            onChange={(e) => setSelectedRoleToAssign(e.target.value)}
+                            required
+                        >
+                            <option value="">-- Choisir un rôle --</option>
+                            {roles.map(role => (
+                                <option key={role.id} value={role.id}>{role.name}</option>
+                            ))}
+                        </select>
+
+                        <div className="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={handleBulkUnassign}
+                                className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg border border-red-200 mr-auto"
+                            >
+                                Retirer
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsAssignModalOpen(false)}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-slate-50 rounded-lg border border-slate-200"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={assigning || !selectedRoleToAssign}
+                                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50"
+                            >
+                                {assigning ? "..." : "Confirmer"}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         )}
@@ -547,9 +781,30 @@ export default function UsersPage() {
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
+                    {selectedUserIds.length > 0 && (
+                <div className="flex items-center justify-between bg-indigo-50 border border-indigo-100 px-4 py-3 rounded-lg mb-4">
+                    <span className="text-sm font-medium text-indigo-900">
+                        {selectedUserIds.length} utilisateur(s) sélectionné(s)
+                    </span>
+                    <button
+                        onClick={() => openAssignModal()}
+                        className="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                        Assigner un rôle
+                    </button>
+                </div>
+            )}
                         <table className="min-w-full text-left text-sm">
                             <thead className="bg-slate-50">
                             <tr className="border-b border-slate-200">
+                                <th className="px-6 py-4 w-12">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer"
+                                        onChange={handleSelectAll}
+                                        checked={filteredUsers.length > 0 && selectedUserIds.length === filteredUsers.length}
+                                    />
+                                </th>
                                 <th className="px-6 py-4 font-semibold text-gray-700 text-xs uppercase tracking-wider">Nom complet</th>
                                 <th className="px-6 py-4 font-semibold text-gray-700 text-xs uppercase tracking-wider">Email</th>
                                 <th className="px-6 py-4 font-semibold text-gray-700 text-xs uppercase tracking-wider text-center">Rôle</th>
@@ -567,13 +822,23 @@ export default function UsersPage() {
                                 return (
                                     <tr
                                         key={user.id}
-                                        className="border-b border-slate-100 hover:bg-linear-to-r hover:from-indigo-50 transition-colors border-l-2 hover:border-l-indigo-500"
+                                        className={`border-b border-slate-100 hover:bg-linear-to-r hover:from-indigo-50 transition-colors border-l-2 ${selectedUserIds.includes(user.id) ? 'bg-indigo-50 border-l-indigo-600' : 'hover:border-l-indigo-500 border-transparent'}`}
                                     >
+                                        <td className="px-6 py-4 align-middle">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer"
+                                                checked={selectedUserIds.includes(user.id)}
+                                                onChange={() => handleSelectUser(user.id)}
+                                            />
+                                        </td>
+
                                         {/* Full Name */}
                                         <td className="px-6 py-4 align-middle">
                                             <div className="flex items-center gap-3">
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-semibold text-sm">
-                                                    {(user.firstName?.charAt(0) || user.email?.charAt(0) || '?').toUpperCase()}
+                                                    {(user.firstName?.charAt(0) || user.email?.charAt(0) || '?').toUpperCase()
+}
                                                 </div>
                                                 <div>
                                                     <div className="font-medium text-gray-900">

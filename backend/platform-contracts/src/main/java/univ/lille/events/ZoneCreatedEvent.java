@@ -1,9 +1,15 @@
 package univ.lille.events;
 
-import lombok.Value;
+import java.io.Serializable;
 
-@Value
-public class ZoneCreatedEvent {
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Data;
+
+@Data 
+@NoArgsConstructor
+@AllArgsConstructor
+public class ZoneCreatedEvent implements Serializable {
 
     Long zoneId ;
     Long organizationId;

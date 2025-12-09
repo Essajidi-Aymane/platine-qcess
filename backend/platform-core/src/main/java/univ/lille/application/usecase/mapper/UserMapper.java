@@ -27,6 +27,7 @@ public final class UserMapper {
                 .build();
 
         if (user.getCustomRole() != null) {
+            userDTO.setCustomRoleId(user.getCustomRole().getId());
             userDTO.setCustomRoleName(user.getCustomRole().getName());
         }
 
