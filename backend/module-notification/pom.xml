@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>univ.lille</groupId>
-    <artifactId>notification</artifactId>
+    <artifactId>module-notification</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>
