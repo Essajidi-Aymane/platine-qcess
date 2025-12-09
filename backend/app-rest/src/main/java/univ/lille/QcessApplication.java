@@ -9,6 +9,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 
 
@@ -16,6 +17,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableJpaRepositories(basePackages = "univ.lille")
 @EntityScan(basePackages = "univ.lille")
 @EnableAsync
+@EnableScheduling
 public class QcessApplication {
 
     private static final Logger log = LoggerFactory.getLogger(QcessApplication.class);

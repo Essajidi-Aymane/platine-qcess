@@ -3,7 +3,8 @@ package univ.lille.module_notification.infrastructure.adapter.jpa;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import univ.lille.module_notification.domain.port.DeviceTokenRepositoryPort;
+
+import univ.lille.module_notification.domain.port.out.DeviceTokenRepositoryPort;
 import univ.lille.module_notification.infrastructure.dao.DeviceTokenDao;
 
 import java.util.List;
@@ -51,6 +52,11 @@ public class DeviceTokenRepositoryAdapter implements DeviceTokenRepositoryPort {
         return jpaRepository.findByOrganizationId(organizationId).stream()
             .map(DeviceTokenDao::getFcmToken)
             .toList();
+    }
+
+    @Override
+    public List<Long> getUserIdsByOrganizationId(Long organizationId) {
+        return jpaRepository.findDistinctUserIdsByOrganizationId(organizationId);
     }
 
     @Override

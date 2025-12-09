@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import univ.lille.application.service.AuthenticationService;
 import univ.lille.module_notification.application.dto.RegisterTokenRequest;
-import univ.lille.module_notification.domain.port.DeviceTokenServicePort;
+import univ.lille.module_notification.domain.port.in.DeviceTokenServicePort;
 
 @Slf4j
 @RestController

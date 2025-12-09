@@ -1,4 +1,4 @@
-package univ.lille.module_notification.domain.port;
+package univ.lille.module_notification.domain.port.out;
 
 import java.util.Map;
 

@@ -2,8 +2,9 @@ package univ.lille.module_notification.application.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import univ.lille.module_notification.domain.port.DeviceTokenRepositoryPort;
-import univ.lille.module_notification.domain.port.DeviceTokenServicePort;
+
+import univ.lille.module_notification.domain.port.in.DeviceTokenServicePort;
+import univ.lille.module_notification.domain.port.out.DeviceTokenRepositoryPort;
 
 import java.util.List;
 
@@ -26,5 +27,10 @@ public class DeviceTokenService implements DeviceTokenServicePort {
     @Override
     public List<String> getTokensByOrganizationId(Long organizationId) {
         return deviceTokenRepository.getTokensByOrganizationId(organizationId);
+    }
+
+    @Override
+    public List<Long> getUserIdsByOrganizationId(Long organizationId) {
+        return deviceTokenRepository.getUserIdsByOrganizationId(organizationId);
     }
 }

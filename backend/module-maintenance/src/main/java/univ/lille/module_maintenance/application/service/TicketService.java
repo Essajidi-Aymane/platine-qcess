@@ -90,13 +90,6 @@ public class TicketService implements TicketServicePort {
         
         Long ownerId = savedTicket.getCreatedByUserId();
         if (ownerId != null) {
-            notificationPublisher.notifyTicketStatusChanged(
-                ownerId,
-                ticketId,
-                savedTicket.getTitle(),
-                newStatus
-            );
-            
             if (newStatus == Status.RESOLVED) {
                 notificationPublisher.notifyTicketResolved(
                     ownerId,
@@ -108,6 +101,13 @@ public class TicketService implements TicketServicePort {
                     ownerId,
                     ticketId,
                     savedTicket.getTitle()
+                );
+            } else {
+                notificationPublisher.notifyTicketStatusChanged(
+                    ownerId,
+                    ticketId,
+                    savedTicket.getTitle(),
+                    newStatus
                 );
             }
         }

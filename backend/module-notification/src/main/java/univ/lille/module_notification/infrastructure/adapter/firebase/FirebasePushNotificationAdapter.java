@@ -5,8 +5,9 @@ import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import lombok.extern.slf4j.Slf4j;
+import univ.lille.module_notification.domain.port.out.PushNotificationPort;
+
 import org.springframework.stereotype.Component;
-import univ.lille.module_notification.domain.port.PushNotificationPort;
 
 import java.util.Map;
 

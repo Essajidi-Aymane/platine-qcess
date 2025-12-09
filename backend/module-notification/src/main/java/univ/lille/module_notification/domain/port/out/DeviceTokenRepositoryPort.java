@@ -1,4 +1,4 @@
-package univ.lille.module_notification.domain.port;
+package univ.lille.module_notification.domain.port.out;
 
 import java.util.List;
 import java.util.Optional;
@@ -8,4 +8,5 @@ public interface DeviceTokenRepositoryPort {
     List<String> getTokensByUserId(Long userId);
     List<String> getTokensByOrganizationId(Long organizationId);
     Optional<Long> getUserIdByToken(String fcmToken);
+    List<Long> getUserIdsByOrganizationId(Long organizationId);
 }

@@ -3,9 +3,12 @@ package univ.lille.module_notification.application.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import univ.lille.module_notification.domain.port.DeviceTokenServicePort;
-import univ.lille.module_notification.domain.port.PushNotificationPort;
-import univ.lille.module_notification.domain.port.PushNotificationServicePort;
+
+import univ.lille.module_notification.domain.model.Notification;
+import univ.lille.module_notification.domain.port.in.DeviceTokenServicePort;
+import univ.lille.module_notification.domain.port.in.PushNotificationServicePort;
+import univ.lille.module_notification.domain.port.out.NotificationRepositoryPort;
+import univ.lille.module_notification.domain.port.out.PushNotificationPort;
 
 import java.util.List;
 import java.util.Map;
@@ -17,6 +20,7 @@ public class PushNotificationService implements PushNotificationServicePort {
 
     private final PushNotificationPort pushNotificationPort;
     private final DeviceTokenServicePort deviceTokenService;
+    private final NotificationRepositoryPort notificationRepository;
 
     @Override
     public void sendToToken(String fcmToken, String title, String body, Map<String, String> data) {
@@ -24,10 +28,20 @@ public class PushNotificationService implements PushNotificationServicePort {
     }
 
     @Override
-    public void sendPushToUser(Long userId, String title, String body, Map<String, String> data) {
+    public void sendPushToUser(Long userId, String title, String body, String type, Map<String, String> data) {
+        Notification notification = Notification.builder()
+                .userId(userId)
+                .title(title)
+                .body(body)
+                .type(type)
+                .read(false)
+                .build();
+        notificationRepository.save(notification);
+        log.debug("Notification stored for user {}", userId);
+
         List<String> tokens = deviceTokenService.getTokensByUserId(userId);
         if (tokens.isEmpty()) {
-            log.warn("No FCM tokens found for user {}", userId);
+            log.warn("No FCM tokens found for user {}, notification stored but push not sent", userId);
             return;
         }
         for (String token : tokens) {
@@ -37,7 +51,21 @@ public class PushNotificationService implements PushNotificationServicePort {
     }
 
     @Override
-    public void sendToOrganization(Long organizationId, String title, String body, Map<String, String> data) {
+    public void sendToOrganization(Long organizationId, String title, String body, String type, Map<String, String> data) {
+        List<Long> userIds = deviceTokenService.getUserIdsByOrganizationId(organizationId);
+        
+        for (Long userId : userIds) {
+            Notification notification = Notification.builder()
+                    .userId(userId)
+                    .title(title)
+                    .body(body)
+                    .type(type)
+                    .read(false)
+                    .build();
+            notificationRepository.save(notification);
+        }
+        log.debug("Notifications stored for {} users in organization {}", userIds.size(), organizationId);
+
         List<String> tokens = deviceTokenService.getTokensByOrganizationId(organizationId);
         if (tokens.isEmpty()) {
             log.warn("No FCM tokens found for organization {}", organizationId);
