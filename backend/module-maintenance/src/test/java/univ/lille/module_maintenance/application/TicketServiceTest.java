@@ -8,6 +8,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import univ.lille.module_maintenance.application.service.NotificationPublisher;
+import univ.lille.module_maintenance.application.service.TicketService;
 import univ.lille.module_maintenance.domain.exception.CommentException;
 import univ.lille.module_maintenance.domain.exception.InvalidTicketException;
 import univ.lille.module_maintenance.domain.exception.TicketNotFoundException;
@@ -18,7 +21,6 @@ import univ.lille.module_maintenance.domain.model.Priority;
 import univ.lille.module_maintenance.domain.model.Status;
 import univ.lille.module_maintenance.domain.model.Ticket;
 import univ.lille.module_maintenance.domain.port.TicketRepositoryPort;
-import univ.lille.domain.port.in.UserPort;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +37,7 @@ class TicketServiceTest {
     private TicketRepositoryPort ticketRepository;
 
     @Mock
-    private UserPort userPort;
+    private NotificationPublisher notificationPublisher;
 
     @InjectMocks
     private TicketService service;
@@ -115,6 +117,7 @@ class TicketServiceTest {
         @DisplayName("updateStatus succeeds for valid transition")
         void updateStatus_validTransition() {
             when(ticketRepository.findById(10L)).thenReturn(Optional.of(baseTicket));
+            when(ticketRepository.save(baseTicket)).thenReturn(baseTicket);
             service.updateStatus(10L, Status.IN_PROGRESS);
             assertEquals(Status.IN_PROGRESS, baseTicket.getStatus());
             verify(ticketRepository).save(baseTicket);
@@ -194,6 +197,7 @@ class TicketServiceTest {
         @DisplayName("addAdminComment success adds admin comment and saves")
         void addAdminComment_success() {
             when(ticketRepository.findById(10L)).thenReturn(Optional.of(baseTicket));
+            when(ticketRepository.save(baseTicket)).thenReturn(baseTicket);
             service.addAdminCommentToThread(10L, "Admin Response", 50L, "AdminUser");
             assertEquals(1, baseTicket.getComments().size());
             Comment c = baseTicket.getComments().get(0);

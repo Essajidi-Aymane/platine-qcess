@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import univ.lille.infrastructure.adapter.security.QcessUserPrincipal;
-import univ.lille.module_maintenance.application.TicketService;
 import univ.lille.module_maintenance.application.dto.AddAdminCommentRequest;
 import univ.lille.module_maintenance.application.dto.AddCommentRequest;
 import univ.lille.module_maintenance.application.dto.CreateTicketRequest;
@@ -21,6 +20,7 @@ import univ.lille.module_maintenance.application.dto.UpdateTicketStatusRequest;
 import univ.lille.module_maintenance.domain.model.Priority;
 import univ.lille.module_maintenance.domain.model.Status;
 import univ.lille.module_maintenance.domain.model.Ticket;
+import univ.lille.module_maintenance.domain.port.TicketServicePort;
 
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequiredArgsConstructor
 public class TicketController {
 
-    private final TicketService ticketService;
+    private final TicketServicePort ticketService;
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/me")

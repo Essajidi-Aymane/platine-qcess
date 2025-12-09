@@ -32,9 +32,9 @@ class FeatureGrid extends StatelessWidget {
         color: AppColors.historyColor,
       ),
       const FeatureData(
-        icon: Icons.calendar_today,
-        label: 'Réservations',
-        color: AppColors.reservationsColor,
+        icon: Icons.notifications_outlined,
+        label: 'Notifications',
+        color: AppColors.info,
       ),
       const FeatureData(
         icon: Icons.chat_bubble_outline,
@@ -88,6 +88,9 @@ class FeatureGrid extends StatelessWidget {
     switch (label) {
       case 'Maintenance':
         context.push(AppRoutes.maintenanceTickets);
+        break;
+      case 'Notifications':
+        context.push(AppRoutes.notifications);
         break;
       default:
         _showComingSoon(context, label);

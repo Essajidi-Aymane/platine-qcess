@@ -1,4 +1,4 @@
-package univ.lille.module_maintenance.application;
+package univ.lille.module_maintenance.application.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
@@ -15,6 +15,7 @@ import univ.lille.module_maintenance.domain.model.Priority;
 import univ.lille.module_maintenance.domain.model.Status;
 import univ.lille.module_maintenance.domain.model.Ticket;
 import univ.lille.module_maintenance.domain.port.TicketRepositoryPort;
+import univ.lille.module_maintenance.domain.port.TicketServicePort;
 import univ.lille.domain.port.in.UserPort;
 import univ.lille.dto.auth.user.UserDTO;
 
@@ -27,9 +28,10 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class TicketService {
+public class TicketService implements TicketServicePort {
 
     private final TicketRepositoryPort ticketRepository;
+    private final NotificationPublisher notificationPublisher;
     private final UserPort userPort;
 
     @Transactional
@@ -38,7 +40,6 @@ public class TicketService {
         if (ticket.getStatus() == null) {
             ticket.setStatus(Status.OPEN);
         }
-        // ✅ FIX: On tente de récupérer le nom de l'utilisateur AVANT la sauvegarde
         if (ticket.getCreatedByUserName() == null) {
             enrichTicketsWithUserNames(List.of(ticket), ticket.getOrganizationId());
         }
@@ -52,12 +53,10 @@ public class TicketService {
                 .orElseThrow(() -> new TicketNotFoundException(ticketId))
         );
 
-        // ✅ FIX: On enrichit le ticket unique si les noms sont manquants (pour l'affichage détail)
         if (ticket.getCreatedByUserName() == null || hasMissingCommentAuthors(ticket)) {
             enrichTicketsWithUserNames(List.of(ticket), ticket.getOrganizationId());
         }
 
-        // ✅ FIX: On trie les commentaires par date pour que la conversation soit logique
         if (ticket.getComments() != null) {
             ticket.getComments().sort(Comparator.comparing(Comment::getCreatedAt));
         }
@@ -65,7 +64,6 @@ public class TicketService {
         return ticket;
     }
 
-    // Helper pour vérifier si des auteurs de commentaires sont manquants
     private boolean hasMissingCommentAuthors(Ticket ticket) {
         if (ticket.getComments() == null) return false;
         return ticket.getComments().stream().anyMatch(c -> c.getAuthorUserName() == null);
@@ -143,16 +141,42 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
 
+        Status oldStatus = ticket.getStatus();
+        
         try {
             ticket.updateStatus(newStatus);
         } catch (IllegalStateException ex) {
             throw InvalidTicketException.invalidTransition(
-                    ticket.getStatus() != null ? ticket.getStatus().name() : "<null>",
+                    oldStatus != null ? oldStatus.name() : "<null>",
                     newStatus.name()
             );
         }
 
         Ticket savedTicket = ticketRepository.save(ticket);
+        Long ownerId = savedTicket.getCreatedByUserId();
+        if (ownerId != null) {
+            if (newStatus == Status.RESOLVED) {
+                notificationPublisher.notifyTicketResolved(
+                    ownerId,
+                    ticketId,
+                    savedTicket.getTitle()
+                );
+            } else if (newStatus == Status.REJECTED) {
+                notificationPublisher.notifyTicketRejected(
+                    ownerId,
+                    ticketId,
+                    savedTicket.getTitle()
+                );
+            } else {
+                notificationPublisher.notifyTicketStatusChanged(
+                    ownerId,
+                    ticketId,
+                    savedTicket.getTitle(),
+                    newStatus
+                );
+            }
+        }
+
         enrichTicketsWithUserNames(List.of(savedTicket), savedTicket.getOrganizationId());
         return savedTicket;
     }
@@ -216,7 +240,6 @@ public class TicketService {
         
         Ticket savedTicket = ticketRepository.save(ticket);
         enrichTicketsWithUserNames(List.of(savedTicket), savedTicket.getOrganizationId());
-        // Ensure comments are sorted
         if (savedTicket.getComments() != null) {
             savedTicket.getComments().sort(Comparator.comparing(Comment::getCreatedAt));
         }
@@ -252,8 +275,18 @@ public class TicketService {
         ticket.setUpdatedAt(LocalDateTime.now());
         
         Ticket savedTicket = ticketRepository.save(ticket);
+        
+        Long ownerId = savedTicket.getCreatedByUserId();
+        if (ownerId != null && !ownerId.equals(authorUserId)) {
+            notificationPublisher.notifyAdminCommentAdded(
+                ownerId,
+                ticketId,
+                savedTicket.getTitle(),
+                authorUserName != null ? authorUserName : "Un administrateur"
+            );
+        }
+
         enrichTicketsWithUserNames(List.of(savedTicket), savedTicket.getOrganizationId());
-        // Ensure comments are sorted
         if (savedTicket.getComments() != null) {
             savedTicket.getComments().sort(Comparator.comparing(Comment::getCreatedAt));
         }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "176626326734",
+    "project_id": "qcess-app",
+    "storage_bucket": "qcess-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:176626326734:android:c19f65969101977672049f",
+        "android_client_info": {
+          "package_name": "com.example.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQchXjrKzZY9bQeXYWb9K5RxJbKpoAEKE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

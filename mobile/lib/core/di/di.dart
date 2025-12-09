@@ -16,12 +16,17 @@ import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repository.dart';
 import 'package:mobile/features/maintenance/data/repositories/maintenance_repository.dart';
 import 'package:mobile/features/maintenance/logic/bloc/tickets_bloc.dart';
+import 'package:mobile/features/notification/data/repositories/i_device_token_repository.dart';
+import 'package:mobile/features/notification/data/repositories/device_token_repository.dart';
+import 'package:mobile/features/notification/data/repositories/i_notification_repository.dart';
+import 'package:mobile/features/notification/data/repositories/notification_repository.dart';
+import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
 import 'package:mobile/features/profile/data/repositories/i_profile_repository.dart';
 import 'package:mobile/features/profile/logic/bloc/profile_bloc.dart';
 
 final sl = GetIt.instance;
 
-const String apiBaseUrl = 'http://localhost:8080';
+const String apiBaseUrl = 'http://10.0.2.2:8080';
 const Duration httpTimeout = Duration(seconds: 30);
 
 Future<void> initDependencies() async {
@@ -31,6 +36,7 @@ Future<void> initDependencies() async {
   await initHomeFeature();
   await initMaintenanceFeature();
   await initProfileFeature();
+  await initNotificationFeature();
 }
 
 Future<void> initNetworkDependencies() async {
@@ -116,5 +122,22 @@ Future<void> initProfileFeature() async {
 
   sl.registerFactory<ProfileBloc>(
     () => ProfileBloc(profileRepository: sl<IProfileRepository>()),
+  );
+}
+
+Future<void> initNotificationFeature() async {
+  sl.registerLazySingleton<IDeviceTokenRepository>(
+    () => PushNotificationRepository(dio: sl<Dio>()),
+  );
+
+  sl.registerLazySingleton<INotificationRepository>(
+    () => NotificationRepository(sl<Dio>()),
+  );
+
+  sl.registerLazySingleton<PushNotificationBloc>(
+    () => PushNotificationBloc(
+      repository: sl<IDeviceTokenRepository>(),
+      notificationRepository: sl<INotificationRepository>(),
+    ),
   );
 }

@@ -9,6 +9,8 @@ import 'package:mobile/features/home/data/repositories/I_dashboard_user_reposito
 import 'package:mobile/features/home/logic/bloc/dashboard_bloc.dart';
 import 'package:mobile/features/maintenance/data/repositories/i_maintenance_repository.dart';
 import 'package:mobile/features/maintenance/logic/bloc/tickets_bloc.dart';
+import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
+import 'package:mobile/features/notification/presentation/notification_initializer.dart';
 import 'package:mobile/features/profile/data/repositories/i_profile_repository.dart';
 import 'package:mobile/features/profile/logic/bloc/profile_bloc.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
@@ -53,34 +55,39 @@ class _MyAppState extends State<MyApp> {
           create: (_) => ProfileBloc(
               profileRepository: sl<IProfileRepository>()),
         ),
+        BlocProvider<PushNotificationBloc>(
+          create: (_) => sl<PushNotificationBloc>(),
+        ),
         BlocProvider<ThemeBloc>(
           create: (_) => ThemeBloc(),
         ),
       ],
-      child: BlocBuilder<ThemeBloc, ThemeState>(
-        builder: (context, themeState) {
-          debugPrint('[MyApp] Building with theme: ${themeState.themeMode}, isLoading: ${themeState.isLoading}');
-          
-          if (themeState.isLoading) {
-            return const MaterialApp(
-              home: Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
+      child: NotificationInitializer(
+        child: BlocBuilder<ThemeBloc, ThemeState>(
+          builder: (context, themeState) {
+            debugPrint('[MyApp] Building with theme: ${themeState.themeMode}, isLoading: ${themeState.isLoading}');
+            
+            if (themeState.isLoading) {
+              return const MaterialApp(
+                home: Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
                 ),
-              ),
+                debugShowCheckedModeBanner: false,
+              );
+            }
+            
+            return MaterialApp.router(
+              title: 'Qcess',
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeState.themeMode,
               debugShowCheckedModeBanner: false,
+              routerConfig: _appRouter.router,
             );
-          }
-          
-          return MaterialApp.router(
-            title: 'Qcess',
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeState.themeMode,
-            debugShowCheckedModeBanner: false,
-            routerConfig: _appRouter.router,
-          );
-        },
+          },
+        ),
       ),
     );
   }
