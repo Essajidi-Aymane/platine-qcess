@@ -14,14 +14,22 @@ class DashboardUserRepository extends BaseApiRepository
   Future<UserDashboard> getUserDashboard(UserInfo userInfo) async {
     final logs = await accessRepository.getUserAccessLogs(limit: 100);
 
-    final totalAccess = logs.length;
+    final now = DateTime.now();
+    final logsThisMonth = logs.where((log) {
+      if (log.accessGranted != true) return false;
+      final ts = log.timestamp;
+      return ts.month == now.month && ts.year == now.year;
+    }).toList();
+
+    final totalAccess = logsThisMonth.length;
+
     final lastAccess = logs.isNotEmpty ? logs.first.timestamp : null;
     final lastAccessGranted = logs.isNotEmpty ? logs.first.accessGranted : null;
     final lastAccessReason = logs.isNotEmpty ? logs.first.reason : null;
 
     final uniqueZones = logs
-        .where((log) => log.zoneId != null)
-        .map((log) => log.zoneId)
+        .where((log) => log.zoneName != null)
+        .map((log) => log.zoneName)
         .toSet()
         .length;
 
