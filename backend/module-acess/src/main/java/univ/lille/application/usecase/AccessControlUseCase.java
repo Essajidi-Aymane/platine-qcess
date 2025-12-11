@@ -44,7 +44,9 @@ public class AccessControlUseCase implements AccessControlPort {
             reason = "ZONE_INACTIVE"; 
         } else if (zone.getAllowedRoleIds() == null || zone.getAllowedRoleIds().isEmpty()) { 
             granted=true; 
+            user.setLastAccessAt(LocalDateTime.now());
             reason = "PUBLIC_ZONE" ; 
+            
         } else if ( zone.getAllowedRoleIds() != null && zone.getAllowedRoleIds().contains(user.getCustomRole().getId())) { 
             granted = true; 
             reason = "AUTHORIZED_ROLE" ; 
@@ -52,6 +54,8 @@ public class AccessControlUseCase implements AccessControlPort {
         } else { 
             reason = "ROLE_NOT_ALLOWED" ; 
         }
+
+     
 
         AccessLog log = AccessLog.builder()
                 .userId(userId)
@@ -64,6 +68,11 @@ public class AccessControlUseCase implements AccessControlPort {
                 .reason(reason)
                 .build(); 
         accessLogRepository.save(log);
+
+           if ( granted) { 
+            user.setLastAccessAt(LocalDateTime.now());
+            userRepository.save(user);
+        }
 
         AccessLogResponseDTO notificationDto = mapToDto(log);
 
@@ -83,6 +92,7 @@ public class AccessControlUseCase implements AccessControlPort {
     private AccessLogResponseDTO mapToDto(AccessLog log) {
         return AccessLogResponseDTO.builder()
             .id(log.getId())
+            .userId(log.getUserId())
             .userName(log.getUserName() != null ? log.getUserName() : "Utilisateur inconnu")
             .zoneName(log.getZoneName() != null ? log.getZoneName() : "Zone inconnue")
             .timestamp(log.getTimestamp())

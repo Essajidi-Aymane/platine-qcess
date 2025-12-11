@@ -29,6 +29,8 @@ public class UserDTO {
     private Long organisationId;
     private String organizationName;
     private LocalDateTime createdAt;
+    private LocalDateTime lastAccessAt; 
+    private LocalDateTime lastLogin ; 
     private String profilePictureUrl;
 
     public String getDisplayName() {

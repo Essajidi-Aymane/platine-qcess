@@ -23,6 +23,8 @@ public final class UserMapper {
                 .organisationId(user.getOrganization() != null ? user.getOrganization().getId() : null)
                 .organizationName(user.getOrganization() != null ? user.getOrganization().getName() : null)
                 .createdAt(user.getCreatedAt())
+                .lastLogin(user.getLastLoginAt())
+                .lastAccessAt(user.getLastAccessAt())
                 .profilePictureUrl(user.getProfilePictureUrl())
                 .build();
 
