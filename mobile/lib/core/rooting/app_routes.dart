@@ -17,6 +17,10 @@ class AppRoutes {
 
   static const notifications = '/notifications';
   static const notificationsName = 'notifications';
+
+  static const scanner = '/scanner';
+  static const scannerName = 'scanner';
+
   static const settings = '/settings';
   static const settingsName = 'settings';
   static const settingsProfile = '/settings/profile';
@@ -27,4 +31,5 @@ class AppRoutes {
   static const settingsHelpName = 'settingsHelp';
   static const settingsAbout = '/settings/about';
   static const settingsAboutName = 'settingsAbout';
+
 }

@@ -15,20 +15,24 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   Future<void> _onLoadDashboard(LoadDashboard event, Emitter<DashboardState> emit) async {
     emit(DashboardLoading());
     try {
-      final userDashboard = await dashboardUserRepository.getUserDashboard();
+      final userDashboard = await dashboardUserRepository.getUserDashboard(event.userInfo);
       emit(DashboardLoaded(userDashboard));
-    } catch (e) {
-      emit(DashboardError("Failed to load dashboard"));
+    } catch (e, stackTrace) {
+      print('[DashboardBloc] Error loading dashboard: $e');
+      print('[DashboardBloc] StackTrace: $stackTrace');
+      emit(DashboardError("Failed to load dashboard: ${e.toString()}"));
     }
   }
 
   Future<void> _onRefreshDashboard(RefreshDashboard event, Emitter<DashboardState> emit) async {
     emit(DashboardLoading());
     try {
-      final userDashboard = await dashboardUserRepository.getUserDashboard();
+      final userDashboard = await dashboardUserRepository.getUserDashboard(event.userInfo);
       emit(DashboardLoaded(userDashboard));
-    } catch (e) {
-      emit(DashboardError("Failed to refresh dashboard"));
+    } catch (e, stackTrace) {
+      print('[DashboardBloc] Error refreshing dashboard: $e');
+      print('[DashboardBloc] StackTrace: $stackTrace');
+      emit(DashboardError("Failed to refresh dashboard: ${e.toString()}"));
     }
   }
 }

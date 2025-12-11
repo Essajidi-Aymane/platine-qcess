@@ -1,3 +1,4 @@
+import 'package:mobile/features/auth/data/models/user_info.dart';
 import 'package:mobile/features/auth/data/repositories/i_auth_repository.dart';
 import 'package:mobile/features/auth/logic/exception/api_exception.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_event.dart';
@@ -24,7 +25,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (hasToken) {
         final token = await authRepository.getToken();
         if (token != null && token.isNotEmpty) {
-          emit(AuthAuthenticated(token: token));
+          try {
+            final userInfo = await authRepository.getUserInfo();
+            emit(AuthAuthenticated(token: token, userInfo: userInfo));
+          } catch (e) {
+            print('[AuthBloc] Erreur récupération user info au démarrage: $e');
+            emit(AuthUnauthenticated());
+          }
         } else {
           emit(AuthUnauthenticated());
         }
@@ -43,7 +50,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final token = await authRepository.login(event.username, event.accessCode);
-      emit(AuthAuthenticated(token: token));
+      
+      // Récupérer les infos utilisateur après le login
+      try {
+        final userInfo = await authRepository.getUserInfo();
+        emit(AuthAuthenticated(token: token, userInfo: userInfo));
+      } catch (e) {
+        // Si échec de récupération des infos, déconnecter
+        print('[AuthBloc] Erreur récupération user info après login: $e');
+        await authRepository.logout(token);
+        emit(AuthUnauthenticated(error: 'Erreur lors de la récupération des informations utilisateur'));
+      }
     } catch (e) {
       emit(AuthUnauthenticated(error: _mapExceptionToMessage(e)));
     }

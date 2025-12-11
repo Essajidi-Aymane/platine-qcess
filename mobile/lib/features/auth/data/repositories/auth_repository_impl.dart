@@ -1,4 +1,5 @@
 import 'package:mobile/features/auth/data/models/login_request.dart';
+import 'package:mobile/features/auth/data/models/user_info.dart';
 import 'package:mobile/features/auth/data/repositories/auth_api_service.dart';
 import 'package:mobile/features/auth/data/repositories/i_auth_repository.dart';
 import 'package:mobile/features/auth/data/repositories/token_storage_service.dart';
@@ -71,6 +72,18 @@ class AuthRepositoryImpl implements IAuthRepository {
       return await tokenStorage.getToken();
     } catch (e) {
       return null;
+    }
+  }
+
+  @override
+  Future<UserInfo> getUserInfo() async {
+    try {
+      final data = await apiService.getUserInfo();
+      return UserInfo.fromJson(data);
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Erreur lors de la récupération des informations utilisateur: ${e.toString()}');
     }
   }
 }

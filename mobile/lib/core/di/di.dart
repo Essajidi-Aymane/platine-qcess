@@ -9,7 +9,7 @@ import 'package:mobile/features/auth/data/repositories/i_auth_repository.dart';
 import 'package:mobile/features/auth/data/repositories/token_storage_service.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_bloc.dart';
 import 'package:mobile/features/home/data/repositories/I_dashboard_user_repository.dart';
-import 'package:mobile/features/home/data/repositories/dashboard_user_repository_mock.dart';
+import 'package:mobile/features/home/data/repositories/dashboard_user_repository.dart';
 import 'package:mobile/features/home/logic/bloc/dashboard_bloc.dart';
 import 'package:mobile/features/profile/data/repositories/profile_repository.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
@@ -23,10 +23,13 @@ import 'package:mobile/features/notification/data/repositories/notification_repo
 import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
 import 'package:mobile/features/profile/data/repositories/i_profile_repository.dart';
 import 'package:mobile/features/profile/logic/bloc/profile_bloc.dart';
+import 'package:mobile/features/access/data/repositories/i_access_repository.dart';
+import 'package:mobile/features/access/data/repositories/access_repository.dart';
+import 'package:mobile/features/access/logic/bloc/access_bloc.dart';
 
 final sl = GetIt.instance;
 
-const String apiBaseUrl = 'http://10.0.2.2:8080';
+const String apiBaseUrl = 'http://localhost:8080';
 const Duration httpTimeout = Duration(seconds: 30);
 
 Future<void> initDependencies() async {
@@ -37,16 +40,13 @@ Future<void> initDependencies() async {
   await initMaintenanceFeature();
   await initProfileFeature();
   await initNotificationFeature();
+  await initAccessFeature();
 }
 
 Future<void> initNetworkDependencies() async {
-  sl.registerLazySingleton<TokenStorageService>(
-    () => TokenStorageService(),
-  );
+  sl.registerLazySingleton<TokenStorageService>(() => TokenStorageService());
 
-  sl.registerLazySingleton<Dio>(
-    () => _buildDio(sl<TokenStorageService>()),
-  );
+  sl.registerLazySingleton<Dio>(() => _buildDio(sl<TokenStorageService>()));
 }
 
 Dio _buildDio(TokenStorageService tokenStorage) {
@@ -71,9 +71,7 @@ Dio _buildDio(TokenStorageService tokenStorage) {
 }
 
 Future<void> initSplashFeature() async {
-  sl.registerLazySingleton<SplashBloc>(
-    () => SplashBloc(),
-  );
+  sl.registerLazySingleton<SplashBloc>(() => SplashBloc());
 }
 
 Future<void> initAuthFeature() async {
@@ -95,13 +93,12 @@ Future<void> initAuthFeature() async {
 
 Future<void> initHomeFeature() async {
   sl.registerLazySingleton<IDashboardUserRepository>(
-    () => DashboardUserRepositoryMock(),
+    () => DashboardUserRepository(sl<Dio>(), sl<IAccessRepository>()),
   );
 
   sl.registerLazySingleton<DashboardBloc>(
-    () => DashboardBloc(
-      dashboardUserRepository: sl<IDashboardUserRepository>(),
-    ),
+    () =>
+        DashboardBloc(dashboardUserRepository: sl<IDashboardUserRepository>()),
   );
 }
 
@@ -139,5 +136,15 @@ Future<void> initNotificationFeature() async {
       repository: sl<IDeviceTokenRepository>(),
       notificationRepository: sl<INotificationRepository>(),
     ),
+  );
+}
+
+Future<void> initAccessFeature() async {
+  sl.registerLazySingleton<IAccessRepository>(
+    () => AccessRepository(sl<Dio>()),
+  );
+
+  sl.registerFactory<AccessBloc>(
+    () => AccessBloc(repository: sl<IAccessRepository>()),
   );
 }

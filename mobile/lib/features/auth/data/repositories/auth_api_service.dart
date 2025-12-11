@@ -37,4 +37,13 @@ class AuthApiService extends BaseApiRepository {
       return false;
     }
   }
+
+  Future<Map<String, dynamic>> getUserInfo() async {
+    try {
+      final data = await get<Map<String, dynamic>>('/api/users/me');
+      return data;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

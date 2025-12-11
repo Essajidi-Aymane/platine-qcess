@@ -21,6 +21,7 @@ import 'package:mobile/features/profile/presentation/pages/profile_page.dart';
 import 'package:mobile/features/settings/presentation/screens/settings_page.dart';
 import 'package:mobile/features/settings/presentation/screens/help_page.dart';
 import 'package:mobile/features/settings/presentation/screens/about_page.dart';
+import 'package:mobile/features/access/presentation/screens/scanner_page.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_state.dart';
 import 'package:mobile/features/splash/presentation/screens/splash_page.dart';
@@ -210,11 +211,9 @@ class AppRouter {
             StatefulShellBranch(
               routes: [
                 GoRoute(
-                  path: '/scanner',
-                  name: 'scanner',
-                  builder: (context, state) => const Scaffold(
-                    body: Center(child: Text('Scanner - À venir')),
-                  ),
+                  path: AppRoutes.scanner,
+                  name: AppRoutes.scannerName,
+                  builder: (context, state) => const ScannerPage(),
                 ),
               ],
             ),
@@ -233,10 +232,14 @@ class AppRouter {
 
   void _triggerDashboardLoad(BuildContext context) {
     final dashboardBloc = context.read<DashboardBloc>();
+    final authBloc = context.read<AuthBloc>();
     final state = dashboardBloc.state;
 
     if (state is DashboardInitial || state is DashboardError) {
-      dashboardBloc.add(LoadDashboard());
+      final authState = authBloc.state;
+      if (authState is AuthAuthenticated && authState.userInfo != null) {
+        dashboardBloc.add(LoadDashboard(userInfo: authState.userInfo!));
+      }
     }
   }
 }
