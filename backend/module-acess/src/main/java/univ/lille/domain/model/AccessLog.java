@@ -11,6 +11,8 @@ public class AccessLog {
     Long id; 
     Long userId; 
     Long zoneId ; 
+    String userName; 
+    String zoneName;
     Long organizationId; 
     LocalDateTime timestamp; 
     boolean accessGranted ; 

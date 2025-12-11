@@ -11,6 +11,7 @@ import univ.lille.domain.model.AccessLog;
 import univ.lille.domain.model.CustomRole;
 import univ.lille.domain.model.User;
 import univ.lille.domain.model.Zone;
+import univ.lille.domain.port.out.AccessLogNotificationPort;
 import univ.lille.domain.port.out.AccessLogRepository;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.domain.port.out.ZoneRepository;
@@ -33,6 +34,8 @@ class AccessControlUseCaseTest {
     private UserRepository userRepository;
     @Mock
     private AccessLogRepository accessLogRepository;
+    @Mock 
+    private AccessLogNotificationPort notifictionPort; 
 
     @InjectMocks
     private AccessControlUseCase accessControlUseCase;

@@ -24,7 +24,6 @@ export default function UsersPage() {
     const [formError, setFormError] = React.useState(null);
     const [copiedEmail, setCopiedEmail] = React.useState(null);
 
-    // Modal détails utilisateur
     const [isDetailsModalOpen, setIsDetailsModalOpen] = React.useState(false);
     const [detailsModalVisible, setDetailsModalVisible] = React.useState(false);
     const [selectedUser, setSelectedUser] = React.useState(null);
@@ -34,6 +33,49 @@ export default function UsersPage() {
     const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
     const [selectedRoleToAssign, setSelectedRoleToAssign] = React.useState("");
     const [assigning, setAssigning] = React.useState(false);
+
+
+
+    React.useEffect(() => {
+        // On se connecte au flux des logs d'accès
+        // Note: Assurez-vous que l'URL correspond à votre backend (ex: /api/access/stream-logs)
+        const streamUrl = `${API_BASE_URL}/access/stream-logs`;
+        
+        // withCredentials: true permet d'envoyer les cookies (JWT) automatiquement
+        const eventSource = new EventSource(streamUrl, { withCredentials: true });
+
+        eventSource.addEventListener('access-log', (event) => {
+            try {
+                const newLog = JSON.parse(event.data);
+                
+                // Quand un log arrive, on met à jour le "Dernier accès" de l'utilisateur concerné
+                setUsers(currentUsers => currentUsers.map(user => {
+                    // On essaie de faire correspondre l'utilisateur
+                    // Idéalement, le log devrait contenir userId. Sinon on compare les noms (moins précis)
+                    const isMatch = user.id === newLog.userId || 
+                                   (user.firstName + ' ' + user.lastName) === newLog.userName;
+
+                    if (isMatch) {
+                        console.log(`Mise à jour temps réel pour : ${user.email}`);
+                        return {
+                            ...user,
+                            lastAccessAt: newLog.timestamp // On met à jour la date
+                        };
+                    }
+                    return user;
+                }));
+            } catch (err) {
+                console.error("Erreur parsing SSE", err);
+            }
+        });
+        eventSource.onerror = (err) => {
+            console.warn("SSE déconnecté (UsersPage)", err);
+            eventSource.close();
+        };
+         return () => {
+            eventSource.close();
+        };
+    }, []); 
 
     const copyEmail = async (email) => {
         try {
@@ -118,13 +160,10 @@ export default function UsersPage() {
             setSelectedUserIds([...selectedUserIds, id]);
         }
     };
-        // Ouvrir la modale d'assignation (soit pour la sélection multiple, soit pour un user unique)
     const openAssignModal = (userId = null) => {
         if (userId) {
-            // Si on vient du bouton "Détails", on ne sélectionne que lui temporairement pour l'action
             setSelectedUserIds([userId]);
         }
-        // Si userId est null, on utilise les selectedUserIds déjà cochés dans le tableau
         setIsAssignModalOpen(true);
     };
     const loadUsers = React.useCallback(async () => {

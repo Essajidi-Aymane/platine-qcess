@@ -1,6 +1,7 @@
 package univ.lille.application.usecase;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
@@ -12,9 +13,11 @@ import univ.lille.domain.model.AccessLog;
 import univ.lille.domain.model.User;
 import univ.lille.domain.model.Zone;
 import univ.lille.domain.port.in.AccessControlPort;
+import univ.lille.domain.port.out.AccessLogNotificationPort;
 import univ.lille.domain.port.out.AccessLogRepository;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.domain.port.out.ZoneRepository;
+import univ.lille.dto.access.AccessLogResponseDTO;
 import univ.lille.dto.access.AccessResponseDTO;
 import univ.lille.enums.ZoneStatus;
 
@@ -25,6 +28,7 @@ public class AccessControlUseCase implements AccessControlPort {
     private final ZoneRepository zoneRepository ; 
     private final UserRepository userRepository ; 
     private final AccessLogRepository accessLogRepository ; 
+    private final AccessLogNotificationPort notificationPort; 
     @Override
     @Transactional
     public AccessResponseDTO validateAccess(Long userId, Long zoneId) {
@@ -52,14 +56,39 @@ public class AccessControlUseCase implements AccessControlPort {
         AccessLog log = AccessLog.builder()
                 .userId(userId)
                 .zoneId(zoneId)
+                .zoneName(zone.getName())
+                .userName(user.getFullName())
                 .organizationId(zone.getOrgId())
                 .timestamp(LocalDateTime.now())
                 .accessGranted(granted)
                 .reason(reason)
                 .build(); 
         accessLogRepository.save(log);
-        return new AccessResponseDTO(granted , reason , zone.getName()); 
 
+        AccessLogResponseDTO notificationDto = mapToDto(log);
+
+        
+        AccessResponseDTO logDto =  new AccessResponseDTO(granted , reason , zone.getName()); 
+        
+        notificationPort.notifyAdmins(log.getOrganizationId(), notificationDto);
+
+         return logDto;
+
+    }
+    @Override
+    @Transactional
+    public List<AccessLogResponseDTO> getAccessLogs(Long orgaanizationId) {
+        return accessLogRepository.findByOrganizationId(orgaanizationId).stream().map(this::mapToDto).toList();
+    }
+    private AccessLogResponseDTO mapToDto(AccessLog log) {
+        return AccessLogResponseDTO.builder()
+            .id(log.getId())
+            .userName(log.getUserName() != null ? log.getUserName() : "Utilisateur inconnu")
+            .zoneName(log.getZoneName() != null ? log.getZoneName() : "Zone inconnue")
+            .timestamp(log.getTimestamp())
+            .accessGranted(log.isAccessGranted())
+            .reason(log.getReason())
+            .build();
     }
     
 }
