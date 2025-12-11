@@ -5,6 +5,8 @@ class UserDashboard extends Equatable {
   final String? profilePictureUrl;
   final int totalAccess;
   final DateTime? lastAccess;
+  final bool? lastAccessGranted;
+  final String? lastAccessReason;
   final int totalZones;
 
   const UserDashboard({
@@ -12,6 +14,8 @@ class UserDashboard extends Equatable {
     this.profilePictureUrl,
     required this.totalAccess,
     this.lastAccess,
+    this.lastAccessGranted,
+    this.lastAccessReason,
     this.totalZones = 0,
   });
 
@@ -21,6 +25,8 @@ class UserDashboard extends Equatable {
         profilePictureUrl,
         totalAccess,
         lastAccess,
+      lastAccessGranted,
+      lastAccessReason,
         totalZones,
       ];
 }

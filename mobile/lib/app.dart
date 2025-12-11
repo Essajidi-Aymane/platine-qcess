@@ -13,6 +13,8 @@ import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.d
 import 'package:mobile/features/notification/presentation/notification_initializer.dart';
 import 'package:mobile/features/profile/data/repositories/i_profile_repository.dart';
 import 'package:mobile/features/profile/logic/bloc/profile_bloc.dart';
+import 'package:mobile/features/access/data/repositories/i_access_repository.dart';
+import 'package:mobile/features/access/logic/bloc/access_bloc.dart';
 import 'package:mobile/features/splash/logic/bloc/splash_bloc.dart';
 import 'package:mobile/features/theme/logic/bloc/theme_bloc.dart';
 import 'package:mobile/features/theme/logic/bloc/theme_state.dart';
@@ -57,6 +59,11 @@ class _MyAppState extends State<MyApp> {
         ),
         BlocProvider<PushNotificationBloc>(
           create: (_) => sl<PushNotificationBloc>(),
+        ),
+        BlocProvider<AccessBloc>(
+          create: (_) => AccessBloc(
+            repository: sl<IAccessRepository>(),
+          ),
         ),
         BlocProvider<ThemeBloc>(
           create: (_) => ThemeBloc(),

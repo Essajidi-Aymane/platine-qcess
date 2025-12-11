@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/core/presentation/widgets/error_widget.dart';
 import 'package:mobile/core/presentation/widgets/loading_widget.dart';
 import 'package:mobile/core/utils/responsive_utils.dart';
+import 'package:mobile/features/auth/logic/bloc/auth_bloc.dart';
+import 'package:mobile/features/auth/logic/bloc/auth_state.dart';
 import 'package:mobile/features/home/data/models/user_dashboard.dart';
 import 'package:mobile/features/home/logic/bloc/dashboard_bloc.dart';
 import 'package:mobile/features/home/logic/bloc/dashboard_event.dart';
@@ -48,13 +50,16 @@ class HomePage extends StatelessWidget {
 
   Widget _buildError(BuildContext context, String message) {
     final dashboardBloc = context.read<DashboardBloc>();
-    final userId = dashboardBloc.state.userId;
+    final authBloc = context.read<AuthBloc>();
 
     return ErrorDisplayWidget(
       message: message,
-      onRetry: userId != null
-          ? () => dashboardBloc.add(LoadDashboard())
-          : null,
+      onRetry: () {
+        final authState = authBloc.state;
+        if (authState is AuthAuthenticated && authState.userInfo != null) {
+          dashboardBloc.add(LoadDashboard(userInfo: authState.userInfo!));
+        }
+      },
     );
   }
 
@@ -68,7 +73,11 @@ class HomePage extends StatelessWidget {
     return RefreshIndicator(
       color: Theme.of(context).colorScheme.primary,
       onRefresh: () async {
-        dashboardBloc.add(RefreshDashboard());
+        final authBloc = context.read<AuthBloc>();
+        final authState = authBloc.state;
+        if (authState is AuthAuthenticated && authState.userInfo != null) {
+          dashboardBloc.add(RefreshDashboard(userInfo: authState.userInfo!));
+        }
         await Future.delayed(const Duration(seconds: 1));
       },
       child: SingleChildScrollView(
@@ -155,7 +164,11 @@ class HomePage extends StatelessWidget {
                 child: Column(
                   children: [
                     SizedBox(height: spacing * 1.5),
-                    AccessStatusCard(lastAccess: dashboard.lastAccess),
+                    AccessStatusCard(
+                      lastAccess: dashboard.lastAccess,
+                      lastAccessGranted: dashboard.lastAccessGranted,
+                      lastAccessReason: dashboard.lastAccessReason,
+                    ),
                     SizedBox(height: spacing),
                     StatsRow(dashboard: dashboard),
                     SizedBox(height: spacing * 1.5),

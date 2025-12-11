@@ -1,5 +1,16 @@
 import 'package:dio/dio.dart';
 
+class ApiException implements Exception {
+  final int? statusCode;
+  final dynamic data;
+  final String message;
+
+  ApiException({this.statusCode, this.data, required this.message});
+
+  @override
+  String toString() => message;
+}
+
 abstract class BaseApiRepository {
   final Dio dio;
 
@@ -20,7 +31,7 @@ abstract class BaseApiRepository {
       }
       return response.data as T;
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw _toApiException(e);
     }
   }
 
@@ -41,7 +52,7 @@ abstract class BaseApiRepository {
       }
       return response.data as T;
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw _toApiException(e);
     }
   }
 
@@ -62,7 +73,7 @@ abstract class BaseApiRepository {
       }
       return response.data as T;
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw _toApiException(e);
     }
   }
 
@@ -83,34 +94,29 @@ abstract class BaseApiRepository {
       }
       return response.data as T;
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw _toApiException(e);
     }
   }
 
-  Exception _handleError(DioException error) {
-    final message = _getErrorMessage(error);
-    return Exception(message);
-  }
-
-  String _getErrorMessage(DioException error) {
-    return switch (error.type) {
-      DioExceptionType.badResponse =>
-        _extractServerMessage(error.response?.data) ?? 'Erreur serveur',
-      DioExceptionType.connectionTimeout ||
-      DioExceptionType.receiveTimeout ||
-      DioExceptionType.sendTimeout =>
-        'Délai d\'attente dépassé',
+  ApiException _toApiException(DioException error) {
+    final status = error.response?.statusCode;
+    final data = error.response?.data;
+    final message = switch (error.type) {
+      DioExceptionType.badResponse => _extractServerMessage(data) ?? 'Erreur serveur',
+      DioExceptionType.connectionTimeout => 'Délai d\'attente dépassé',
+      DioExceptionType.receiveTimeout => 'Délai d\'attente dépassé',
+      DioExceptionType.sendTimeout => 'Délai d\'attente dépassé',
       DioExceptionType.connectionError => 'Erreur réseau',
       DioExceptionType.cancel => 'Requête annulée',
       DioExceptionType.badCertificate => 'Erreur SSL',
       DioExceptionType.unknown => error.message ?? 'Erreur inconnue',
     };
+    return ApiException(statusCode: status, data: data, message: message);
   }
 
   String? _extractServerMessage(dynamic responseData) {
     if (responseData is Map<String, dynamic>) {
-      return responseData['message'] as String? ??
-          responseData['error'] as String?;
+      return responseData['message'] as String? ?? responseData['error'] as String?;
     }
     return null;
   }
