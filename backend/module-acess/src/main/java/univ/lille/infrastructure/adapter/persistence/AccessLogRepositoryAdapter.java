@@ -20,6 +20,9 @@ public class AccessLogRepositoryAdapter implements AccessLogRepository {
     public AccessLog save(AccessLog log) {
         AccessLogEntity entity = new AccessLogEntity(); 
         entity.setUserId(log.getUserId());
+        entity.setZoneId(log.getZoneId());
+        entity.setUserName(log.getUserName());
+        entity.setZoneName(log.getZoneName());
         entity.setOrganizationId(log.getOrganizationId());
         entity.setTimestamp(log.getTimestamp());
         entity.setAccessGranted(log.isAccessGranted());
@@ -43,6 +46,8 @@ public class AccessLogRepositoryAdapter implements AccessLogRepository {
                 .id(entity.getId())
                 .userId(entity.getUserId())
                 .zoneId(entity.getZoneId())
+                .userName(entity.getUserName())
+                .zoneName(entity.getZoneName())
                 .organizationId(entity.getOrganizationId())
                 .timestamp(entity.getTimestamp())
                 .accessGranted(entity.isAccessGranted())

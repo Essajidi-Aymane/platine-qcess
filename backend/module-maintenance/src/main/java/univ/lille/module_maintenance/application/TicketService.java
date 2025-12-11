@@ -38,7 +38,6 @@ public class TicketService {
         if (ticket.getStatus() == null) {
             ticket.setStatus(Status.OPEN);
         }
-        // ✅ FIX: On tente de récupérer le nom de l'utilisateur AVANT la sauvegarde
         if (ticket.getCreatedByUserName() == null) {
             enrichTicketsWithUserNames(List.of(ticket), ticket.getOrganizationId());
         }
@@ -52,12 +51,10 @@ public class TicketService {
                 .orElseThrow(() -> new TicketNotFoundException(ticketId))
         );
 
-        // ✅ FIX: On enrichit le ticket unique si les noms sont manquants (pour l'affichage détail)
         if (ticket.getCreatedByUserName() == null || hasMissingCommentAuthors(ticket)) {
             enrichTicketsWithUserNames(List.of(ticket), ticket.getOrganizationId());
         }
 
-        // ✅ FIX: On trie les commentaires par date pour que la conversation soit logique
         if (ticket.getComments() != null) {
             ticket.getComments().sort(Comparator.comparing(Comment::getCreatedAt));
         }

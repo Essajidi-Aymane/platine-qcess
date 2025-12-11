@@ -16,6 +16,8 @@ public class AccessLogEntity {
     private Long id ; 
     private Long userId; 
     private Long zoneId; 
+    private String userName;
+    private String zoneName; 
     private Long organizationId; 
     private LocalDateTime timestamp; 
     private boolean accessGranted ; 

@@ -17,7 +17,6 @@ const navItems = [
     { id: "config", label: "Configuration", icon: <FiSettings />, href: "/admin/configuration" },
     { id: "users", label: "Utilisateurs", icon: <FiUsers />, href: "/admin/users" },
     { id: "tickets", label: "Tickets", icon: <FiGrid />, href: "/admin/tickets" },
-    { id: "messages", label: "Messagerie", icon: <FiMessageCircle />, href: "/admin/messagerie" },
     { id: "history", label: "Historique", icon: <FiClock />, href: "/admin/historique" },
     { id: "organisation", label: "Organisation", icon: <FiGrid />, href: "/admin/organisation" },
 ];
@@ -84,7 +83,7 @@ export default function Sidebar({ isOpen, onClose }) {
                     <div className="border-t border-slate-200 p-3">
                         <button onClick={handleLogout} className="flex cursor-pointer w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600">
                             <FiLogOut className="text-lg" />
-                            <span>Déconnexion</span>
+                            Déconnexion
                         </button>
                     </div>
                 </div>
