@@ -67,35 +67,62 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
 
         return Scaffold(
           backgroundColor: theme.colorScheme.primary,
+          resizeToAvoidBottomInset: true,
           body: SafeArea(
-            child: Column(
-              children: [
-                TicketDetailHeader(ticket: effectiveTicket, onBack: () => context.pop()),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(32),
-                        topRight: Radius.circular(32),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                  child: Column(
+                    children: [
+                      TicketDetailHeader(
+                        ticket: effectiveTicket,
+                        onBack: () => context.pop(),
                       ),
-                    ),
-                    child: Column(
-                      children: [
-                          TicketInfoSection(ticket: effectiveTicket),
-                        const Divider(height: 1),
-                          Expanded(child: TicketCommentsList(comments: effectiveTicket.comments, controller: _scrollController)),
-                        if (!isCancelled)
-                            TicketCommentInput(
-                              controller: _commentCtrl,
-                              disabled: state.status == TicketsStatus.submitting || state.isDetailLoading,
-                              onSend: () => _sendComment(bloc, effectiveTicket),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(32),
+                              topRight: Radius.circular(32),
                             ),
-                      ],
-                    ),
+                          ),
+                          child: CustomScrollView(
+                            controller: _scrollController,
+                            slivers: [
+                              SliverToBoxAdapter(
+                                child: TicketInfoSection(ticket: effectiveTicket),
+                              ),
+                              const SliverToBoxAdapter(
+                                child: Divider(height: 1),
+                              ),
+                              SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final comment = effectiveTicket.comments[index];
+                                    return TicketCommentsList(
+                                      comments: [comment],
+                                    );
+                                  },
+                                  childCount: effectiveTicket.comments.length,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (!isCancelled)
+                        TicketCommentInput(
+                          controller: _commentCtrl,
+                          disabled: state.status == TicketsStatus.submitting ||
+                              state.isDetailLoading,
+                          onSend: () => _sendComment(bloc, effectiveTicket),
+                        ),
+                    ],
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ),
         );

@@ -33,6 +33,12 @@ class ZoneQrCodeLoaded extends AccessState {
   ZoneQrCodeLoaded(this.imageBytes, this.zoneId);
 }
 
+class QrCodeScanned extends AccessState {
+  final int zoneId;
+
+  QrCodeScanned(this.zoneId);
+}
+
 class ZoneQrCodeError extends AccessState {
   final String message;
 

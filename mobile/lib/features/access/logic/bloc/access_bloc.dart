@@ -29,6 +29,8 @@ class AccessBloc extends Bloc<AccessEvent, AccessState> {
 
       final response = await _repository.scanQrCode(request);
 
+      emit(QrCodeScanned(event.zoneId));
+
       if (response.granted) {
         emit(AccessSuccess(response));
       } else {
