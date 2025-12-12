@@ -87,5 +87,4 @@ public class OrganizationController {
         return ResponseEntity.ok("Custom role deleted successfully.");
     }
 
-
 }

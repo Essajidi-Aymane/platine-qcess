@@ -66,10 +66,37 @@ export default function UsersPage() {
             console.warn("SSE déconnecté (UsersPage)", err);
             eventSource.close();
         };
-         return () => {
+   
+      eventSource.addEventListener('resource-update', (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                console.log("📩 resource-update reçu:", msg);
+
+                if (msg.resourceType === 'USER') {
+                    setUsers(prevUsers => prevUsers.map(user => {
+                        if (user.id === msg.resourceId) {
+                            console.log(`✅ Fusion update pour user ${user.email}:`, msg.payload);
+                            // Fusion intelligente : on garde l'ancien et on écrase avec le nouveau
+                            return { ...user, ...msg.payload };
+                        }
+                        return user;
+                    }));
+                }
+            } catch (err) {
+                console.error("Erreur parsing resource-update", err);
+            }
+        });
+
+        eventSource.onerror = (err) => {
+            console.warn(" SSE déconnecté (UsersPage)", err);
             eventSource.close();
         };
-    }, []); 
+
+        return () => {
+            console.log("🔌 Fermeture SSE");
+            eventSource.close();
+        };
+    }, []);
 
     const copyEmail = async (email) => {
         try {

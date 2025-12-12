@@ -1,66 +1,188 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
 import { HiOutlineUsers, HiOutlineLocationMarker } from "react-icons/hi";
 import { RiTicketLine } from "react-icons/ri";
 import { AiOutlineQrcode } from "react-icons/ai";
 
-const stats = [
-    {
-        id: "access-today",
-        label: "Accès aujourd'hui",
-        value: "156",
-        subLabel: "+12% par rapport à hier",
-        icon: <AiOutlineQrcode className="text-xl" />,
-    },
-    {
-        id: "active-users",
-        label: "Utilisateurs actifs",
-        value: "89",
-        subLabel: "3 nouveaux cette semaine",
-        icon: <HiOutlineUsers className="text-xl" />,
-    },
-    {
-        id: "open-tickets",
-        label: "Tickets ouverts",
-        value: "7",
-        subLabel: "2 urgents",
-        icon: <RiTicketLine className="text-xl" />,
-    },
-    {
-        id: "zones-configured",
-        label: "Zones configurées",
-        value: "12",
-        subLabel: "Bureau, Parking, Cafétéria",
-        icon: <HiOutlineLocationMarker className="text-xl" />,
-    },
-];
-
-const recentAccess = [
-    { id: "1", name: "Jean Dupont", zone: "Bureau Principal", time: "09:15", badgeId: "BD001" },
-    { id: "2", name: "Marie Martin", zone: "Cafétéria", time: "09:12", badgeId: "BD002" },
-    { id: "3", name: "Pierre Durand", zone: "Parking", time: "09:08", badgeId: "BD003" },
-    { id: "4", name: "Sophie Laurent", zone: "Bureau Principal", time: "09:05", badgeId: "BD004" },
-];
-
-const recentTickets = [
-    { id: "1", title: "Problème climatisation", location: "Bureau 201", status: "urgent" },
-    { id: "2", title: "Badge défaillant", location: "Parking", status: "en cours" },
-    { id: "3", title: "Éclairage bureau", location: "Bureau 105", status: "nouveau" },
-];
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 function StatusBadge({ status }) {
-    const base =
-        "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium";
-
-    if (status === "urgent") {
-        return <span className={`${base} bg-red-100 text-red-700`}>urgent</span>;
+    const base = "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium";
+    
+    if (status === "OPEN" || status === "IN_PROGRESS") {
+        return <span className={`${base} ${status === "OPEN" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
+            {status === "OPEN" ? "ouvert" : "en cours"}
+        </span>;
     }
-    if (status === "en cours") {
-        return <span className={`${base} bg-blue-100 text-blue-700`}>en cours</span>;
-    }
-    return <span className={`${base} bg-gray-100 text-gray-700`}>nouveau</span>;
+    return <span className={`${base} bg-gray-100 text-gray-700`}>fermé</span>;
 }
 
 export default function DashboardPage() {
+    const [stats, setStats] = useState(null);
+    const [recentAccess, setRecentAccess] = useState([]);
+    const [recentTickets, setRecentTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const loadDashboardData = useCallback(async () => {
+        try {
+            setLoading(true);
+            
+            // Charger les statistiques
+            const statsRes = await fetch(`${API_BASE_URL}/dashboard/stats`, {
+                credentials: "include",
+            });
+            if (!statsRes.ok) throw new Error("Impossible de charger les statistiques");
+            const statsData = await statsRes.json();
+            setStats(statsData);
+
+            // Charger les 4 derniers accès
+            const accessRes = await fetch(`${API_BASE_URL}/access/logs?limit=4`, {
+                credentials: "include",
+            });
+            if (!accessRes.ok) throw new Error("Impossible de charger l'historique des accès");
+            const accessData = await accessRes.json();
+            setRecentAccess(accessData);
+
+            // Charger les 3 derniers tickets
+            const ticketsRes = await fetch(`${API_BASE_URL}/maintenance/tickets/organization`, {
+                credentials: "include",
+            });
+            if (!ticketsRes.ok) throw new Error("Impossible de charger les tickets");
+            const ticketsData = await ticketsRes.json();
+            // Filtrer les tickets ouverts/en cours et prendre les 3 plus récents
+            const openTickets = ticketsData
+                .filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS")
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .slice(0, 3);
+            setRecentTickets(openTickets);
+
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadDashboardData();
+        
+        // Rafraîchir toutes les 30 secondes
+        const interval = setInterval(loadDashboardData, 30000);
+        
+        // Recharger quand la page devient visible
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                loadDashboardData();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        // SSE pour les mises à jour en temps réel
+        const streamUrl = `${API_BASE_URL}/access/stream-logs`;
+        const eventSource = new EventSource(streamUrl, { withCredentials: true });
+        
+        // Écouter les événements de mise à jour de ressources
+        eventSource.addEventListener('resource-update', (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                console.log("📩 Dashboard SSE resource-update:", msg);
+                
+                // Si un utilisateur est créé, suspendu ou activé, recharger le dashboard
+                if (msg.resourceType === 'USER') {
+                    console.log("Rechargement du dashboard suite à modification USER");
+                    loadDashboardData();
+                }
+                
+                // Si un ticket est créé ou modifié, recharger le dashboard
+                if (msg.resourceType === 'TICKET') {
+                    console.log("✅ Rechargement du dashboard suite à modification TICKET");
+                    loadDashboardData();
+                }
+            } catch (err) {
+                console.error("Erreur parsing resource-update dans dashboard:", err);
+            }
+        });
+        
+        // Écouter les nouveaux access-logs pour mettre à jour les accès
+        eventSource.addEventListener('access-log', (event) => {
+            try {
+                const newLog = JSON.parse(event.data);
+                console.log(" Dashboard SSE access-log:", newLog);
+                
+                // Ajouter le nouveau log au début et limiter à 4 éléments
+                setRecentAccess(prev => [newLog, ...prev].slice(0, 4));
+                
+                // Incrémenter le compteur d'accès du jour
+                setStats(prev => prev ? {
+                    ...prev,
+                    accessToday: (prev.accessToday || 0) + 1
+                } : null);
+            } catch (err) {
+                console.error("Erreur parsing access-log dans dashboard:", err);
+            }
+        });
+        
+        eventSource.onerror = (err) => {
+            console.warn("SSE déconnecté (Dashboard)", err);
+            eventSource.close();
+        };
+        
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            eventSource.close();
+        };
+    }, [loadDashboardData]);
+
+    if (loading && !stats) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <p className="text-red-600">{error}</p>
+            </div>
+        );
+    }
+
+    const statsCards = stats ? [
+        {
+            id: "access-today",
+            label: "Accès aujourd'hui",
+            value: stats.accessToday?.toString() || "0",
+            subLabel: `${stats.accessPercentageChange >= 0 ? '+' : ''}${stats.accessPercentageChange}% par rapport à hier`,
+            icon: <AiOutlineQrcode className="text-xl" />,
+        },
+        {
+            id: "active-users",
+            label: "Utilisateurs actifs",
+            value: stats.activeUsers?.toString() || "0",
+            subLabel: `${stats.newUsersThisWeek} nouveau${stats.newUsersThisWeek > 1 ? 'x' : ''} cette semaine`,
+            icon: <HiOutlineUsers className="text-xl" />,
+        },
+        {
+            id: "open-tickets",
+            label: "Tickets ouverts",
+            value: stats.openTickets?.toString() || "0",
+            subLabel: `${stats.urgentTickets} urgent${stats.urgentTickets > 1 ? 's' : ''}`,
+            icon: <RiTicketLine className="text-xl" />,
+        },
+        {
+            id: "zones-configured",
+            label: "Zones configurées",
+            value: stats.configuredZones?.toString() || "0",
+            subLabel: stats.topZones || "Aucune zone",
+            icon: <HiOutlineLocationMarker className="text-xl" />,
+        },
+    ] : [];
+
     return (
         <main className="space-y-8">
             {/* Header */}
@@ -76,7 +198,7 @@ export default function DashboardPage() {
 
             {/* Stat cards */}
             <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {stats.map((stat) => (
+                {statsCards.map((stat) => (
                     <div
                         key={stat.id}
                         className="flex items-center justify-between rounded-2xl bg-white px-5 py-4 shadow-sm border border-slate-100"
@@ -117,23 +239,33 @@ export default function DashboardPage() {
                     </div>
 
                     <ul className="divide-y divide-gray-100">
-                        {recentAccess.map((access) => (
-                            <li
-                                key={access.id}
-                                className="flex items-center justify-between py-3"
-                            >
-                                <div>
-                                    <p className="text-sm font-medium text-gray-900">
-                                        {access.name}
-                                    </p>
-                                    <p className="text-xs text-gray-500">{access.zone}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-sm text-gray-900">{access.time}</p>
-                                    <p className="text-xs text-gray-400">{access.badgeId}</p>
-                                </div>
+                        {recentAccess.length === 0 ? (
+                            <li className="py-8 text-center text-sm text-gray-500">
+                                Aucun accès récent
                             </li>
-                        ))}
+                        ) : (
+                            recentAccess.map((access) => (
+                                <li
+                                    key={access.id}
+                                    className="flex items-center justify-between py-3"
+                                >
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {access.userName || "Utilisateur inconnu"}
+                                        </p>
+                                        <p className="text-xs text-gray-500">{access.zoneName || "Zone inconnue"}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-gray-900">
+                                            {new Date(access.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                        <p className={`text-xs ${access.accessGranted ? "text-green-600" : "text-red-600"}`}>
+                                            {access.accessGranted ? "Autorisé" : "Refusé"}
+                                        </p>
+                                    </div>
+                                </li>
+                            ))
+                        )}
                     </ul>
                 </div>
 
@@ -151,20 +283,28 @@ export default function DashboardPage() {
                     </div>
 
                     <ul className="divide-y divide-gray-100">
-                        {recentTickets.map((ticket) => (
-                            <li
-                                key={ticket.id}
-                                className="flex items-center justify-between py-3"
-                            >
-                                <div>
-                                    <p className="text-sm font-medium text-indigo-700 hover:underline cursor-pointer">
-                                        {ticket.title}
-                                    </p>
-                                    <p className="text-xs text-gray-500">{ticket.location}</p>
-                                </div>
-                                <StatusBadge status={ticket.status} />
+                        {recentTickets.length === 0 ? (
+                            <li className="py-8 text-center text-sm text-gray-500">
+                                Aucun ticket récent
                             </li>
-                        ))}
+                        ) : (
+                            recentTickets.map((ticket) => (
+                                <li
+                                    key={ticket.id}
+                                    className="flex items-center justify-between py-3"
+                                >
+                                    <div>
+                                        <p className="text-sm font-medium text-indigo-700 hover:underline cursor-pointer">
+                                            {ticket.title}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            Par {ticket.createdByUserName || "Utilisateur"} - {new Date(ticket.createdAt).toLocaleDateString('fr-FR')}
+                                        </p>
+                                    </div>
+                                    <StatusBadge status={ticket.status} />
+                                </li>
+                            ))
+                        )}
                     </ul>
                 </div>
             </section>

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter; 
 
@@ -58,8 +59,15 @@ public class AccessController {
     }
     @GetMapping("/logs")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AccessLogResponseDTO>> getAccessHistory(@AuthenticationPrincipal QcessUserPrincipal principal) {
+    public ResponseEntity<List<AccessLogResponseDTO>> getAccessHistory(
+            @AuthenticationPrincipal QcessUserPrincipal principal,
+            @RequestParam(value = "limit", required = false) Integer limit) {
         List<AccessLogResponseDTO> logs = accessControlPort.getAccessLogs(principal.getOrganizationId());
+        
+        if (limit != null && limit > 0 && limit < logs.size()) {
+            logs = logs.subList(0, limit);
+        }
+        
         return ResponseEntity.ok(logs);
     }
 

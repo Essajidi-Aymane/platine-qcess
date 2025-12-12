@@ -150,6 +150,36 @@ const OrganisationPage = () => {
     }, 300);
   }
 
+  // Fonction pour télécharger le QR code
+  const downloadQrCode = async (zoneId, zoneName) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/access/zones/${zoneId}/qr`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Impossible de télécharger le QR code");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `qrcode-${zoneName.replace(/\s+/g, '-').toLowerCase()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Erreur lors du téléchargement du QR code:", err);
+      setRoleUpdateError("Erreur lors du téléchargement du QR code");
+      setTimeout(() => setRoleUpdateError(null), 3000);
+    }
+  };
+
   const toggleZoneRoleSelection = (roleId) => {
     setSelectedRoleIds(prev =>
       prev.includes(roleId)
@@ -862,16 +892,27 @@ const OrganisationPage = () => {
             <div className="flex justify-between gap-3 border-t border-slate-200 px-6 py-4 sticky bottom-0 bg-white">
               <button
                 onClick={() => openDeleteZoneModal(selectedZone)}
-                className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700 active:scale-50 transition-all duration-200 shadow-sm cursor-pointer"
+                className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700 active:scale-95 transition-all duration-200 shadow-sm cursor-pointer"
               >
                 Supprimer la zone
               </button>
-              <button
-                onClick={closeZoneModal}
-                className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-slate-50 active:scale-95 transition-all duration-200 cursor-pointer"
-              >
-                Fermer
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => downloadQrCode(selectedZone.id, selectedZone.name)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 active:scale-95 transition-all duration-200 shadow-sm cursor-pointer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Télécharger QR Code
+                </button>
+                <button
+                  onClick={closeZoneModal}
+                  className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-slate-50 active:scale-95 transition-all duration-200 cursor-pointer"
+                >
+                  Fermer
+                </button>
+              </div>
             </div>
           </div>
         </div>

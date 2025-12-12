@@ -18,8 +18,11 @@ import univ.lille.domain.model.User;
 import univ.lille.domain.port.in.UserPort;
 import univ.lille.domain.port.out.CustomRoleRepository;
 import univ.lille.domain.port.out.EmailPort;
+import univ.lille.domain.port.out.NotificationPort;
 import univ.lille.domain.port.out.OrganizationRepository;
 import univ.lille.domain.port.out.UserRepository;
+import java.util.Map;
+import java.util.HashMap;
 import univ.lille.dto.auth.user.CreateUserRequest;
 import univ.lille.dto.auth.user.UpdateProfileRequest;
 import univ.lille.dto.auth.user.UserDTO;
@@ -41,6 +44,7 @@ public class UserUseCase implements UserPort {
     private final EmailPort emailPort;
     private final AuthenticationService authenticationService;
     private final CustomRoleRepository customRoleRepository;
+    private final NotificationPort notificationPort;
 
 
     @Override
@@ -78,7 +82,17 @@ public class UserUseCase implements UserPort {
         user = userRepository.save(user);
 
         emailPort.sendWelcomeEmail(user.getEmail(), user.getFullName(), loginCode);
-        return UserMapper.toDTO(user);
+        
+        // Notification SSE pour la création d'utilisateur
+        UserDTO userDTO = UserMapper.toDTO(user);
+        notificationPort.notifyResourceUpdate(
+            organizationId,
+            "USER",
+            user.getId(),
+            convertUserDTOToMap(userDTO)
+        );
+        
+        return userDTO;
 
 
     }
@@ -109,6 +123,15 @@ public class UserUseCase implements UserPort {
         }
         user.setUserStatus(UserStatus.ACTIVE);
         userRepository.save(user);
+        
+        // Notification SSE pour l'activation
+        UserDTO userDTO = UserMapper.toDTO(user);
+        notificationPort.notifyResourceUpdate(
+            orgId,
+            "USER",
+            user.getId(),
+            convertUserDTOToMap(userDTO)
+        );
     }
 
     /**
@@ -121,8 +144,16 @@ public class UserUseCase implements UserPort {
                 new  UserNotFoundException("Cet utilisateur n'existe pas dans cette organisation"));
 
         user.setUserStatus(UserStatus.SUSPENDED);
-
         userRepository.save(user);
+        
+        // Notification SSE pour la suspension
+        UserDTO userDTO = UserMapper.toDTO(user);
+        notificationPort.notifyResourceUpdate(
+            orgId,
+            "USER",
+            user.getId(),
+            convertUserDTOToMap(userDTO)
+        );
 
     }
 
@@ -150,8 +181,20 @@ public class UserUseCase implements UserPort {
         }
 
         userRepository.saveAll(users);
-    log.info("Assigned custom role ID {} to users {} in organization ID {} by admin ID {}",
-        roleId, userIds, orgId);
+        
+        // Notification SSE pour chaque utilisateur mis à jour
+        for (User user : users) {
+            UserDTO userDTO = UserMapper.toDTO(user);
+            notificationPort.notifyResourceUpdate(
+                orgId,
+                "USER",
+                user.getId(),
+                convertUserDTOToMap(userDTO)
+            );
+        }
+        
+        log.info("Assigned custom role ID {} to users {} in organization ID {} by admin ID {}",
+            roleId, userIds, orgId);
 
     }
 
@@ -174,8 +217,45 @@ public class UserUseCase implements UserPort {
         }
 
         userRepository.saveAll(users);
+        
+        // Notification SSE pour chaque utilisateur mis à jour
+        for (User user : users) {
+            UserDTO userDTO = UserMapper.toDTO(user);
+            notificationPort.notifyResourceUpdate(
+                orgId,
+                "USER",
+                user.getId(),
+                convertUserDTOToMap(userDTO)
+            );
+        }
+        
         log.info("Desassigned custom role ID {} from users {} in organization ID {} by admin ID {}",
                 roleId, userIds, orgId, adminId);
+    }
+    
+    // Méthode helper pour convertir UserDTO en Map pour SSE
+    private Map<String, Object> convertUserDTOToMap(UserDTO dto) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", dto.getId());
+        map.put("email", dto.getEmail());
+        map.put("firstName", dto.getFirstName());
+        map.put("lastName", dto.getLastName());
+        map.put("fullName", dto.getFullName());
+        map.put("role", dto.getRole());
+        map.put("userStatus", dto.getUserStatus());
+        if (dto.getLastAccessAt() != null) {
+            map.put("lastAccessAt", dto.getLastAccessAt());
+        }
+        if (dto.getLastLogin()!= null) {
+            map.put("lastLoginAt", dto.getLastLogin());
+        }
+        if (dto.getCreatedAt() != null) {
+            map.put("createdAt", dto.getCreatedAt());
+        }
+        if (dto.getCustomRoleId() != null) {
+            map.put("customRole", dto.getCustomRoleName());
+        }
+        return map;
     }
 
     @Override

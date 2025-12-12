@@ -12,6 +12,7 @@ import univ.lille.domain.exception.UserNotFoundException;
 import univ.lille.domain.model.User;
 import univ.lille.domain.port.in.LoginUserPort;
 import univ.lille.domain.port.out.EmailPort;
+import univ.lille.domain.port.out.NotificationPort;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.dto.auth.AuthResponse;
 import univ.lille.dto.auth.ForgotPasswordRequest;
@@ -23,6 +24,7 @@ import univ.lille.infrastructure.adapter.security.JwtService;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.Map; 
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +35,7 @@ public class LoginUseCase implements LoginUserPort {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailPort emailPort;
+    private final NotificationPort notificationPort; 
 
     @Value("${app.fontend.base-url:http://localhost:3000}")
     private String frontendBaseUrl;
@@ -56,6 +59,14 @@ public class LoginUseCase implements LoginUserPort {
         user.updateLastLogin();
         userRepository.save(user);
         String token = jwtService.generateToken(user, loginRequest.isRememberMe());
+        
+            notificationPort.notifyResourceUpdate(
+            user.getOrganization().getId(),
+            "USER",
+            user.getId(),
+            Map.of("lastLogin", user.getLastLoginAt().toString())
+        );
+        
 
         if (loginRequest.isRememberMe()) {
             log.info("Mode RememberMe activé → Token 7 jours pour utilisateur {}", user.getEmail());
