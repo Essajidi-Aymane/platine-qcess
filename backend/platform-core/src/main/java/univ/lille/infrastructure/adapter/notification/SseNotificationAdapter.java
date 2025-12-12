@@ -46,10 +46,12 @@ public class SseNotificationAdapter implements NotificationPort {
         List<SseEmitter> emitters = organizationEmitters.get(organizationId);
         if (emitters != null) {
             new ArrayList<>(emitters).forEach(emitter -> {
-                try {
-                    emitter.send(SseEmitter.event().name(eventName).data(data));
-                } catch (IOException e) {
-                    removeEmitter(organizationId, emitter);
+                if (emitter != null) {
+                    try {
+                        emitter.send(SseEmitter.event().name(eventName).data(data));
+                    } catch (IOException e) {
+                        removeEmitter(organizationId, emitter);
+                    }
                 }
             });
         }

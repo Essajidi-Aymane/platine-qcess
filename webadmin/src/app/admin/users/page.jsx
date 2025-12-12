@@ -70,7 +70,7 @@ export default function UsersPage() {
       eventSource.addEventListener('resource-update', (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                console.log("📩 resource-update reçu:", msg);
+                console.log("resource-update reçu:", msg);
 
                 if (msg.resourceType === 'USER') {
                     setUsers(prevUsers => prevUsers.map(user => {
@@ -406,20 +406,36 @@ export default function UsersPage() {
             });
 
             if (!res.ok) {
-                const txt = await res.text().catch(() => null);
-                console.error("Erreur création user:", res.status, txt);
-                throw new Error("Impossible de créer l'utilisateur");
+                let errorMessage = "Impossible de créer l'utilisateur";
+                
+                try {
+                    const errorData = await res.json();
+                    
+                    if (errorData.error === "EMAIL_ALREADY_EXISTS") {
+                        errorMessage = errorData.message || "Cet email est déjà utilisé";
+                    } else if (errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (parseError) {
+                    console.error("Erreur parsing réponse:", parseError);
+                }
+                
+                setFormError(errorMessage);
+                setCreating(false);
+                return;
             }
 
             closeModal();
             setFormEmail("");
             setFormFirstName("");
             setFormLastName("");
+            setFormError(null);
 
             await loadUsers();
 
         } catch (e) {
-            setError(e.message);
+            console.error("Erreur création user:", e);
+            setFormError(e.message || "Une erreur est survenue");
         } finally {
             setCreating(false);
         }

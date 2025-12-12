@@ -83,7 +83,6 @@ public class UserUseCase implements UserPort {
 
         emailPort.sendWelcomeEmail(user.getEmail(), user.getFullName(), loginCode);
         
-        // Notification SSE pour la création d'utilisateur
         UserDTO userDTO = UserMapper.toDTO(user);
         notificationPort.notifyResourceUpdate(
             organizationId,
@@ -146,7 +145,6 @@ public class UserUseCase implements UserPort {
         user.setUserStatus(UserStatus.SUSPENDED);
         userRepository.save(user);
         
-        // Notification SSE pour la suspension
         UserDTO userDTO = UserMapper.toDTO(user);
         notificationPort.notifyResourceUpdate(
             orgId,

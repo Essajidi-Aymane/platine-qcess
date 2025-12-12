@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter; 
 
 import lombok.RequiredArgsConstructor;
+import univ.lille.domain.model.AccessLog;
 import univ.lille.domain.model.ZoneQrCode;
 import univ.lille.domain.port.in.AccessControlPort;
 import univ.lille.domain.port.in.ZoneQrCodePort;
 import univ.lille.dto.access.AccessLogResponseDTO;
 import univ.lille.dto.access.AccessRequestDTO;
+
 import org.springframework.http.MediaType;
 import univ.lille.dto.access.AccessResponseDTO;
 import univ.lille.infrastructure.adapter.notification.SseNotificationAdapter;
@@ -70,6 +72,29 @@ public class AccessController {
         
         return ResponseEntity.ok(logs);
     }
+    @GetMapping("/logs/user")
+    public ResponseEntity<List<AccessLogResponseDTO>> getUserAccessLogs(
+            @AuthenticationPrincipal QcessUserPrincipal principal,
+            @RequestParam(defaultValue = "10") int limit) {
+        
+        List<AccessLog> logs = accessControlPort.findByUserIdOrderByTimestampDesc(
+                principal.getId(), limit);
+        
+        List<AccessLogResponseDTO> dtos = logs.stream()
+                .map(log -> AccessLogResponseDTO.builder()
+                        .id(log.getId())
+                        .userName(log.getUserName())
+                        .zoneName(log.getZoneName())
+                        .timestamp(log.getTimestamp())
+                        .accessGranted(log.isAccessGranted())
+                        .reason(log.getReason())
+                        .build())
+                .toList();
+        
+        return ResponseEntity.ok(dtos);
+    }
+
+
 
     @GetMapping("/stream-logs") 
     @PreAuthorize("hasRole('ADMIN')")

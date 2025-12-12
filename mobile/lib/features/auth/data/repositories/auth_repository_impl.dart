@@ -9,22 +9,16 @@ class AuthRepositoryImpl implements IAuthRepository {
   final AuthApiService apiService;
   final TokenStorageService tokenStorage;
 
-  AuthRepositoryImpl({
-    required this.apiService,
-    required this.tokenStorage,
-  });
+  AuthRepositoryImpl({required this.apiService, required this.tokenStorage});
 
   @override
   Future<String> login(String username, String accessCode) async {
     try {
-      final request = LoginRequest(
-        username: username,
-        accessCode: accessCode,
-      );
+      final request = LoginRequest(username: username, accessCode: accessCode);
       final response = await apiService.login(request);
-      
+
       await tokenStorage.saveToken(response.token);
-  
+
       return response.token;
     } on ApiException {
       rethrow;
@@ -37,11 +31,23 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<void> logout(String token) async {
     try {
       await apiService.logout(token);
-      await tokenStorage.deleteToken();
+      await clearLocalData();
     } on ApiException {
+      await clearLocalData();
       rethrow;
     } catch (e) {
+      await clearLocalData();
       throw Exception('Erreur lors de la déconnexion: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> clearLocalData() async {
+    try {
+      await tokenStorage.deleteToken();
+      print('[AuthRepository] Données locales supprimées');
+    } catch (e) {
+      print('[AuthRepository] Erreur suppression données: $e');
     }
   }
 
@@ -52,14 +58,13 @@ class AuthRepositoryImpl implements IAuthRepository {
       if (token == null || token.isEmpty) {
         return false;
       }
-      
+
       final isValid = await apiService.checkToken();
       if (!isValid) {
         await tokenStorage.deleteToken();
         return false;
       }
       return true;
-      
     } catch (e) {
       print('[AuthRepository] Erreur vérification token: $e');
       return false;
@@ -83,7 +88,9 @@ class AuthRepositoryImpl implements IAuthRepository {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Erreur lors de la récupération des informations utilisateur: ${e.toString()}');
+      throw Exception(
+        'Erreur lors de la récupération des informations utilisateur: ${e.toString()}',
+      );
     }
   }
 }

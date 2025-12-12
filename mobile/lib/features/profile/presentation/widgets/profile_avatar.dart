@@ -22,7 +22,9 @@ class ProfileAvatar extends StatelessWidget {
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return '$url?ts=${DateTime.now().millisecondsSinceEpoch}';
     }
-    final base = apiBaseUrl.endsWith('/') ? apiBaseUrl.substring(0, apiBaseUrl.length - 1) : apiBaseUrl;
+    final base = apiBaseUrl.endsWith('/')
+        ? apiBaseUrl.substring(0, apiBaseUrl.length - 1)
+        : apiBaseUrl;
     final path = url.startsWith('/') ? url : '/$url';
     return '$base$path?ts=${DateTime.now().millisecondsSinceEpoch}';
   }
@@ -31,7 +33,7 @@ class ProfileAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final fullImageUrl = _buildFullUrl(imageUrl);
-    
+
     return Stack(
       children: [
         Hero(
@@ -41,7 +43,7 @@ class ProfileAvatar extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.2),
@@ -73,10 +75,10 @@ class ProfileAvatar extends StatelessWidget {
                   color: theme.colorScheme.primary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.camera_alt,
                   size: 18,
-                  color: Colors.white,
+                  color: theme.colorScheme.onPrimary,
                 ),
               ),
             ),
@@ -87,7 +89,7 @@ class ProfileAvatar extends StatelessWidget {
 
   Widget _buildPlaceholder(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Center(
       child: Text(
         initials,

@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import univ.lille.domain.port.out.NotificationPort;
 import univ.lille.module_maintenance.application.service.NotificationPublisher;
 import univ.lille.module_maintenance.application.service.TicketService;
 import univ.lille.module_maintenance.domain.exception.CommentException;
@@ -38,6 +39,9 @@ class TicketServiceTest {
 
     @Mock
     private NotificationPublisher notificationPublisher;
+
+    @Mock
+    private NotificationPort notificationPort;
 
     @InjectMocks
     private TicketService service;

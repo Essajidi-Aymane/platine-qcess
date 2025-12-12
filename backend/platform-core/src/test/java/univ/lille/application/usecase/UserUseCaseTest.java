@@ -16,6 +16,7 @@ import univ.lille.domain.model.Organization;
 import univ.lille.domain.model.User;
 import univ.lille.domain.port.out.CustomRoleRepository;
 import univ.lille.domain.port.out.EmailPort;
+import univ.lille.domain.port.out.NotificationPort;
 import univ.lille.domain.port.out.OrganizationRepository;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.dto.auth.user.CreateUserRequest;
@@ -47,6 +48,9 @@ class UserUseCaseTest {
 
     @Mock
     private CustomRoleRepository customRoleRepository;
+
+    @Mock
+    private NotificationPort notificationPort;
 
     @InjectMocks
     private UserUseCase userUseCase;

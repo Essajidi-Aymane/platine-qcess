@@ -9,9 +9,8 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
   final IMaintenanceRepository maintenanceRepository;
 
   EventTransformer<T> debounce<T>(Duration duration) {
-  return (events, mapper) =>
-      events.debounceTime(duration).switchMap(mapper);
-}
+    return (events, mapper) => events.debounceTime(duration).switchMap(mapper);
+  }
 
   List<TicketDTO> _applySearchFilter(List<TicketDTO> source, String? rawQuery) {
     final query = (rawQuery ?? '').trim().toLowerCase();
@@ -35,7 +34,6 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
     return list;
   }
 
-
   TicketsBloc({required this.maintenanceRepository}) : super(TicketsState()) {
     on<TicketsRequested>(_onTicketsRequested);
     on<TicketDetailRequested>(_onTicketDetailRequested);
@@ -47,18 +45,53 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
       _onSearchChanged,
       transformer: debounce(const Duration(milliseconds: 300)),
     );
+    on<ResetTickets>(_onResetTickets);
+  }
+
+  String _getUserFriendlyError(dynamic error, String action) {
+    final errorString = error.toString();
+    
+    if (errorString.contains('Erreur') || errorString.contains('impossible')) {
+      return errorString;
+    }
+    
+    if (errorString.contains('403') || errorString.contains('Forbidden')) {
+      return 'Vous n\'avez pas les permissions nécessaires pour $action.';
+    }
+    if (errorString.contains('404') || errorString.contains('Not Found')) {
+      return 'Le ticket demandé n\'existe pas ou a été supprimé.';
+    }
+    if (errorString.contains('400') || errorString.contains('Bad Request')) {
+      return 'Les données fournies sont invalides. Veuillez vérifier et réessayer.';
+    }
+    if (errorString.contains('401') || errorString.contains('Unauthorized')) {
+      return 'Votre session a expiré. Veuillez vous reconnecter.';
+    }
+    if (errorString.contains('409') || errorString.contains('Conflict')) {
+      return 'Ce ticket ne peut pas être modifié dans son état actuel.';
+    }
+    if (errorString.contains('réseau') || errorString.contains('connexion')) {
+      return 'Impossible de $action. Vérifiez votre connexion internet.';
+    }
+    if (errorString.contains('timeout') || errorString.contains('Délai')) {
+      return 'La requête a pris trop de temps. Veuillez réessayer.';
+    }
+    
+    return 'Impossible de $action. Veuillez réessayer.';
   }
 
   Future<void> _onTicketsRequested(
     TicketsRequested event,
     Emitter<TicketsState> emit,
   ) async {
-    emit(state.copyWith(
-      status: TicketsStatus.loading,
-      error: null,
-      filterStatus: event.status,
-      filterPriority: event.priority,
-    ));
+    emit(
+      state.copyWith(
+        status: TicketsStatus.loading,
+        error: null,
+        filterStatus: event.status,
+        filterPriority: event.priority,
+      ),
+    );
     try {
       final rawTickets = await maintenanceRepository.getMyTickets(
         status: event.status,
@@ -66,9 +99,16 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
       );
       final sorted = _sortByCreatedDesc(rawTickets);
       final visible = _applySearchFilter(sorted, state.searchQuery);
-      emit(state.copyWith(status: TicketsStatus.loaded, tickets: sorted, visibleTickets: visible));
+      emit(
+        state.copyWith(
+          status: TicketsStatus.loaded,
+          tickets: sorted,
+          visibleTickets: visible,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: TicketsStatus.failure, error: e.toString()));
+      final userMessage = _getUserFriendlyError(e, 'charger les tickets');
+      emit(state.copyWith(status: TicketsStatus.failure, error: userMessage));
     }
   }
 
@@ -81,7 +121,8 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
       final ticket = await maintenanceRepository.getTicketById(event.id);
       emit(state.copyWith(selectedTicket: ticket, isDetailLoading: false));
     } catch (e) {
-      emit(state.copyWith(isDetailLoading: false, error: e.toString()));
+      final userMessage = _getUserFriendlyError(e, 'charger les détails du ticket');
+      emit(state.copyWith(isDetailLoading: false, error: userMessage));
     }
   }
 
@@ -92,12 +133,22 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
     emit(state.copyWith(status: TicketsStatus.submitting, error: null));
     try {
       final created = await maintenanceRepository.createTicket(event.request);
-      final updatedTickets = _sortByCreatedDesc(<TicketDTO>[...state.tickets, created]);
+      final updatedTickets = _sortByCreatedDesc(<TicketDTO>[
+        ...state.tickets,
+        created,
+      ]);
       final visible = _applySearchFilter(updatedTickets, state.searchQuery);
-      emit(state.copyWith(status: TicketsStatus.success, tickets: updatedTickets, visibleTickets: visible));
+      emit(
+        state.copyWith(
+          status: TicketsStatus.success,
+          tickets: updatedTickets,
+          visibleTickets: visible,
+        ),
+      );
       emit(state.copyWith(status: TicketsStatus.loaded));
     } catch (e) {
-      emit(state.copyWith(status: TicketsStatus.failure, error: e.toString()));
+      final userMessage = _getUserFriendlyError(e, 'créer le ticket');
+      emit(state.copyWith(status: TicketsStatus.failure, error: userMessage));
     }
   }
 
@@ -107,15 +158,25 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
   ) async {
     emit(state.copyWith(status: TicketsStatus.submitting, error: null));
     try {
-      final updated = await maintenanceRepository.updateTicket(event.id, event.request);
+      final updated = await maintenanceRepository.updateTicket(
+        event.id,
+        event.request,
+      );
       final updatedTickets = _sortByCreatedDesc(
         state.tickets.map((t) => t.id == event.id ? updated : t).toList(),
       );
       final visible = _applySearchFilter(updatedTickets, state.searchQuery);
-      emit(state.copyWith(status: TicketsStatus.success, tickets: updatedTickets, visibleTickets: visible));
+      emit(
+        state.copyWith(
+          status: TicketsStatus.success,
+          tickets: updatedTickets,
+          visibleTickets: visible,
+        ),
+      );
       emit(state.copyWith(status: TicketsStatus.loaded));
     } catch (e) {
-      emit(state.copyWith(status: TicketsStatus.failure, error: e.toString()));
+      final userMessage = _getUserFriendlyError(e, 'modifier le ticket');
+      emit(state.copyWith(status: TicketsStatus.failure, error: userMessage));
     }
   }
 
@@ -130,10 +191,17 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
         state.tickets.map((t) => t.id == event.id ? cancelled : t).toList(),
       );
       final visible = _applySearchFilter(updatedTickets, state.searchQuery);
-      emit(state.copyWith(status: TicketsStatus.success, tickets: updatedTickets, visibleTickets: visible));
+      emit(
+        state.copyWith(
+          status: TicketsStatus.success,
+          tickets: updatedTickets,
+          visibleTickets: visible,
+        ),
+      );
       emit(state.copyWith(status: TicketsStatus.loaded));
     } catch (e) {
-      emit(state.copyWith(status: TicketsStatus.failure, error: e.toString()));
+      final userMessage = _getUserFriendlyError(e, 'annuler le ticket');
+      emit(state.copyWith(status: TicketsStatus.failure, error: userMessage));
     }
   }
 
@@ -143,10 +211,15 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
   ) async {
     emit(state.copyWith(status: TicketsStatus.submitting, error: null));
     try {
-      final updatedTicket = await maintenanceRepository.addUserComment(event.ticketId, event.request);
+      final updatedTicket = await maintenanceRepository.addUserComment(
+        event.ticketId,
+        event.request,
+      );
 
       final updatedTickets = _sortByCreatedDesc(
-        state.tickets.map((t) => t.id == event.ticketId ? updatedTicket : t).toList(),
+        state.tickets
+            .map((t) => t.id == event.ticketId ? updatedTicket : t)
+            .toList(),
       );
 
       TicketDTO? refreshedSelected = state.selectedTicket;
@@ -155,10 +228,18 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
       }
 
       final visible = _applySearchFilter(updatedTickets, state.searchQuery);
-      emit(state.copyWith(status: TicketsStatus.success, tickets: updatedTickets, visibleTickets: visible, selectedTicket: refreshedSelected));
+      emit(
+        state.copyWith(
+          status: TicketsStatus.success,
+          tickets: updatedTickets,
+          visibleTickets: visible,
+          selectedTicket: refreshedSelected,
+        ),
+      );
       emit(state.copyWith(status: TicketsStatus.loaded));
     } catch (e) {
-      emit(state.copyWith(status: TicketsStatus.failure, error: e.toString()));
+      final userMessage = _getUserFriendlyError(e, 'ajouter le commentaire');
+      emit(state.copyWith(status: TicketsStatus.failure, error: userMessage));
     }
   }
 
@@ -168,5 +249,13 @@ class TicketsBloc extends Bloc<TicketsEvent, TicketsState> {
   ) async {
     final visible = _applySearchFilter(state.tickets, event.query);
     emit(state.copyWith(searchQuery: event.query, visibleTickets: visible));
+  }
+
+  Future<void> _onResetTickets(
+    ResetTickets event,
+    Emitter<TicketsState> emit,
+  ) async {
+    print('[TicketsBloc] ✅ Reset tickets');
+    emit(TicketsState());
   }
 }

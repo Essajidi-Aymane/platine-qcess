@@ -379,10 +379,17 @@ const OrganisationPage = () => {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/roles`,
         { credentials: "include" }
       );
+      
+      if (!res.ok) {
+        setError("Impossible de charger les rôles");
+        return;
+      }
+      
       const data = await res.json();
       setRoles(data);
     } catch (e) {
-      setError(e.message);
+      console.error("Erreur chargement rôles:", e);
+      setError("Une erreur est survenue lors du chargement des rôles");
     }
   }, []);
 
@@ -393,11 +400,18 @@ const OrganisationPage = () => {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/zones`,
         { credentials: "include" }
       );
-      if (!res.ok) throw new Error("Erreur lors du chargement des zones");
+      
+      if (!res.ok) {
+        console.error("Erreur HTTP zones:", res.status);
+        setError("Impossible de charger les zones");
+        return;
+      }
+      
       const data = await res.json();
       setZones(data);
     } catch (e) {
       console.error("Erreur zones:", e);
+      setError("Une erreur est survenue lors du chargement des zones");
     } finally {
       setZonesLoading(false);
     }
@@ -456,13 +470,26 @@ const OrganisationPage = () => {
       );
 
       if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || "Erreur serveur");
+        let errorMessage = "Impossible de mettre à jour l'organisation";
+        
+        try {
+          const errorData = await res.json();
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (parseError) {
+          console.error("Erreur parsing réponse:", parseError);
+        }
+        
+        setError(errorMessage);
+        setLoading(false);
+        return;
       }
 
       setSuccess("Organisation mise à jour avec succès !");
     } catch (err) {
-      setError(err.message);
+      console.error("Erreur mise à jour organisation:", err);
+      setError("Une erreur est survenue lors de la mise à jour");
     } finally {
       setLoading(false);
     }

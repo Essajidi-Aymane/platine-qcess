@@ -16,11 +16,7 @@ class TicketDetailPage extends StatefulWidget {
   final int? ticketId;
   final TicketDTO? initialTicket;
 
-  const TicketDetailPage({
-    super.key,
-    this.ticketId,
-    this.initialTicket,
-  });
+  const TicketDetailPage({super.key, this.ticketId, this.initialTicket});
 
   @override
   State<TicketDetailPage> createState() => _TicketDetailPageState();
@@ -49,7 +45,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
   Widget build(BuildContext context) {
     final bloc = context.read<TicketsBloc>();
     final theme = Theme.of(context);
-    
+
     return BlocBuilder<TicketsBloc, TicketsState>(
       builder: (context, state) {
         final effectiveTicket = _getTicket(state) ?? widget.initialTicket;
@@ -57,72 +53,79 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
         if (effectiveTicket == null) {
           return Scaffold(
             backgroundColor: theme.colorScheme.primary,
-            body: SafeArea(
-              child: _buildNotFound(context),
-            ),
+            body: SafeArea(child: _buildNotFound(context)),
           );
         }
 
         final isCancelled = effectiveTicket.status == Status.cancelled;
 
-        return Scaffold(
-          backgroundColor: theme.colorScheme.primary,
-          resizeToAvoidBottomInset: true,
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return Padding(
-                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-                  child: Column(
-                    children: [
-                      TicketDetailHeader(
-                        ticket: effectiveTicket,
-                        onBack: () => context.pop(),
-                      ),
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(32),
-                              topRight: Radius.circular(32),
+        return GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Scaffold(
+            backgroundColor: theme.colorScheme.primary,
+            resizeToAvoidBottomInset: true,
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: Column(
+                      children: [
+                        TicketDetailHeader(
+                          ticket: effectiveTicket,
+                          onBack: () => context.pop(),
+                        ),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(32),
+                                topRight: Radius.circular(32),
+                              ),
+                            ),
+                            child: CustomScrollView(
+                              controller: _scrollController,
+                              slivers: [
+                                SliverToBoxAdapter(
+                                  child: TicketInfoSection(
+                                    ticket: effectiveTicket,
+                                  ),
+                                ),
+                                const SliverToBoxAdapter(
+                                  child: Divider(height: 1),
+                                ),
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                      final comment =
+                                          effectiveTicket.comments[index];
+                                      return TicketCommentsList(
+                                        comments: [comment],
+                                      );
+                                    },
+                                    childCount: effectiveTicket.comments.length,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: CustomScrollView(
-                            controller: _scrollController,
-                            slivers: [
-                              SliverToBoxAdapter(
-                                child: TicketInfoSection(ticket: effectiveTicket),
-                              ),
-                              const SliverToBoxAdapter(
-                                child: Divider(height: 1),
-                              ),
-                              SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                    final comment = effectiveTicket.comments[index];
-                                    return TicketCommentsList(
-                                      comments: [comment],
-                                    );
-                                  },
-                                  childCount: effectiveTicket.comments.length,
-                                ),
-                              ),
-                            ],
+                        ),
+                        if (!isCancelled)
+                          TicketCommentInput(
+                            controller: _commentCtrl,
+                            disabled:
+                                state.status == TicketsStatus.submitting ||
+                                state.isDetailLoading,
+                            onSend: () => _sendComment(bloc, effectiveTicket),
                           ),
-                        ),
-                      ),
-                      if (!isCancelled)
-                        TicketCommentInput(
-                          controller: _commentCtrl,
-                          disabled: state.status == TicketsStatus.submitting ||
-                              state.isDetailLoading,
-                          onSend: () => _sendComment(bloc, effectiveTicket),
-                        ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         );
@@ -138,7 +141,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
         return null;
       }
     }
-    
+
     return null;
   }
 
@@ -167,15 +170,16 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
     );
   }
 
-
   void _sendComment(TicketsBloc bloc, TicketDTO ticket) {
     final content = _commentCtrl.text.trim();
     if (content.isEmpty) return;
 
-    bloc.add(UserCommentAdded(
-      ticketId: ticket.id,
-      request: AddCommentRequest(content: content),
-    ));
+    bloc.add(
+      UserCommentAdded(
+        ticketId: ticket.id,
+        request: AddCommentRequest(content: content),
+      ),
+    );
 
     _commentCtrl.clear();
 
@@ -189,5 +193,4 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
       }
     });
   }
-
 }

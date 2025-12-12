@@ -49,7 +49,6 @@ public class TicketService implements TicketServicePort {
         }
         Ticket savedTicket = ticketRepository.save(ticket);
         
-        // Notification SSE pour la création du ticket
         TicketDTO ticketDTO = TicketDTO.from(savedTicket);
         notificationPort.notifyResourceUpdate(
             savedTicket.getOrganizationId(),
@@ -346,14 +345,30 @@ public class TicketService implements TicketServicePort {
         map.put("description", dto.description());
         map.put("status", dto.status());
         map.put("priority", dto.priority());
+        map.put("priorityColor", dto.priorityColor());
         map.put("createdByUserId", dto.createdByUserId());
         map.put("createdByUserName", dto.createdByUserName());
         map.put("organizationId", dto.organizationId());
         map.put("createdAt", dto.createdAt() != null ? dto.createdAt().toString() : null);
         map.put("updatedAt", dto.updatedAt() != null ? dto.updatedAt().toString() : null);
+        
+        // Inclure les commentaires complets pour la synchronisation
         if (dto.comments() != null) {
-            map.put("commentCount", dto.comments().size());
+            List<Map<String, Object>> commentsList = dto.comments().stream()
+                .map(comment -> {
+                    Map<String, Object> commentMap = new HashMap<>();
+                    commentMap.put("id", comment.getId());
+                    commentMap.put("content", comment.getContent());
+                    commentMap.put("type", comment.getType());
+                    commentMap.put("authorUserId", comment.getAuthorUserId());
+                    commentMap.put("authorUserName", comment.getAuthorUserName());
+                    commentMap.put("createdAt", comment.getCreatedAt() != null ? comment.getCreatedAt().toString() : null);
+                    return commentMap;
+                })
+                .collect(Collectors.toList());
+            map.put("comments", commentsList);
         }
+        
         return map;
     }
 

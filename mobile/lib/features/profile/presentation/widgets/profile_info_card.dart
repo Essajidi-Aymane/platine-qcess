@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 
 class ProfileInfoCard extends StatelessWidget {
@@ -22,7 +21,7 @@ class ProfileInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         boxShadow: AppTheme.shadowSmall,
       ),
@@ -36,17 +35,15 @@ class ProfileInfoCard extends StatelessWidget {
                 Icon(
                   icon,
                   size: 20,
-                  color: iconColor ?? AppColors.primary,
+                  color: iconColor ?? Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 12),
               ],
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.text,
                   ),
                 ),
               ),

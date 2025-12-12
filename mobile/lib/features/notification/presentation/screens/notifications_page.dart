@@ -50,16 +50,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: Theme.of(context).colorScheme.primary,
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(context),
             Expanded(
               child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(32),
                     topRight: Radius.circular(32),
                   ),
@@ -87,7 +87,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.cardBackground),
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
                 onPressed: () => context.pop(),
               ),
               const Spacer(),
@@ -97,17 +100,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     return TextButton.icon(
                       onPressed: () {
                         context.read<PushNotificationBloc>().add(
-                              const NotificationsMarkAllAsRead(),
-                            );
+                          const NotificationsMarkAllAsRead(),
+                        );
                       },
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.done_all,
-                        color: AppColors.cardBackground,
+                        color: Theme.of(context).colorScheme.onPrimary,
                         size: 20,
                       ),
-                      label: const Text(
+                      label: Text(
                         'Tout lire',
-                        style: TextStyle(color: AppColors.cardBackground),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
                       ),
                     );
                   }
@@ -122,12 +127,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.cardBackground.withOpacity(0.2),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onPrimary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.notifications_outlined,
-                  color: AppColors.cardBackground,
+                  color: Theme.of(context).colorScheme.onPrimary,
                   size: 28,
                 ),
               ),
@@ -138,16 +145,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   children: [
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           'Notifications',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.cardBackground,
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        BlocBuilder<PushNotificationBloc, PushNotificationState>(
+                        BlocBuilder<
+                          PushNotificationBloc,
+                          PushNotificationState
+                        >(
                           builder: (context, state) {
                             if (state.unreadCount > 0) {
                               return Container(
@@ -163,10 +173,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                   state.unreadCount > 99
                                       ? '99+'
                                       : '${state.unreadCount}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onError,
                                   ),
                                 ),
                               );
@@ -181,7 +193,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       'Restez informé de vos activités',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.cardBackground.withOpacity(0.7),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary.withOpacity(0.7),
                       ),
                     ),
                   ],
@@ -200,8 +214,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
         switch (state.notificationsStatus) {
           case NotificationsStatus.initial:
           case NotificationsStatus.loading:
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+            return Center(
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              ),
             );
 
           case NotificationsStatus.failure:
@@ -221,9 +237,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget _buildNotificationsList(PushNotificationState state) {
     return RefreshIndicator(
       onRefresh: () async {
-        context.read<PushNotificationBloc>().add(const NotificationsRequested(refresh: true));
+        context.read<PushNotificationBloc>().add(
+          const NotificationsRequested(refresh: true),
+        );
       },
-      color: AppColors.primary,
+      color: Theme.of(context).colorScheme.primary,
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.only(top: AppTheme.spacingMedium, bottom: 80),
@@ -232,12 +250,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
             : state.notifications.length + 1,
         itemBuilder: (context, index) {
           if (index >= state.notifications.length) {
-            return const Padding(
-              padding: EdgeInsets.all(AppTheme.spacingMedium),
+            return Padding(
+              padding: const EdgeInsets.all(AppTheme.spacingMedium),
               child: Center(
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             );
@@ -249,8 +267,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
             onMarkAsRead: () {
               if (!notification.read) {
                 context.read<PushNotificationBloc>().add(
-                      NotificationMarkAsRead(notification.id),
-                    );
+                  NotificationMarkAsRead(notification.id),
+                );
               }
             },
             onTap: () => _handleNotificationTap(notification),
@@ -283,30 +301,29 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.notifications_off_outlined,
                 size: 48,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: AppTheme.spacingLarge),
             Text(
               'Aucune notification',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.text,
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: AppTheme.spacingSmall),
             Text(
               'Vous n\'avez pas encore reçu de notification.\nElles apparaîtront ici.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
             ),
           ],
         ),
@@ -324,41 +341,40 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.error.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.error_outline,
                 size: 48,
-                color: AppColors.error,
+                color: Theme.of(context).colorScheme.error,
               ),
             ),
             const SizedBox(height: AppTheme.spacingLarge),
             Text(
               'Une erreur est survenue',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.text,
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: AppTheme.spacingSmall),
             Text(
               errorMessage ?? 'Impossible de charger les notifications',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
             ),
             const SizedBox(height: AppTheme.spacingLarge),
             ElevatedButton.icon(
               onPressed: () {
-                context.read<PushNotificationBloc>().add(const NotificationsRequested());
+                context.read<PushNotificationBloc>().add(
+                  const NotificationsRequested(),
+                );
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Réessayer'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppTheme.spacingLarge,
                   vertical: AppTheme.spacingMedium,

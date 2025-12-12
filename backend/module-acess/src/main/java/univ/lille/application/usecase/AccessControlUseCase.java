@@ -113,5 +113,10 @@ public class AccessControlUseCase implements AccessControlPort {
             .reason(log.getReason())
             .build();
     }
+    @Override
+    public List<AccessLog> findByUserIdOrderByTimestampDesc(Long userId, int limit) {
+        return accessLogRepository.findByUserIdOrderByTimestampDesc(userId, limit) ; 
+ }
+    
     
 }
