@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/core/utils/responsive_utils.dart';
+import 'package:mobile/core/appConfig.dart';
 import 'package:mobile/features/home/data/models/user_dashboard.dart';
 
 class UserProfileHeader extends StatelessWidget {
@@ -12,91 +13,125 @@ class UserProfileHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final spacing = context.spacing;
     final isMobile = context.isMobile;
-
-    final avatarRadius = isMobile ? 40.0 : 50.0;
-    final editIconPadding = isMobile ? 4.0 : 6.0;
-    final editIconSize = isMobile ? 14.0 : 16.0;
+    
+    final avatarRadius = isMobile ? 48.0 : 56.0;
     final initialsFontSize = ResponsiveUtils.getScaledFontSize(
       context,
       isMobile ? 28 : 32,
     );
 
+    final String? avatarUrl = AppConfig.getFullImageUrl(dashboard.profilePictureUrl);
     return Column(
       children: [
-        Stack(
-          children: [
-            CircleAvatar(
-              radius: avatarRadius,
-              backgroundColor: Colors.white,
-              backgroundImage: dashboard.profilePictureUrl != null
-                  ? NetworkImage(dashboard.profilePictureUrl!)
-                  : null,
-              child: dashboard.profilePictureUrl == null
-                  ? Text(
-                      _getInitials(dashboard.username),
-                      style: theme.textTheme.displayLarge?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontSize: initialsFontSize,
-                      ),
-                    )
-                  : null,
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                padding: EdgeInsets.all(editIconPadding),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.edit,
-                  size: editIconSize,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
-          ],
+        CircleAvatar(
+          radius: avatarRadius,
+          backgroundColor: Colors.white,
+          backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
+              ? NetworkImage(avatarUrl)
+              : null,
+          child: (avatarUrl == null || avatarUrl.isEmpty)
+              ? Text(
+                  _getInitials(dashboard.username),
+                  style: theme.textTheme.displayLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontSize: initialsFontSize,
+                  ),
+                )
+              : null,
         ),
-        SizedBox(height: spacing),
+
+        SizedBox(height: spacing * 1.5),
+
         Text(
           dashboard.username,
           style: theme.textTheme.headlineMedium?.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.bold,
+            fontSize: isMobile ? 22 : 26,
+            letterSpacing: 0.5,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.3),
+                offset: const Offset(0, 2),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          textAlign: TextAlign.center,
+        ),
+
+        SizedBox(height: spacing * 0.5),
+
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                dashboard.customRoleName != null &&
+                        dashboard.customRoleName!.isNotEmpty
+                    ? dashboard.customRoleName!
+                    : 'Utilisateur',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: isMobile ? 14 : 15,
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Text(
+                '⭐',
+                style: TextStyle(fontSize: 14),
+              ),
+            ],
           ),
         ),
-        SizedBox(height: spacing * 0.25),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Développeur Senior',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withValues(alpha: 0.9),
+
+        SizedBox(height: spacing * 0.75),
+
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.badge_outlined,
+                size: 14,
+                color: Colors.white.withOpacity(0.8),
               ),
-            ),
-            SizedBox(width: spacing * 0.25),
-            const Text('⭐', style: TextStyle(fontSize: 16)),
-          ],
-        ),
-        SizedBox(height: spacing * 0.25),
-        Text(
-          'ID:EMP-2024-084',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: Colors.white.withValues(alpha: 0.7),
+              const SizedBox(width: 6),
+              Text(
+                'ID: EMP-2024-084',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withOpacity(0.8),
+                  fontWeight: FontWeight.w500,
+                  fontSize: isMobile ? 12 : 13,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
-
   String _getInitials(String name) {
     final parts = name.split(' ');
     if (parts.length >= 2) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
-    return name[0].toUpperCase();
+    return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
 }

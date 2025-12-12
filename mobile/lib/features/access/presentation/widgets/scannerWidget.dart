@@ -142,22 +142,17 @@ class _ScannerWidgetState extends State<ScannerWidget>
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-            // Camera
             MobileScanner(
               controller: _cameraController,
               onDetect: _onDetect,
             ),
 
-            // Overlay avec cadre de scan
             _buildScanOverlay(),
 
-            // Header
             _buildHeader(),
 
-            // Instructions
             _buildInstructions(),
 
-            // Bouton flash
             _buildFlashButton(),
           ],
         ),
@@ -173,7 +168,6 @@ class _ScannerWidgetState extends State<ScannerWidget>
       ),
       child: Stack(
         children: [
-          // Background sombre
           Container(
             decoration: const BoxDecoration(
               color: Colors.black,
@@ -181,14 +175,13 @@ class _ScannerWidgetState extends State<ScannerWidget>
             ),
           ),
           
-          // Zone de scan transparente
           Align(
             alignment: Alignment.center,
             child: Container(
               height: 300,
               width: 300,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
             ),

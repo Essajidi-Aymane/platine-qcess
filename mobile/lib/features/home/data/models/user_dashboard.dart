@@ -8,6 +8,8 @@ class UserDashboard extends Equatable {
   final bool? lastAccessGranted;
   final String? lastAccessReason;
   final int totalZones;
+  final String? role;
+  final String? customRoleName;
 
   const UserDashboard({
     required this.username,
@@ -17,6 +19,8 @@ class UserDashboard extends Equatable {
     this.lastAccessGranted,
     this.lastAccessReason,
     this.totalZones = 0,
+    this.role,
+    this.customRoleName,
   });
 
   @override
@@ -25,8 +29,10 @@ class UserDashboard extends Equatable {
         profilePictureUrl,
         totalAccess,
         lastAccess,
-      lastAccessGranted,
-      lastAccessReason,
+        lastAccessGranted,
+        lastAccessReason,
         totalZones,
+        role,
+        customRoleName,
       ];
 }
