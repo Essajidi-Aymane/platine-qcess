@@ -89,7 +89,9 @@ class _TicketsPageState extends State<TicketsPage> {
               const Spacer(),
               IconButton(
                 icon: Icon(Icons.notifications_outlined, color: theme.colorScheme.onPrimary),
-                onPressed: () {},
+                onPressed: () {
+                  context.push(AppRoutes.notifications);
+                },
               ),
             ],
           ),

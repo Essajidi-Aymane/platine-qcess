@@ -12,6 +12,7 @@ import univ.lille.application.usecase.LogoutUseCase;
 import univ.lille.domain.port.in.LoginUserPort;
 import univ.lille.domain.port.in.RegisterAdminPort;
 import univ.lille.dto.auth.*;
+import univ.lille.dto.auth.user.UserDTO;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -109,14 +110,14 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<String> getCurrentUser() {
         var user = authenticationService.getCurrentUser();
-        CurrentUserResponse response = CurrentUserResponse.builder()
+        UserDTO response = UserDTO.builder()
                 .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .customRoleName(user.getCustomRole() != null ? user.getCustomRole().getName() : null)
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .build();
         return ResponseEntity.ok("Token is valid for user: " + response.getEmail());
-
     }
-
-
 }
