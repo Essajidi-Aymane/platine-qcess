@@ -28,6 +28,8 @@ class TicketCommentsList extends StatelessWidget {
       controller: controller,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       itemCount: comments.length,
+      shrinkWrap: true,
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final comment = comments[index];
