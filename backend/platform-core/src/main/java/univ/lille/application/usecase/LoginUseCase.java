@@ -129,6 +129,16 @@ private void loginByRole ( User user, LoginRequest loginRequest  ) {
 
         if (user.getUserStatus() == UserStatus.PENDING) {
             user.activate();
+            
+            notificationPort.notifyResourceUpdate(
+                user.getOrganization().getId(),
+                "USER",
+                user.getId(),
+                Map.of(
+                    "userStatus", UserStatus.ACTIVE.toString(),
+                    "id", user.getId()
+                )
+            );
         }
     }}
 

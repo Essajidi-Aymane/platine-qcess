@@ -96,8 +96,7 @@ public class AccessController {
 
 
 
-    @GetMapping("/stream-logs") 
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/stream-logs")
     public SseEmitter streamAccessLogs(@AuthenticationPrincipal QcessUserPrincipal principal) { 
         return sseNotificationAdapter.subscribe(principal.getOrganizationId()); 
     }

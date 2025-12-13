@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/presentation/widgets/error_widget.dart';
 import 'package:mobile/core/presentation/widgets/loading_widget.dart';
+import 'package:mobile/core/presentation/widgets/scaffold_with_nav_bar.dart';
 import 'package:mobile/core/utils/responsive_utils.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_bloc.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_state.dart';
@@ -17,8 +18,6 @@ import 'package:mobile/features/home/presentation/widgets/user_profile_header.da
 import 'package:mobile/core/rooting/app_routes.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/notification/logic/bloc/push_notification_bloc.dart';
-
-
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -81,6 +80,7 @@ class HomePage extends StatelessWidget {
         await Future.delayed(const Duration(seconds: 1));
       },
       child: SingleChildScrollView(
+        controller: ScaffoldWithNavBar.getScrollController(0),
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [

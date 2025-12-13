@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/core/presentation/widgets/scaffold_with_nav_bar.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_bloc.dart';
@@ -217,6 +218,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildProfileContent(UserProfile profile, bool isUpdating) {
     return CustomScrollView(
+      controller: ScaffoldWithNavBar.getScrollController(
+        1,
+      ), // Index 1 pour l'onglet Profil
       slivers: [
         ProfileAppBar(
           imageUrl: profile.profilePictureUrl,

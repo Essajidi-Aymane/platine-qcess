@@ -180,7 +180,6 @@ public class UserUseCase implements UserPort {
 
         userRepository.saveAll(users);
         
-        // Notification SSE pour chaque utilisateur mis à jour
         for (User user : users) {
             UserDTO userDTO = UserMapper.toDTO(user);
             notificationPort.notifyResourceUpdate(
