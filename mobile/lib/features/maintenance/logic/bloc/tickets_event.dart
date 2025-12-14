@@ -77,3 +77,10 @@ class TicketSearchChanged extends TicketsEvent {
   @override
   List<Object?> get props => [query];
 }
+
+class ResetTickets extends TicketsEvent {
+  const ResetTickets();
+
+  @override
+  List<Object?> get props => [];
+}

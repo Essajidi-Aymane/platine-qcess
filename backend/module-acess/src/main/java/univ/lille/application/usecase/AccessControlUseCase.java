@@ -15,11 +15,13 @@ import univ.lille.domain.model.Zone;
 import univ.lille.domain.port.in.AccessControlPort;
 import univ.lille.domain.port.out.AccessLogNotificationPort;
 import univ.lille.domain.port.out.AccessLogRepository;
+import univ.lille.domain.port.out.NotificationPort;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.domain.port.out.ZoneRepository;
 import univ.lille.dto.access.AccessLogResponseDTO;
 import univ.lille.dto.access.AccessResponseDTO;
 import univ.lille.enums.ZoneStatus;
+import java.util.Map;
 
 @Service 
 @RequiredArgsConstructor
@@ -28,7 +30,7 @@ public class AccessControlUseCase implements AccessControlPort {
     private final ZoneRepository zoneRepository ; 
     private final UserRepository userRepository ; 
     private final AccessLogRepository accessLogRepository ; 
-    private final AccessLogNotificationPort notificationPort; 
+    private final NotificationPort notificationPort; 
     @Override
     @Transactional
     public AccessResponseDTO validateAccess(Long userId, Long zoneId) {
@@ -38,13 +40,21 @@ public class AccessControlUseCase implements AccessControlPort {
 
         Zone zone = zoneRepository.findById(zoneId).orElseThrow(()-> 
         new ZoneNotFoundException("Zone not found")); 
+
         String reason = ""; 
         boolean granted = false; 
-        if (zone.getStatus()!= ZoneStatus.ACTIVE) {
+
+        if (!user.getOrganization().getId().equals(zone.getOrgId())) {
+                reason = "ORGANIZATION_MISMATCH";
+        }
+        
+        else if (zone.getStatus()!= ZoneStatus.ACTIVE) {
             reason = "ZONE_INACTIVE"; 
         } else if (zone.getAllowedRoleIds() == null || zone.getAllowedRoleIds().isEmpty()) { 
             granted=true; 
+            user.setLastAccessAt(LocalDateTime.now());
             reason = "PUBLIC_ZONE" ; 
+            
         } else if ( zone.getAllowedRoleIds() != null && zone.getAllowedRoleIds().contains(user.getCustomRole().getId())) { 
             granted = true; 
             reason = "AUTHORIZED_ROLE" ; 
@@ -52,6 +62,7 @@ public class AccessControlUseCase implements AccessControlPort {
         } else { 
             reason = "ROLE_NOT_ALLOWED" ; 
         }
+
 
         AccessLog log = AccessLog.builder()
                 .userId(userId)
@@ -65,12 +76,23 @@ public class AccessControlUseCase implements AccessControlPort {
                 .build(); 
         accessLogRepository.save(log);
 
+           if ( granted) { 
+            user.setLastAccessAt(LocalDateTime.now());
+            userRepository.save(user);
+                notificationPort.notifyResourceUpdate(
+                zone.getOrgId(), 
+                "USER", 
+                userId, 
+                Map.of("lastAccessAt", user.getLastAccessAt().toString())
+            );
+        }
+
         AccessLogResponseDTO notificationDto = mapToDto(log);
 
         
         AccessResponseDTO logDto =  new AccessResponseDTO(granted , reason , zone.getName()); 
         
-        notificationPort.notifyAdmins(log.getOrganizationId(), notificationDto);
+        notificationPort.notifyEvent(zone.getOrgId(), "access-log", notificationDto);
 
          return logDto;
 
@@ -83,6 +105,7 @@ public class AccessControlUseCase implements AccessControlPort {
     private AccessLogResponseDTO mapToDto(AccessLog log) {
         return AccessLogResponseDTO.builder()
             .id(log.getId())
+            .userId(log.getUserId())
             .userName(log.getUserName() != null ? log.getUserName() : "Utilisateur inconnu")
             .zoneName(log.getZoneName() != null ? log.getZoneName() : "Zone inconnue")
             .timestamp(log.getTimestamp())
@@ -90,5 +113,10 @@ public class AccessControlUseCase implements AccessControlPort {
             .reason(log.getReason())
             .build();
     }
+    @Override
+    public List<AccessLog> findByUserIdOrderByTimestampDesc(Long userId, int limit) {
+        return accessLogRepository.findByUserIdOrderByTimestampDesc(userId, limit) ; 
+ }
+    
     
 }

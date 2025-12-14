@@ -41,37 +41,83 @@ class _TicketsPageState extends State<TicketsPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
-    return Scaffold(
-      backgroundColor: theme.colorScheme.primary,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context, theme),
-            
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(32),
-                    topRight: Radius.circular(32),
+
+    return BlocListener<TicketsBloc, TicketsState>(
+      listener: (context, state) {
+        if (state.status == TicketsStatus.failure && state.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      state.error!,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: theme.colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        } else if (state.status == TicketsStatus.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 12),
+                  Text(
+                    'Opération réussie',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          backgroundColor: theme.colorScheme.primary,
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(context, theme),
+
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(32),
+                        topRight: Radius.circular(32),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 24),
+                        _buildSearchBar(theme),
+                        const SizedBox(height: 16),
+                        Expanded(child: _buildTicketsList(theme)),
+                      ],
+                    ),
                   ),
                 ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 24),
-                    _buildSearchBar(theme),
-                    const SizedBox(height: 16),
-                    Expanded(child: _buildTicketsList(theme)),
-                  ],
-                ),
-              ),
+              ],
             ),
-          ],
+          ),
+          floatingActionButton: _buildFAB(context, theme),
         ),
       ),
-      floatingActionButton: _buildFAB(context, theme),
     );
   }
 
@@ -83,13 +129,21 @@ class _TicketsPageState extends State<TicketsPage> {
           Row(
             children: [
               IconButton(
-                icon: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: theme.colorScheme.onPrimary,
+                ),
                 onPressed: () => context.pop(),
               ),
               const Spacer(),
               IconButton(
-                icon: Icon(Icons.notifications_outlined, color: theme.colorScheme.onPrimary),
-                onPressed: () {},
+                icon: Icon(
+                  Icons.notifications_outlined,
+                  color: theme.colorScheme.onPrimary,
+                ),
+                onPressed: () {
+                  context.push(AppRoutes.notifications);
+                },
               ),
             ],
           ),
@@ -149,16 +203,24 @@ class _TicketsPageState extends State<TicketsPage> {
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Rechercher votre ticket',
-              prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant),
+              prefixIcon: Icon(
+                Icons.search,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (value.text.isNotEmpty)
                     IconButton(
-                      icon: Icon(Icons.clear, color: theme.colorScheme.onSurfaceVariant),
+                      icon: Icon(
+                        Icons.clear,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                       onPressed: () {
                         _searchController.clear();
-                        context.read<TicketsBloc>().add(const TicketSearchChanged(''));
+                        context.read<TicketsBloc>().add(
+                          const TicketSearchChanged(''),
+                        );
                       },
                     ),
                   IconButton(
@@ -173,9 +235,14 @@ class _TicketsPageState extends State<TicketsPage> {
                 borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
             ),
-            onChanged: (value) => context.read<TicketsBloc>().add(TicketSearchChanged(value.trim())),
+            onChanged: (value) => context.read<TicketsBloc>().add(
+              TicketSearchChanged(value.trim()),
+            ),
           );
         },
       ),
@@ -192,7 +259,10 @@ class _TicketsPageState extends State<TicketsPage> {
       ),
       builder: (context) {
         Status? selectedStatus = context.read<TicketsBloc>().state.filterStatus;
-        Priority? selectedPriority = context.read<TicketsBloc>().state.filterPriority;
+        Priority? selectedPriority = context
+            .read<TicketsBloc>()
+            .state
+            .filterPriority;
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
@@ -203,7 +273,13 @@ class _TicketsPageState extends State<TicketsPage> {
                 children: [
                   Row(
                     children: [
-                      const Text('Filtres', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                      const Text(
+                        'Filtres',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const Spacer(),
                       TextButton(
                         onPressed: () {
@@ -213,31 +289,57 @@ class _TicketsPageState extends State<TicketsPage> {
                           });
                         },
                         child: const Text('Réinitialiser'),
-                      )
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text('Statut', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Statut',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _statusChip(null, 'Tous', selectedStatus == null, (val) => setModalState(() => selectedStatus = null)),
+                      _statusChip(
+                        null,
+                        'Tous',
+                        selectedStatus == null,
+                        (val) => setModalState(() => selectedStatus = null),
+                      ),
                       for (final s in Status.values)
-                        _statusChip(s, s.getDisplayName(), selectedStatus == s, (val) => setModalState(() => selectedStatus = s)),
+                        _statusChip(
+                          s,
+                          s.getDisplayName(),
+                          selectedStatus == s,
+                          (val) => setModalState(() => selectedStatus = s),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text('Priorité', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Priorité',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _priorityChip(null, 'Toutes', selectedPriority == null, (val) => setModalState(() => selectedPriority = null)),
+                      _priorityChip(
+                        null,
+                        'Toutes',
+                        selectedPriority == null,
+                        (val) => setModalState(() => selectedPriority = null),
+                      ),
                       for (final p in Priority.values)
-                        _priorityChip(p, p.getDisplayName(), selectedPriority == p, (val) => setModalState(() => selectedPriority = p)),
+                        _priorityChip(
+                          p,
+                          p.getDisplayName(),
+                          selectedPriority == p,
+                          (val) => setModalState(() => selectedPriority = p),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -246,11 +348,16 @@ class _TicketsPageState extends State<TicketsPage> {
                     child: ElevatedButton(
                       onPressed: () {
                         context.pop();
-                        context.read<TicketsBloc>().add(TicketsRequested(status: selectedStatus, priority: selectedPriority));
+                        context.read<TicketsBloc>().add(
+                          TicketsRequested(
+                            status: selectedStatus,
+                            priority: selectedPriority,
+                          ),
+                        );
                       },
                       child: const Text('Appliquer les filtres'),
                     ),
-                  )
+                  ),
                 ],
               ),
             );
@@ -260,7 +367,12 @@ class _TicketsPageState extends State<TicketsPage> {
     );
   }
 
-  Widget _statusChip(Status? value, String label, bool selected, ValueChanged<bool> onSelected) {
+  Widget _statusChip(
+    Status? value,
+    String label,
+    bool selected,
+    ValueChanged<bool> onSelected,
+  ) {
     return FilterChip(
       selected: selected,
       label: Text(label),
@@ -268,7 +380,12 @@ class _TicketsPageState extends State<TicketsPage> {
     );
   }
 
-  Widget _priorityChip(Priority? value, String label, bool selected, ValueChanged<bool> onSelected) {
+  Widget _priorityChip(
+    Priority? value,
+    String label,
+    bool selected,
+    ValueChanged<bool> onSelected,
+  ) {
     return ChoiceChip(
       selected: selected,
       label: Text(label),
@@ -292,7 +409,8 @@ class _TicketsPageState extends State<TicketsPage> {
             title: 'Erreur',
             message: state.error ?? 'Une erreur est survenue',
             action: ElevatedButton(
-              onPressed: () => context.read<TicketsBloc>().add(const TicketsRequested()),
+              onPressed: () =>
+                  context.read<TicketsBloc>().add(const TicketsRequested()),
               child: const Text('Réessayer'),
             ),
           );
@@ -303,14 +421,17 @@ class _TicketsPageState extends State<TicketsPage> {
         if (tickets.isEmpty) {
           return _buildEmptyState(
             theme: theme,
-            icon: state.tickets.isEmpty ? Icons.inbox_outlined : Icons.search_off,
+            icon: state.tickets.isEmpty
+                ? Icons.inbox_outlined
+                : Icons.search_off,
             title: state.tickets.isEmpty ? 'Aucun ticket' : 'Aucun résultat',
             message: state.tickets.isEmpty
                 ? 'Vous n\'avez pas encore créé de ticket.\nCommencez par créer votre premier ticket !'
                 : 'Aucun ticket ne correspond à votre recherche.',
             action: state.tickets.isEmpty
                 ? ElevatedButton.icon(
-                    onPressed: () => context.push(AppRoutes.maintenanceTicketCreate),
+                    onPressed: () =>
+                        context.push(AppRoutes.maintenanceTicketCreate),
                     icon: const Icon(Icons.add),
                     label: const Text('Créer un ticket'),
                   )
@@ -320,7 +441,8 @@ class _TicketsPageState extends State<TicketsPage> {
 
         return RefreshIndicator(
           color: theme.colorScheme.primary,
-          onRefresh: () async => context.read<TicketsBloc>().add(const TicketsRequested()),
+          onRefresh: () async =>
+              context.read<TicketsBloc>().add(const TicketsRequested()),
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
             itemCount: tickets.length,
@@ -331,10 +453,15 @@ class _TicketsPageState extends State<TicketsPage> {
                 child: TicketCard(
                   ticket: ticket,
                   onTap: () => context.push(
-                    AppRoutes.maintenanceTicketDetail.replaceFirst(':id', ticket.id.toString()),
+                    AppRoutes.maintenanceTicketDetail.replaceFirst(
+                      ':id',
+                      ticket.id.toString(),
+                    ),
                     extra: ticket,
                   ),
-                  onCancel: () => context.read<TicketsBloc>().add(TicketCancelled(ticket.id)),
+                  onCancel: () => context.read<TicketsBloc>().add(
+                    TicketCancelled(ticket.id),
+                  ),
                 ),
               );
             },
@@ -363,11 +490,7 @@ class _TicketsPageState extends State<TicketsPage> {
                 color: theme.colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: theme.colorScheme.primary,
-              ),
+              child: Icon(icon, size: 64, color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 24),
             Text(
@@ -388,10 +511,7 @@ class _TicketsPageState extends State<TicketsPage> {
                 height: 1.5,
               ),
             ),
-            if (action != null) ...[
-              const SizedBox(height: 24),
-              action,
-            ],
+            if (action != null) ...[const SizedBox(height: 24), action],
           ],
         ),
       ),
@@ -403,7 +523,10 @@ class _TicketsPageState extends State<TicketsPage> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.primaryContainer,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -436,4 +559,3 @@ class _TicketsPageState extends State<TicketsPage> {
     );
   }
 }
-

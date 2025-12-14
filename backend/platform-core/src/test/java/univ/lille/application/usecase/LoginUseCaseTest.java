@@ -11,6 +11,7 @@ import univ.lille.domain.exception.UserNotFoundException;
 import univ.lille.domain.model.Organization;
 import univ.lille.domain.model.User;
 import univ.lille.domain.port.out.EmailPort;
+import univ.lille.domain.port.out.NotificationPort;
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.dto.auth.AuthResponse;
 import univ.lille.dto.auth.ForgotPasswordRequest;
@@ -40,6 +41,8 @@ class LoginUseCaseTest {
 
     @Mock
     private EmailPort emailPort;
+    @Mock 
+    private NotificationPort notificationPort; 
 
     @InjectMocks
     private LoginUseCase loginUseCase;

@@ -36,6 +36,11 @@
             <artifactId>module-notification</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>univ.lille</groupId>
+            <artifactId>module-dashboard</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

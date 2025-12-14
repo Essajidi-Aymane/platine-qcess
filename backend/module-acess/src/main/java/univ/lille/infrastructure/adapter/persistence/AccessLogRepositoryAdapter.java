@@ -54,5 +54,14 @@ public class AccessLogRepositoryAdapter implements AccessLogRepository {
                 .reason(entity.getReason())
                 .build();
     }
+        @Override
+    public List<AccessLog> findByUserIdOrderByTimestampDesc(Long userId, int limit) {
+        return jpaRepository.findByUserIdOrderByTimestampDesc(userId)
+        .stream()
+        .limit(limit)
+        .map(this::mapToDomain)
+        .collect(Collectors.toList());
+}
+
     
 }

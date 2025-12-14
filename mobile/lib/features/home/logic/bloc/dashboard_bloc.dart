@@ -4,18 +4,24 @@ import 'package:mobile/features/home/logic/bloc/dashboard_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
-
   final IDashboardUserRepository dashboardUserRepository;
 
-  DashboardBloc({required this.dashboardUserRepository}) : super(DashboardInitial()) {
+  DashboardBloc({required this.dashboardUserRepository})
+    : super(DashboardInitial()) {
     on<LoadDashboard>(_onLoadDashboard);
     on<RefreshDashboard>(_onRefreshDashboard);
+    on<ResetDashboard>(_onResetDashboard);
   }
 
-  Future<void> _onLoadDashboard(LoadDashboard event, Emitter<DashboardState> emit) async {
+  Future<void> _onLoadDashboard(
+    LoadDashboard event,
+    Emitter<DashboardState> emit,
+  ) async {
     emit(DashboardLoading());
     try {
-      final userDashboard = await dashboardUserRepository.getUserDashboard(event.userInfo);
+      final userDashboard = await dashboardUserRepository.getUserDashboard(
+        event.userInfo,
+      );
       emit(DashboardLoaded(userDashboard));
     } catch (e, stackTrace) {
       print('[DashboardBloc] Error loading dashboard: $e');
@@ -24,15 +30,28 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     }
   }
 
-  Future<void> _onRefreshDashboard(RefreshDashboard event, Emitter<DashboardState> emit) async {
+  Future<void> _onRefreshDashboard(
+    RefreshDashboard event,
+    Emitter<DashboardState> emit,
+  ) async {
     emit(DashboardLoading());
     try {
-      final userDashboard = await dashboardUserRepository.getUserDashboard(event.userInfo);
+      final userDashboard = await dashboardUserRepository.getUserDashboard(
+        event.userInfo,
+      );
       emit(DashboardLoaded(userDashboard));
     } catch (e, stackTrace) {
       print('[DashboardBloc] Error refreshing dashboard: $e');
       print('[DashboardBloc] StackTrace: $stackTrace');
       emit(DashboardError("Failed to refresh dashboard: ${e.toString()}"));
     }
+  }
+
+  Future<void> _onResetDashboard(
+    ResetDashboard event,
+    Emitter<DashboardState> emit,
+  ) async {
+    print('[DashboardBloc]  Reset dashboard');
+    emit(DashboardInitial());
   }
 }

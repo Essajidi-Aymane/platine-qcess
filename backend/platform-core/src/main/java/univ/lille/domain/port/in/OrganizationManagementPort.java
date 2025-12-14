@@ -14,7 +14,6 @@ public interface OrganizationManagementPort {
     // ancien DeactivateModulePort
     void deactivateModule(Long organizationId, String moduleKey);
 
-
     // ancien CheckZoneAccessPort
     //boolean hasAccessToZone(String qrCode, Long userId);
 }

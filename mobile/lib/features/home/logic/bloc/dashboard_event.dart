@@ -23,3 +23,10 @@ class RefreshDashboard extends DashboardEvent {
   @override
   List<Object?> get props => [userInfo];
 }
+
+class ResetDashboard extends DashboardEvent {
+  ResetDashboard();
+
+  @override
+  List<Object?> get props => [];
+}

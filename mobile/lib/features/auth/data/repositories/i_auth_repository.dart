@@ -6,4 +6,5 @@ abstract class IAuthRepository {
   Future<bool> checkToken();
   Future<String?> getToken();
   Future<UserInfo> getUserInfo();
+  Future<void> clearLocalData();
 }

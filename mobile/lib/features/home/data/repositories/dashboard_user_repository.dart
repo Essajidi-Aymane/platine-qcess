@@ -14,14 +14,22 @@ class DashboardUserRepository extends BaseApiRepository
   Future<UserDashboard> getUserDashboard(UserInfo userInfo) async {
     final logs = await accessRepository.getUserAccessLogs(limit: 100);
 
-    final totalAccess = logs.length;
+    final now = DateTime.now();
+    final logsThisMonth = logs.where((log) {
+      if (log.accessGranted != true) return false;
+      final ts = log.timestamp;
+      return ts.month == now.month && ts.year == now.year;
+    }).toList();
+
+    final totalAccess = logsThisMonth.length;
+
     final lastAccess = logs.isNotEmpty ? logs.first.timestamp : null;
     final lastAccessGranted = logs.isNotEmpty ? logs.first.accessGranted : null;
-    final lastAccessReason = logs.isNotEmpty ? logs.first.reason : null;
+    final lastAccessReason = logs.isNotEmpty ? _mapReason(logs.first.reason) : null;
 
     final uniqueZones = logs
-        .where((log) => log.zoneId != null)
-        .map((log) => log.zoneId)
+        .where((log) => log.zoneName != null && log.accessGranted == true)
+        .map((log) => log.zoneName)
         .toSet()
         .length;
 
@@ -35,6 +43,27 @@ class DashboardUserRepository extends BaseApiRepository
       lastAccessReason: lastAccessReason,
       profilePictureUrl: userInfo.profilePictureUrl,
       totalZones: uniqueZones,
+      role: userInfo.role,
+      customRoleName: userInfo.customRoleName,
     );
   }
+
+  String _mapReason(String? reason) {
+      switch (reason) {
+        case 'ZONE_ORG_MISMATCH':
+          return "Cette zone n'appartient pas à votre organisation.";
+        case 'ZONE_INACTIVE':
+          return "Cette zone est désactivée.";
+        case 'PUBLIC_ZONE':
+          return "Zone publique : accès autorisé à tous.";
+        case 'AUTHORIZED_ROLE':
+          return "Votre rôle permet l'accès à cette zone.";
+        case 'ROLE_NOT_ALLOWED':
+          return "Votre rôle ne permet pas l'accès à cette zone.";
+        case 'PERMISSION_DENIED':
+          return "Vous n'avez pas la permission d'accéder à cette zone.";
+        default:
+          return reason != null && reason.isNotEmpty ? reason : "Raison inconnue.";
+      }
+    }
 }

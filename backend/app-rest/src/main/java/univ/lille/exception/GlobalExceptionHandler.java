@@ -45,10 +45,9 @@ public class GlobalExceptionHandler {
             EmailAlreadyExistsException ex) {
 
         ErrorResponse errorResponse = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
                 .status(HttpStatus.CONFLICT.value())
-                .error("Email Already Exists")
-                .message(ex.getMessage())
+                .error("EMAIL_ALREADY_EXISTS")
+                .message("Cet email est déjà utilisé")
                 .build();
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);

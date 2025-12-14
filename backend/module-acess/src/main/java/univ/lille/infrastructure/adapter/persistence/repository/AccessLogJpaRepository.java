@@ -8,5 +8,7 @@ import java.util.List;
 
 public interface AccessLogJpaRepository extends JpaRepository<AccessLogEntity, Long >  {
         List<AccessLogEntity> findByOrganizationIdOrderByTimestampDesc(Long organizationId);
+        List<AccessLogEntity> findByUserIdOrderByTimestampDesc(Long userId);
+
 
 }

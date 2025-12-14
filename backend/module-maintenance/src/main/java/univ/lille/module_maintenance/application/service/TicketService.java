@@ -17,10 +17,13 @@ import univ.lille.module_maintenance.domain.model.Ticket;
 import univ.lille.module_maintenance.domain.port.TicketRepositoryPort;
 import univ.lille.module_maintenance.domain.port.TicketServicePort;
 import univ.lille.domain.port.in.UserPort;
+import univ.lille.domain.port.out.NotificationPort;
 import univ.lille.dto.auth.user.UserDTO;
+import univ.lille.module_maintenance.application.dto.TicketDTO;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,6 +36,7 @@ public class TicketService implements TicketServicePort {
     private final TicketRepositoryPort ticketRepository;
     private final NotificationPublisher notificationPublisher;
     private final UserPort userPort;
+    private final NotificationPort notificationPort;
 
     @Transactional
     @NonNull
@@ -43,7 +47,17 @@ public class TicketService implements TicketServicePort {
         if (ticket.getCreatedByUserName() == null) {
             enrichTicketsWithUserNames(List.of(ticket), ticket.getOrganizationId());
         }
-        return ticketRepository.save(ticket);
+        Ticket savedTicket = ticketRepository.save(ticket);
+        
+        TicketDTO ticketDTO = TicketDTO.from(savedTicket);
+        notificationPort.notifyResourceUpdate(
+            savedTicket.getOrganizationId(),
+            "TICKET",
+            savedTicket.getId(),
+            convertTicketDTOToMap(ticketDTO)
+        );
+        
+        return savedTicket;
     }
 
     @NonNull
@@ -178,6 +192,16 @@ public class TicketService implements TicketServicePort {
         }
 
         enrichTicketsWithUserNames(List.of(savedTicket), savedTicket.getOrganizationId());
+        
+        // Notification SSE pour le changement de statut
+        TicketDTO ticketDTO = TicketDTO.from(savedTicket);
+        notificationPort.notifyResourceUpdate(
+            savedTicket.getOrganizationId(),
+            "TICKET",
+            savedTicket.getId(),
+            convertTicketDTOToMap(ticketDTO)
+        );
+        
         return savedTicket;
     }
 
@@ -243,6 +267,16 @@ public class TicketService implements TicketServicePort {
         if (savedTicket.getComments() != null) {
             savedTicket.getComments().sort(Comparator.comparing(Comment::getCreatedAt));
         }
+        
+        // Notification SSE pour le nouveau commentaire utilisateur
+        TicketDTO ticketDTO = TicketDTO.from(savedTicket);
+        notificationPort.notifyResourceUpdate(
+            savedTicket.getOrganizationId(),
+            "TICKET",
+            savedTicket.getId(),
+            convertTicketDTOToMap(ticketDTO)
+        );
+        
         return savedTicket;
     }
 
@@ -279,10 +313,10 @@ public class TicketService implements TicketServicePort {
         Long ownerId = savedTicket.getCreatedByUserId();
         if (ownerId != null && !ownerId.equals(authorUserId)) {
             notificationPublisher.notifyAdminCommentAdded(
-                ownerId,
-                ticketId,
-                savedTicket.getTitle(),
-                authorUserName != null ? authorUserName : "Un administrateur"
+                ownerId, 
+                ticketId, 
+                savedTicket.getTitle(), 
+                authorUserName
             );
         }
 
@@ -290,7 +324,52 @@ public class TicketService implements TicketServicePort {
         if (savedTicket.getComments() != null) {
             savedTicket.getComments().sort(Comparator.comparing(Comment::getCreatedAt));
         }
+        
+        // Notification SSE pour le nouveau commentaire admin
+        TicketDTO ticketDTO = TicketDTO.from(savedTicket);
+        notificationPort.notifyResourceUpdate(
+            savedTicket.getOrganizationId(),
+            "TICKET",
+            savedTicket.getId(),
+            convertTicketDTOToMap(ticketDTO)
+        );
+        
         return savedTicket;
+    }
+    
+    // Méthode helper pour convertir TicketDTO en Map pour SSE
+    private Map<String, Object> convertTicketDTOToMap(TicketDTO dto) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", dto.id());
+        map.put("title", dto.title());
+        map.put("description", dto.description());
+        map.put("status", dto.status());
+        map.put("priority", dto.priority());
+        map.put("priorityColor", dto.priorityColor());
+        map.put("createdByUserId", dto.createdByUserId());
+        map.put("createdByUserName", dto.createdByUserName());
+        map.put("organizationId", dto.organizationId());
+        map.put("createdAt", dto.createdAt() != null ? dto.createdAt().toString() : null);
+        map.put("updatedAt", dto.updatedAt() != null ? dto.updatedAt().toString() : null);
+        
+        // Inclure les commentaires complets pour la synchronisation
+        if (dto.comments() != null) {
+            List<Map<String, Object>> commentsList = dto.comments().stream()
+                .map(comment -> {
+                    Map<String, Object> commentMap = new HashMap<>();
+                    commentMap.put("id", comment.getId());
+                    commentMap.put("content", comment.getContent());
+                    commentMap.put("type", comment.getType());
+                    commentMap.put("authorUserId", comment.getAuthorUserId());
+                    commentMap.put("authorUserName", comment.getAuthorUserName());
+                    commentMap.put("createdAt", comment.getCreatedAt() != null ? comment.getCreatedAt().toString() : null);
+                    return commentMap;
+                })
+                .collect(Collectors.toList());
+            map.put("comments", commentsList);
+        }
+        
+        return map;
     }
 
     @Transactional

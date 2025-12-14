@@ -5,10 +5,17 @@ import 'package:mobile/core/presentation/widgets/bottom_nav_bar.dart';
 class ScaffoldWithNavBar extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
-  const ScaffoldWithNavBar({
-    required this.navigationShell,
-    super.key,
-  });
+  const ScaffoldWithNavBar({required this.navigationShell, super.key});
+
+  // ScrollController global pour chaque onglet
+  static final Map<int, ScrollController> _scrollControllers = {};
+
+  static ScrollController getScrollController(int index) {
+    if (!_scrollControllers.containsKey(index)) {
+      _scrollControllers[index] = ScrollController();
+    }
+    return _scrollControllers[index]!;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +29,21 @@ class ScaffoldWithNavBar extends StatelessWidget {
   }
 
   void _onItemTapped(int index, BuildContext context) {
-    navigationShell.goBranch(
-      index,
-      initialLocation: index == navigationShell.currentIndex,
-    );
+    if (index == navigationShell.currentIndex) {
+      // Remonter en haut de l'onglet actuel
+      final controller = _scrollControllers[index];
+      if (controller != null && controller.hasClients) {
+        controller.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    } else {
+      navigationShell.goBranch(
+        index,
+        initialLocation: index == navigationShell.currentIndex,
+      );
+    }
   }
 }

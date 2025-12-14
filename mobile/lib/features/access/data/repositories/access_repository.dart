@@ -30,7 +30,7 @@ class AccessRepository extends BaseApiRepository implements IAccessRepository {
   @override
   Future<List<AccessLogDTO>> getUserAccessLogs({int limit = 10}) {
     return get<List<AccessLogDTO>>(
-      '$_basePath/logs',
+      '$_basePath/logs/user',
       queryParameters: {'limit': limit},
       fromJson: (data) {
         final list = data as List;

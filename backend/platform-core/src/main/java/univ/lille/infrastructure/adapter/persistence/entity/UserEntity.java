@@ -55,6 +55,9 @@ public class UserEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime lastLogin;
 
+    @Column(name="last_access_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime lastAccessAt; 
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
     @Column(name = "reset_password_token_expiry")

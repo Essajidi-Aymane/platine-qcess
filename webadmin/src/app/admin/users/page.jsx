@@ -37,21 +37,15 @@ export default function UsersPage() {
 
 
     React.useEffect(() => {
-        // On se connecte au flux des logs d'accès
-        // Note: Assurez-vous que l'URL correspond à votre backend (ex: /api/access/stream-logs)
         const streamUrl = `${API_BASE_URL}/access/stream-logs`;
         
-        // withCredentials: true permet d'envoyer les cookies (JWT) automatiquement
         const eventSource = new EventSource(streamUrl, { withCredentials: true });
 
         eventSource.addEventListener('access-log', (event) => {
             try {
                 const newLog = JSON.parse(event.data);
                 
-                // Quand un log arrive, on met à jour le "Dernier accès" de l'utilisateur concerné
                 setUsers(currentUsers => currentUsers.map(user => {
-                    // On essaie de faire correspondre l'utilisateur
-                    // Idéalement, le log devrait contenir userId. Sinon on compare les noms (moins précis)
                     const isMatch = user.id === newLog.userId || 
                                    (user.firstName + ' ' + user.lastName) === newLog.userName;
 
@@ -59,7 +53,7 @@ export default function UsersPage() {
                         console.log(`Mise à jour temps réel pour : ${user.email}`);
                         return {
                             ...user,
-                            lastAccessAt: newLog.timestamp // On met à jour la date
+                            lastAccessAt: newLog.timestamp 
                         };
                     }
                     return user;
@@ -72,10 +66,37 @@ export default function UsersPage() {
             console.warn("SSE déconnecté (UsersPage)", err);
             eventSource.close();
         };
-         return () => {
+   
+      eventSource.addEventListener('resource-update', (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                console.log("resource-update reçu:", msg);
+
+                if (msg.resourceType === 'USER') {
+                    setUsers(prevUsers => prevUsers.map(user => {
+                        if (user.id === msg.resourceId) {
+                            console.log(`✅ Fusion update pour user ${user.email}:`, msg.payload);
+                            // Fusion intelligente : on garde l'ancien et on écrase avec le nouveau
+                            return { ...user, ...msg.payload };
+                        }
+                        return user;
+                    }));
+                }
+            } catch (err) {
+                console.error("Erreur parsing resource-update", err);
+            }
+        });
+
+        eventSource.onerror = (err) => {
+            console.warn(" SSE déconnecté (UsersPage)", err);
             eventSource.close();
         };
-    }, []); 
+
+        return () => {
+            console.log("🔌 Fermeture SSE");
+            eventSource.close();
+        };
+    }, []);
 
     const copyEmail = async (email) => {
         try {
@@ -178,6 +199,8 @@ export default function UsersPage() {
             if (!res.ok) throw new Error("Erreur lors du chargement des utilisateurs");
 
             const json = await res.json();
+             console.log("Données reçues du backend :", json.data);
+
 
             console.log("DATA REÇUE =", json.data[0]);
 
@@ -383,20 +406,36 @@ export default function UsersPage() {
             });
 
             if (!res.ok) {
-                const txt = await res.text().catch(() => null);
-                console.error("Erreur création user:", res.status, txt);
-                throw new Error("Impossible de créer l'utilisateur");
+                let errorMessage = "Impossible de créer l'utilisateur";
+                
+                try {
+                    const errorData = await res.json();
+                    
+                    if (errorData.error === "EMAIL_ALREADY_EXISTS") {
+                        errorMessage = errorData.message || "Cet email est déjà utilisé";
+                    } else if (errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (parseError) {
+                    console.error("Erreur parsing réponse:", parseError);
+                }
+                
+                setFormError(errorMessage);
+                setCreating(false);
+                return;
             }
 
             closeModal();
             setFormEmail("");
             setFormFirstName("");
             setFormLastName("");
+            setFormError(null);
 
             await loadUsers();
 
         } catch (e) {
-            setError(e.message);
+            console.error("Erreur création user:", e);
+            setFormError(e.message || "Une erreur est survenue");
         } finally {
             setCreating(false);
         }
@@ -579,6 +618,20 @@ export default function UsersPage() {
                                 <span className="text-sm text-gray-700">
                                     {selectedUser.lastAccessAt
                                         ? new Date(selectedUser.lastAccessAt).toLocaleString("fr-FR", {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            day: "2-digit",
+                                            month: "2-digit",
+                                            year: "numeric"
+                                        })
+                                        : "Jamais connecté"}
+                                </span>
+                            </div>
+                              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                                <span className="text-sm font-medium text-gray-600">Dernière connexion</span>
+                                <span className="text-sm text-gray-700">
+                                    {selectedUser.lastLogin
+                                        ? new Date(selectedUser.lastLogin).toLocaleString("fr-FR", {
                                             hour: "2-digit",
                                             minute: "2-digit",
                                             day: "2-digit",
