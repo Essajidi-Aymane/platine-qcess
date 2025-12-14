@@ -20,12 +20,10 @@ export default function TicketsPage() {
     const [error, setError] = useState(null);
     const [search, setSearch] = useState("");
     
-    // Modal details
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     
-    // Actions state
     const [commentText, setCommentText] = useState("");
     const [sendingComment, setSendingComment] = useState(false);
     const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -48,7 +46,55 @@ export default function TicketsPage() {
 
     useEffect(() => {
         loadTickets();
-    }, [loadTickets]);
+        
+        // SSE pour les mises à jour en temps réel des tickets
+        const streamUrl = `${API_BASE_URL}/access/stream-logs`;
+        const eventSource = new EventSource(streamUrl, { withCredentials: true });
+        
+        eventSource.addEventListener('resource-update', (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                console.log("📩 Tickets SSE resource-update:", msg);
+                
+                if (msg.resourceType === 'TICKET') {
+                    const ticketId = msg.resourceId;
+                    const payload = msg.payload;
+                    
+                    setTickets(prevTickets => {
+                        const existingIndex = prevTickets.findIndex(t => t.id === ticketId);
+                        
+                        if (existingIndex >= 0) {
+                            // Mettre à jour un ticket existant
+                            const updated = [...prevTickets];
+                            updated[existingIndex] = { ...updated[existingIndex], ...payload };
+                            console.log(`✅ Ticket #${ticketId} mis à jour`);
+                            return updated;
+                        } else {
+                            // Nouveau ticket créé
+                            console.log(`✅ Nouveau ticket #${ticketId} créé`);
+                            return [payload, ...prevTickets];
+                        }
+                    });
+                    
+                    // Si le ticket est ouvert dans la modal, le mettre à jour aussi
+                    if (selectedTicket && selectedTicket.id === ticketId) {
+                        setSelectedTicket(prev => ({ ...prev, ...payload }));
+                    }
+                }
+            } catch (err) {
+                console.error("Erreur parsing resource-update dans tickets:", err);
+            }
+        });
+        
+        eventSource.onerror = (err) => {
+            console.warn("SSE déconnecté (Tickets)", err);
+            eventSource.close();
+        };
+        
+        return () => {
+            eventSource.close();
+        };
+    }, [loadTickets, selectedTicket]);
 
     const openModal = (ticket) => {
         setSelectedTicket(ticket);
@@ -67,6 +113,12 @@ export default function TicketsPage() {
 
     const handleStatusChange = async (newStatus) => {
         if (!selectedTicket) return;
+        
+        // Check if ticket is in a final state
+        if (['CANCELLED', 'RESOLVED', 'REJECTED'].includes(selectedTicket.status)) {
+            return; // Do nothing, button should be disabled
+        }
+        
         try {
             setUpdatingStatus(true);
             const res = await fetch(`${API_BASE_URL}/maintenance/tickets/${selectedTicket.id}/update-status`, {
@@ -85,7 +137,7 @@ export default function TicketsPage() {
             setSelectedTicket(updatedTicket);
 
         } catch (err) {
-            alert(err.message);
+            setError(err.message);
         } finally {
             setUpdatingStatus(false);
         }
@@ -114,7 +166,7 @@ export default function TicketsPage() {
             setCommentText("");
 
         } catch (err) {
-            alert(err.message);
+            setError(err.message);
         } finally {
             setSendingComment(false);
         }
@@ -305,30 +357,67 @@ export default function TicketsPage() {
                             {/* Actions Status */}
                             <div className="space-y-2">
                                 <h4 className="text-sm font-semibold text-gray-900">Changer le statut</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {['OPEN', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'].map((status) => (
-                                        <button
-                                            key={status}
-                                            onClick={() => handleStatusChange(status)}
-                                            disabled={updatingStatus || selectedTicket.status === status}
-                                            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all
-                                                ${selectedTicket.status === status 
-                                                    ? 'bg-slate-800 text-white border-slate-800' 
-                                                    : 'bg-white text-gray-600 border-slate-200 hover:bg-slate-50'
-                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                        >
-                                            {status === 'OPEN' && 'Ouvrir'}
-                                            {status === 'IN_PROGRESS' && 'En cours'}
-                                            {status === 'RESOLVED' && 'Résolu'}
-                                            {status === 'REJECTED' && 'Rejeter'}
-                                        </button>
-                                    ))}
-                                </div>
+                                
                                 {selectedTicket.status === 'CANCELLED' && (
-                                    <p className="text-xs text-slate-500 italic mt-1">
-                                        Ce ticket a été annulé par l'utilisateur.
-                                    </p>
+                                    <div className="bg-slate-50 border border-slate-300 rounded-lg p-3 flex items-start gap-2">
+                                        <HiOutlineExclamation className="h-5 w-5 text-slate-600 shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-800">Ticket annulé</p>
+                                            <p className="text-xs text-slate-600 mt-0.5">
+                                                Ce ticket a été annulé par l'utilisateur. Le statut ne peut plus être modifié.
+                                            </p>
+                                        </div>
+                                    </div>
                                 )}
+                                
+                                {selectedTicket.status === 'RESOLVED' && (
+                                    <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-3 flex items-start gap-2">
+                                        <HiOutlineCheckCircle className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="text-sm font-medium text-emerald-800">Ticket résolu</p>
+                                            <p className="text-xs text-emerald-700 mt-0.5">
+                                                Ce ticket a été marqué comme résolu. Le statut ne peut plus être modifié.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {selectedTicket.status === 'REJECTED' && (
+                                    <div className="bg-red-50 border border-red-300 rounded-lg p-3 flex items-start gap-2">
+                                        <HiX className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="text-sm font-medium text-red-800">Ticket rejeté</p>
+                                            <p className="text-xs text-red-700 mt-0.5">
+                                                Ce ticket a été rejeté. Le statut ne peut plus être modifié.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <div className="flex flex-wrap gap-2">
+                                    {['OPEN', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'].map((status) => {
+                                        const isFinalState = ['CANCELLED', 'RESOLVED', 'REJECTED'].includes(selectedTicket.status);
+                                        const isDisabled = updatingStatus || selectedTicket.status === status || isFinalState;
+                                        
+                                        return (
+                                            <button
+                                                key={status}
+                                                onClick={() => handleStatusChange(status)}
+                                                disabled={isDisabled}
+                                                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all
+                                                    ${selectedTicket.status === status 
+                                                        ? 'bg-slate-800 text-white border-slate-800' 
+                                                        : 'bg-white text-gray-600 border-slate-200 hover:bg-slate-50'
+                                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                            >
+                                                {status === 'OPEN' && 'Ouvrir'}
+                                                {status === 'IN_PROGRESS' && 'En cours'}
+                                                {status === 'RESOLVED' && 'Résolu'}
+                                                {status === 'REJECTED' && 'Rejeter'}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
 
                             {/* Conversation */}

@@ -5,16 +5,13 @@ import 'package:mobile/core/theme/app_theme.dart';
 class OrganizationCard extends StatelessWidget {
   final String organizationName;
 
-  const OrganizationCard({
-    super.key,
-    required this.organizationName,
-  });
+  const OrganizationCard({super.key, required this.organizationName});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         boxShadow: AppTheme.shadowSmall,
       ),
@@ -27,11 +24,7 @@ class OrganizationCard extends StatelessWidget {
               color: AppColors.info.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              Icons.business,
-              color: AppColors.info,
-              size: 24,
-            ),
+            child: Icon(Icons.business, color: AppColors.info, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -40,19 +33,13 @@ class OrganizationCard extends StatelessWidget {
               children: [
                 Text(
                   'Organisation',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: Theme.of(context).textTheme.labelMedium,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   organizationName,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.text,
                   ),
                 ),
               ],

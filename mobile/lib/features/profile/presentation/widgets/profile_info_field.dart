@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 
 class ProfileInfoField extends StatelessWidget {
   final IconData icon;
@@ -25,12 +24,12 @@ class ProfileInfoField extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             icon,
-            color: AppColors.primary,
+            color: Theme.of(context).colorScheme.primary,
             size: 20,
           ),
         ),
@@ -39,46 +38,43 @@ class ProfileInfoField extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text(label, style: Theme.of(context).textTheme.labelMedium),
               const SizedBox(height: 6),
               enabled
                   ? TextFormField(
                       controller: controller,
                       keyboardType: keyboardType,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: AppColors.text,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium,
                       decoration: InputDecoration(
                         isDense: true,
                         filled: true,
-                        fillColor: AppColors.background,
+                        fillColor: Theme.of(context).scaffoldBackgroundColor,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 10,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: AppColors.borderLight),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).dividerColor,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: AppColors.borderLight),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).dividerColor,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 2,
+                          ),
                         ),
                         hintText: 'Non renseigné',
                         hintStyle: TextStyle(
-                          color: AppColors.textSecondary.withOpacity(0.5),
+                          color: Theme.of(context).hintColor.withOpacity(0.5),
                         ),
                       ),
                     )
@@ -86,11 +82,10 @@ class ProfileInfoField extends StatelessWidget {
                       controller.text.isNotEmpty
                           ? controller.text
                           : 'Non renseigné',
-                      style: TextStyle(
-                        fontSize: 15,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: controller.text.isEmpty
-                            ? AppColors.textSecondary
-                            : AppColors.text,
+                            ? Theme.of(context).hintColor
+                            : null,
                         fontWeight: controller.text.isEmpty
                             ? FontWeight.normal
                             : FontWeight.w500,

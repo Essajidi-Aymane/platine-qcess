@@ -8,15 +8,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter; 
 
 import lombok.RequiredArgsConstructor;
+import univ.lille.domain.model.AccessLog;
 import univ.lille.domain.model.ZoneQrCode;
 import univ.lille.domain.port.in.AccessControlPort;
 import univ.lille.domain.port.in.ZoneQrCodePort;
 import univ.lille.dto.access.AccessLogResponseDTO;
 import univ.lille.dto.access.AccessRequestDTO;
+
 import org.springframework.http.MediaType;
 import univ.lille.dto.access.AccessResponseDTO;
 import univ.lille.infrastructure.adapter.notification.SseNotificationAdapter;
@@ -58,13 +61,42 @@ public class AccessController {
     }
     @GetMapping("/logs")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AccessLogResponseDTO>> getAccessHistory(@AuthenticationPrincipal QcessUserPrincipal principal) {
+    public ResponseEntity<List<AccessLogResponseDTO>> getAccessHistory(
+            @AuthenticationPrincipal QcessUserPrincipal principal,
+            @RequestParam(value = "limit", required = false) Integer limit) {
         List<AccessLogResponseDTO> logs = accessControlPort.getAccessLogs(principal.getOrganizationId());
+        
+        if (limit != null && limit > 0 && limit < logs.size()) {
+            logs = logs.subList(0, limit);
+        }
+        
         return ResponseEntity.ok(logs);
     }
+    @GetMapping("/logs/user")
+    public ResponseEntity<List<AccessLogResponseDTO>> getUserAccessLogs(
+            @AuthenticationPrincipal QcessUserPrincipal principal,
+            @RequestParam(defaultValue = "10") int limit) {
+        
+        List<AccessLog> logs = accessControlPort.findByUserIdOrderByTimestampDesc(
+                principal.getId(), limit);
+        
+        List<AccessLogResponseDTO> dtos = logs.stream()
+                .map(log -> AccessLogResponseDTO.builder()
+                        .id(log.getId())
+                        .userName(log.getUserName())
+                        .zoneName(log.getZoneName())
+                        .timestamp(log.getTimestamp())
+                        .accessGranted(log.isAccessGranted())
+                        .reason(log.getReason())
+                        .build())
+                .toList();
+        
+        return ResponseEntity.ok(dtos);
+    }
 
-    @GetMapping("/stream-logs") 
-    @PreAuthorize("hasRole('ADMIN')")
+
+
+    @GetMapping("/stream-logs")
     public SseEmitter streamAccessLogs(@AuthenticationPrincipal QcessUserPrincipal principal) { 
         return sseNotificationAdapter.subscribe(principal.getOrganizationId()); 
     }

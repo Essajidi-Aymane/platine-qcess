@@ -22,7 +22,7 @@ class ProfileAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return SliverAppBar(
       expandedHeight: 200,
       floating: false,
@@ -35,7 +35,7 @@ class ProfileAppBar extends StatelessWidget {
             color: Colors.black26,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.arrow_back, color: Colors.white),
+          child: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),
         ),
         onPressed: onBackPressed,
       ),
@@ -49,7 +49,7 @@ class ProfileAppBar extends StatelessWidget {
             ),
             child: Icon(
               isEditing ? Icons.close : Icons.edit,
-              color: Colors.white,
+              color: theme.colorScheme.onPrimary,
             ),
           ),
           onPressed: onEditToggle,

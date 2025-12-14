@@ -9,10 +9,11 @@ import univ.lille.domain.exception.UserNotFoundException;
 import univ.lille.domain.exception.ZoneNotFoundException;
 import univ.lille.domain.model.AccessLog;
 import univ.lille.domain.model.CustomRole;
+import univ.lille.domain.model.Organization;
 import univ.lille.domain.model.User;
 import univ.lille.domain.model.Zone;
-import univ.lille.domain.port.out.AccessLogNotificationPort;
 import univ.lille.domain.port.out.AccessLogRepository;
+import univ.lille.domain.port.out.NotificationPort; 
 import univ.lille.domain.port.out.UserRepository;
 import univ.lille.domain.port.out.ZoneRepository;
 import univ.lille.dto.access.AccessResponseDTO;
@@ -34,11 +35,19 @@ class AccessControlUseCaseTest {
     private UserRepository userRepository;
     @Mock
     private AccessLogRepository accessLogRepository;
-    @Mock 
-    private AccessLogNotificationPort notifictionPort; 
+    @Mock
+    private NotificationPort notificationPort;
 
     @InjectMocks
     private AccessControlUseCase accessControlUseCase;
+
+    // Méthode helper pour créer une organisation
+    private Organization createOrganization(Long id) {
+        return Organization.builder()
+                .id(id)
+                .name("Test Organization")
+                .build();
+    }
 
     @Test
     void validateAccess_UserNotFound_ThrowsException() {
@@ -50,7 +59,9 @@ class AccessControlUseCaseTest {
 
     @Test
     void validateAccess_ZoneNotFound_ThrowsException() {
-        User user = User.builder().id(1L).build();
+        Organization org = createOrganization(10L);
+        User user = User.builder().id(1L).organization(org).build();
+        
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(zoneRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -60,8 +71,20 @@ class AccessControlUseCaseTest {
 
     @Test
     void validateAccess_ZoneInactive_AccessDenied() {
-        User user = User.builder().id(1L).build();
-        Zone zone = Zone.builder().id(1L).status(ZoneStatus.INACTIVE).orgId(10L).name("Zone A").build();
+        Organization org = createOrganization(10L);
+        User user = User.builder()
+                .id(1L)
+                .organization(org)
+                .firstName("John")
+                .lastName("Doe")
+                .build();
+        
+        Zone zone = Zone.builder()
+                .id(1L)
+                .status(ZoneStatus.INACTIVE)
+                .orgId(10L)
+                .name("Zone A")
+                .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
@@ -75,9 +98,22 @@ class AccessControlUseCaseTest {
 
     @Test
     void validateAccess_PublicZone_AccessGranted() {
-        User user = User.builder().id(1L).build();
-        // allowedRoleIds is null or empty
-        Zone zone = Zone.builder().id(1L).status(ZoneStatus.ACTIVE).orgId(10L).name("Zone A").allowedRoleIds(null).build();
+        Organization org = createOrganization(10L);
+        User user = User.builder()
+                .id(1L)
+                .organization(org)
+                .firstName("John")
+                .lastName("Doe")
+                .build();
+        
+        // Zone publique : allowedRoleIds est null ou vide
+        Zone zone = Zone.builder()
+                .id(1L)
+                .status(ZoneStatus.ACTIVE)
+                .orgId(10L)
+                .name("Zone A")
+                .allowedRoleIds(null)
+                .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
@@ -87,12 +123,22 @@ class AccessControlUseCaseTest {
         assertTrue(response.isGranted());
         assertEquals("PUBLIC_ZONE", response.getReason());
         verify(accessLogRepository).save(any(AccessLog.class));
+        verify(userRepository).save(user); // Vérifie que lastAccessAt a été mis à jour
     }
 
     @Test
     void validateAccess_AuthorizedRole_AccessGranted() {
-        CustomRole role = CustomRole.builder().id(5L).build();
-        User user = User.builder().id(1L).customRole(role).build();
+        Organization org = createOrganization(10L);
+        CustomRole role = CustomRole.builder().id(5L).name("Staff").build();
+        
+        User user = User.builder()
+                .id(1L)
+                .organization(org)
+                .customRole(role)
+                .firstName("Jane")
+                .lastName("Smith")
+                .build();
+        
         Zone zone = Zone.builder()
                 .id(1L)
                 .status(ZoneStatus.ACTIVE)
@@ -109,12 +155,22 @@ class AccessControlUseCaseTest {
         assertTrue(response.isGranted());
         assertEquals("AUTHORIZED_ROLE", response.getReason());
         verify(accessLogRepository).save(any(AccessLog.class));
+        verify(userRepository).save(user); // Vérifie que lastAccessAt a été mis à jour
     }
 
     @Test
     void validateAccess_RoleNotAllowed_AccessDenied() {
-        CustomRole role = CustomRole.builder().id(99L).build();
-        User user = User.builder().id(1L).customRole(role).build();
+        Organization org = createOrganization(10L);
+        CustomRole role = CustomRole.builder().id(99L).name("Guest").build();
+        
+        User user = User.builder()
+                .id(1L)
+                .organization(org)
+                .customRole(role)
+                .firstName("Bob")
+                .lastName("Martin")
+                .build();
+        
         Zone zone = Zone.builder()
                 .id(1L)
                 .status(ZoneStatus.ACTIVE)

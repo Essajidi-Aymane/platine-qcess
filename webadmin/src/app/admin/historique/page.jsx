@@ -48,6 +48,31 @@ export default function LogsPage() {
         }
     };
 
+        useEffect(() => {
+        fetchLogs();
+
+        const streamUrl = 'http://localhost:8080/api/access/stream-logs';
+        const eventSource = new EventSource(streamUrl, { withCredentials: true });
+
+        eventSource.addEventListener('access-log', (event) => {
+            try {
+                const newLog = JSON.parse(event.data);
+                console.log("Nouveau log reçu:", newLog);
+                
+                setLogs(prevLogs => [newLog, ...prevLogs]);
+                setFilteredLogs(prevFiltered => [newLog, ...prevFiltered]);
+            } catch (err) {
+                console.error("Erreur SSE log", err);
+            }
+        });
+
+        eventSource.onerror = () => {
+            console.warn("SSE déconnecté");
+            eventSource.close();
+        };
+
+        return () => eventSource.close();
+    }, []);
     const filterLogs = () => {
         let tempLogs = [...logs];
 

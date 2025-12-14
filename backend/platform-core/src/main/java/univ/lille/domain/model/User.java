@@ -34,6 +34,7 @@ public class User {
     private Organization organization;
     private LocalDateTime createdAt;
     private LocalDateTime lastLoginAt;
+    private LocalDateTime lastAccessAt; 
     private String passwordResetToken;
     private LocalDateTime passwordResetTokenExpiry;
 

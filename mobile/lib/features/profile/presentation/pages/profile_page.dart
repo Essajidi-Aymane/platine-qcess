@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/core/presentation/widgets/scaffold_with_nav_bar.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_bloc.dart';
@@ -60,7 +61,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: BlocConsumer<ProfileBloc, ProfileState>(
         listener: _onStateChanged,
         builder: (context, state) {
@@ -69,18 +70,18 @@ class _ProfilePageState extends State<ProfilePage> {
               child: CircularProgressIndicator(color: AppColors.primary),
             );
           }
-          
+
           if (state is ProfileError && state.previousProfile == null) {
             return _buildErrorState(state.message);
           }
-          
+
           final profile = _extractProfile(state);
           if (profile == null) {
             return Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             );
           }
-          
+
           return _buildProfileContent(profile, state is ProfileUpdating);
         },
       ),
@@ -93,7 +94,10 @@ class _ProfilePageState extends State<ProfilePage> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle, color: Colors.white),
+              Icon(
+                Icons.check_circle,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
               const SizedBox(width: 12),
               Expanded(child: Text(state.message)),
             ],
@@ -106,12 +110,16 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       );
       setState(() => _isEditing = false);
+      _initializeControllers(state.profile);
     } else if (state is ProfileError) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.error_outline, color: Colors.white),
+              Icon(
+                Icons.error_outline,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
               const SizedBox(width: 12),
               Expanded(child: Text(state.message)),
             ],
@@ -158,18 +166,15 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 24),
             Text(
               'Erreur de chargement',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.text,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Text(
               message,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
               textAlign: TextAlign.center,
             ),
@@ -182,17 +187,24 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               child: ElevatedButton.icon(
-                onPressed: () => context.read<ProfileBloc>().add(ProfileLoadRequested()),
+                onPressed: () =>
+                    context.read<ProfileBloc>().add(ProfileLoadRequested()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
-                icon: const Icon(Icons.refresh, color: Colors.white),
-                label: const Text(
+                icon: Icon(
+                  Icons.refresh,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+                label: Text(
                   'Réessayer',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -206,6 +218,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildProfileContent(UserProfile profile, bool isUpdating) {
     return CustomScrollView(
+      controller: ScaffoldWithNavBar.getScrollController(
+        1,
+      ), // Index 1 pour l'onglet Profil
       slivers: [
         ProfileAppBar(
           imageUrl: profile.profilePictureUrl,
@@ -224,7 +239,7 @@ class _ProfilePageState extends State<ProfilePage> {
           }),
           onChangePhoto: _onChangePhoto,
         ),
-        
+
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -236,26 +251,26 @@ class _ProfilePageState extends State<ProfilePage> {
                     displayName: profile.displayName,
                     email: profile.email,
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   _buildInfoSection(isUpdating),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   if (profile.organizationName != null)
                     OrganizationCard(
                       organizationName: profile.organizationName!,
                     ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   _buildAccountInfoCard(profile),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   _buildDangerZone(),
-                  
+
                   const SizedBox(height: 100),
                 ],
               ),
@@ -308,7 +323,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       );
     }
-    
+
     if (_isEditing) {
       return Container(
         decoration: BoxDecoration(
@@ -327,17 +342,17 @@ class _ProfilePageState extends State<ProfilePage> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text(
+          child: Text(
             'Enregistrer',
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
         ),
       );
     }
-    
+
     return null;
   }
 
@@ -376,8 +391,8 @@ class _ProfilePageState extends State<ProfilePage> {
               final authState = context.read<AuthBloc>().state;
               if (authState is AuthAuthenticated) {
                 context.read<AuthBloc>().add(
-                      LogoutRequested(token: authState.token),
-                    );
+                  LogoutRequested(token: authState.token),
+                );
               }
             },
             style: OutlinedButton.styleFrom(
@@ -401,8 +416,18 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _formatDate(DateTime date) {
     const months = [
-      'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-      'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+      'janvier',
+      'février',
+      'mars',
+      'avril',
+      'mai',
+      'juin',
+      'juillet',
+      'août',
+      'septembre',
+      'octobre',
+      'novembre',
+      'décembre',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -429,18 +454,18 @@ class _ProfilePageState extends State<ProfilePage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
               SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onPrimary,
                 ),
               ),
-              SizedBox(width: 12),
-              Text('Téléchargement de la photo...'),
+              const SizedBox(width: 12),
+              const Text('Téléchargement de la photo...'),
             ],
           ),
           backgroundColor: AppColors.primary,
@@ -463,19 +488,21 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _onSaveProfile() {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<ProfileBloc>().add(ProfileUpdateRequested(
-        request: UpdateProfileRequest(
-          firstName: _firstNameController.text.trim().isNotEmpty
-              ? _firstNameController.text.trim()
-              : null,
-          lastName: _lastNameController.text.trim().isNotEmpty
-              ? _lastNameController.text.trim()
-              : null,
-          email: _emailController.text.trim().isNotEmpty
-              ? _emailController.text.trim()
-              : null,
+      context.read<ProfileBloc>().add(
+        ProfileUpdateRequested(
+          request: UpdateProfileRequest(
+            firstName: _firstNameController.text.trim().isNotEmpty
+                ? _firstNameController.text.trim()
+                : null,
+            lastName: _lastNameController.text.trim().isNotEmpty
+                ? _lastNameController.text.trim()
+                : null,
+            email: _emailController.text.trim().isNotEmpty
+                ? _emailController.text.trim()
+                : null,
+          ),
         ),
-      ));
+      );
     }
   }
 }

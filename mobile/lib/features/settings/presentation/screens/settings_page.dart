@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/core/presentation/widgets/scaffold_with_nav_bar.dart';
 import 'package:mobile/core/rooting/app_routes.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/auth/logic/bloc/auth_bloc.dart';
@@ -18,10 +19,11 @@ class SettingsPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Paramètres'),
-      ),
+      appBar: AppBar(title: const Text('Paramètres')),
       body: ListView(
+        controller: ScaffoldWithNavBar.getScrollController(
+          3,
+        ), // Index 3 pour l'onglet Paramètres
         padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingMedium),
         children: [
           _SectionHeader(title: 'Profil'),
@@ -131,11 +133,13 @@ class SettingsPage extends StatelessWidget {
               final authState = context.read<AuthBloc>().state;
               if (authState is AuthAuthenticated) {
                 context.read<AuthBloc>().add(
-                      LogoutRequested(token: authState.token),
-                    );
+                  LogoutRequested(token: authState.token),
+                );
               }
             },
-            style: TextButton.styleFrom(foregroundColor: Theme.of(dialogContext).colorScheme.error),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
             child: const Text('Déconnexion'),
           ),
         ],
@@ -147,7 +151,9 @@ class SettingsPage extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLarge)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTheme.radiusLarge),
+        ),
       ),
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -228,10 +234,10 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-            ),
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.8,
+        ),
       ),
     );
   }
@@ -269,11 +275,7 @@ class _SettingsTile extends StatelessWidget {
           color: (iconColor ?? defaultColor).withOpacity(0.1),
           borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
         ),
-        child: Icon(
-          icon,
-          color: iconColor ?? defaultColor,
-          size: 22,
-        ),
+        child: Icon(icon, color: iconColor ?? defaultColor, size: 22),
       ),
       title: Text(
         title,
@@ -290,7 +292,9 @@ class _SettingsTile extends StatelessWidget {
               ),
             )
           : null,
-      trailing: trailing ?? Icon(Icons.chevron_right, color: theme.colorScheme.outline),
+      trailing:
+          trailing ??
+          Icon(Icons.chevron_right, color: theme.colorScheme.outline),
       onTap: onTap,
     );
   }

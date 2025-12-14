@@ -6,7 +6,6 @@ import 'package:mobile/features/auth/logic/bloc/auth_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-
   final IAuthRepository authRepository;
 
   AuthBloc({required this.authRepository}) : super(AuthInitial()) {
@@ -15,10 +14,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AppStarted>(_onAppStart);
   }
 
-  Future<void> _onAppStart(
-    AppStarted event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onAppStart(AppStarted event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
       final hasToken = await authRepository.checkToken();
@@ -49,8 +45,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final token = await authRepository.login(event.username, event.accessCode);
-      
+      final token = await authRepository.login(
+        event.username,
+        event.accessCode,
+      );
+
       // Récupérer les infos utilisateur après le login
       try {
         final userInfo = await authRepository.getUserInfo();
@@ -59,7 +58,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         // Si échec de récupération des infos, déconnecter
         print('[AuthBloc] Erreur récupération user info après login: $e');
         await authRepository.logout(token);
-        emit(AuthUnauthenticated(error: 'Erreur lors de la récupération des informations utilisateur'));
+        emit(
+          AuthUnauthenticated(
+            error:
+                'Erreur lors de la récupération des informations utilisateur',
+          ),
+        );
       }
     } catch (e) {
       emit(AuthUnauthenticated(error: _mapExceptionToMessage(e)));
@@ -72,10 +76,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
+      // Appeler l'API de déconnexion
       await authRepository.logout(event.token);
       emit(AuthUnauthenticated());
     } catch (e) {
-      emit(AuthUnauthenticated(error: _mapExceptionToMessage(e)));
+      // Même en cas d'erreur, on déconnecte l'utilisateur localement
+      print('[AuthBloc] Erreur lors de la déconnexion: $e');
+      await authRepository.clearLocalData();
+      emit(AuthUnauthenticated());
     }
   }
 
@@ -110,6 +118,4 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     return 'Une erreur est survenue. Veuillez réessayer.';
   }
-
-  
 }

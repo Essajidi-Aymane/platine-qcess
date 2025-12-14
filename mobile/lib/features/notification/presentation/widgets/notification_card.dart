@@ -26,16 +26,19 @@ class NotificationCard extends StatelessWidget {
         vertical: AppTheme.spacingSmall,
       ),
       decoration: BoxDecoration(
-        color: isUnread 
-            ? AppColors.primary.withOpacity(0.08) 
-            : AppColors.cardBackground,
+        color: isUnread
+            ? Theme.of(context).colorScheme.primary.withOpacity(0.08)
+            : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         border: isUnread
-            ? Border.all(color: AppColors.primary.withOpacity(0.3), width: 1)
+            ? Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                width: 1,
+              )
             : null,
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowLight,
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -67,10 +70,12 @@ class NotificationCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               notification.title,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: isUnread ? FontWeight.w600 : FontWeight.w500,
-                                color: AppColors.text,
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: isUnread
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                  ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -79,8 +84,8 @@ class NotificationCard extends StatelessWidget {
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -90,7 +95,9 @@ class NotificationCard extends StatelessWidget {
                       Text(
                         notification.body,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -99,7 +106,9 @@ class NotificationCard extends StatelessWidget {
                       Text(
                         _formatTime(notification.createdAt),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textHint,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.5),
                         ),
                       ),
                     ],
@@ -123,11 +132,7 @@ class NotificationCard extends StatelessWidget {
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
       ),
-      child: Icon(
-        iconData,
-        color: color,
-        size: 22,
-      ),
+      child: Icon(iconData, color: color, size: 22),
     );
   }
 
@@ -177,18 +182,20 @@ class NotificationCard extends StatelessWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-    final notificationDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final notificationDate = DateTime(
+      dateTime.year,
+      dateTime.month,
+      dateTime.day,
+    );
 
     final timeFormat = DateFormat('HH:mm', 'fr_FR');
     final dateFormat = DateFormat('dd/MM/yyyy', 'fr_FR');
 
     if (notificationDate == today) {
       return timeFormat.format(dateTime);
-    }
-    else if (notificationDate == yesterday) {
+    } else if (notificationDate == yesterday) {
       return 'Hier à ${timeFormat.format(dateTime)}';
-    }
-    else {
+    } else {
       return dateFormat.format(dateTime);
     }
   }

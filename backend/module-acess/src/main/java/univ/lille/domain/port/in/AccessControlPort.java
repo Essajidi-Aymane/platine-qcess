@@ -10,5 +10,8 @@ public interface AccessControlPort {
     AccessResponseDTO validateAccess(Long userId , Long zoneId) ; 
 
     List<AccessLogResponseDTO> getAccessLogs(Long organizationId); 
+
+    List<AccessLog> findByUserIdOrderByTimestampDesc(Long userId, int limit);
+
     
 }

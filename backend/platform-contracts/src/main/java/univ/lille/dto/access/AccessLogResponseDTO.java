@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AccessLogResponseDTO {
     private Long id; 
-    
+    private Long userId; 
     private String userName;
     private String zoneName;
     private LocalDateTime timestamp;
