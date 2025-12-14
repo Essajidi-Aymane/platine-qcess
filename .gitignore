@@ -14,6 +14,9 @@ backend/**/.mvn/
 backend/**/hs_err_pid*
 backend/**/.classpath
 backend/**/.project
+backent/app-rest/src/main/ressources/application.yml
+backend/app-rest/src/main/resources/firebase-service-account.json
+backend/app-rest/src/main/resources/application-*.yml
 
 # --- Node / Next.js (webadmin/*) ---
 webadmin/node_modules/
