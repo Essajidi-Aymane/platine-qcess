@@ -15,7 +15,7 @@ export default function UsersPage() {
     const [selectedUserIds, setSelectedUserIds] = React.useState([]);
 
     const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [modalVisible, setModalVisible] = React.useState(false); // <— new
+    const [modalVisible, setModalVisible] = React.useState(false); 
 
     const [formEmail, setFormEmail] = React.useState("");
     const [formFirstName, setFormFirstName] = React.useState("");
@@ -33,6 +33,8 @@ export default function UsersPage() {
     const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
     const [selectedRoleToAssign, setSelectedRoleToAssign] = React.useState("");
     const [assigning, setAssigning] = React.useState(false);
+    const [isConfirmUnassignOpen, setIsConfirmUnassignOpen] = React.useState(false);
+    const [confirmUnassignVisible, setConfirmUnassignVisible] = React.useState(false);
 
 
 
@@ -75,8 +77,7 @@ export default function UsersPage() {
                 if (msg.resourceType === 'USER') {
                     setUsers(prevUsers => prevUsers.map(user => {
                         if (user.id === msg.resourceId) {
-                            console.log(`✅ Fusion update pour user ${user.email}:`, msg.payload);
-                            // Fusion intelligente : on garde l'ancien et on écrase avec le nouveau
+                            console.log(`Fusion update pour user ${user.email}:`, msg.payload);
                             return { ...user, ...msg.payload };
                         }
                         return user;
@@ -217,10 +218,18 @@ export default function UsersPage() {
 
 
     }, [loadUsers]);
-    const handleBulkUnassign = async () => {
+    const openConfirmUnassign = () => {
         if (selectedUserIds.length === 0) return;
-        
-        if (!confirm(`Voulez-vous vraiment retirer le rôle de ${selectedUserIds.length} utilisateur(s) ?`)) return;
+        setIsConfirmUnassignOpen(true);
+        setTimeout(() => setConfirmUnassignVisible(true), 10);
+    };
+
+    const closeConfirmUnassign = () => {
+        setConfirmUnassignVisible(false);
+        setTimeout(() => setIsConfirmUnassignOpen(false), 300);
+    };
+
+    const handleBulkUnassign = async () => {
 
         try {
             setAssigning(true);
@@ -228,7 +237,7 @@ export default function UsersPage() {
             const usersToProcess = users.filter(u => selectedUserIds.includes(u.id) && u.customRoleId);
             
             if (usersToProcess.length === 0) {
-                alert("Aucun utilisateur sélectionné n'a de rôle à retirer.");
+                setActionError("Aucun utilisateur sélectionné n'a de rôle à retirer.");
                 setAssigning(false);
                 return;
             }
@@ -255,6 +264,7 @@ export default function UsersPage() {
 
             await Promise.all(promises);
 
+            setActionSuccess(`Rôle retiré avec succès pour ${usersToProcess.length} utilisateur(s)`);
             setIsAssignModalOpen(false);
             setSelectedUserIds([]);
             setSelectedRoleToAssign("");
@@ -263,7 +273,7 @@ export default function UsersPage() {
 
         } catch (err) {
             console.error(err);
-            alert("Erreur lors du retrait des rôles");
+            setActionError("Erreur lors du retrait des rôles");
         } finally {
             setAssigning(false);
         }
@@ -290,6 +300,7 @@ export default function UsersPage() {
 
             if (!res.ok) throw new Error("Erreur lors de l'assignation");
 
+            setActionSuccess(`Rôle assigné avec succès à ${selectedUserIds.length} utilisateur(s)`);
             setIsAssignModalOpen(false);
             setSelectedUserIds([]); 
             setSelectedRoleToAssign("");
@@ -297,7 +308,7 @@ export default function UsersPage() {
             await loadUsers(); 
             
         } catch (err) {
-            alert(err.message); // Ou utiliser un state d'erreur plus joli
+            setActionError(err.message);
         } finally {
             setAssigning(false);
         }
@@ -782,7 +793,7 @@ export default function UsersPage() {
                         <div className="flex justify-end gap-3">
                             <button
                                 type="button"
-                                onClick={handleBulkUnassign}
+                                onClick={openConfirmUnassign}
                                 className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg border border-red-200 mr-auto"
                             >
                                 Retirer
@@ -1030,6 +1041,56 @@ export default function UsersPage() {
                 )}
             </div>
         </div>
+
+        {/* Modal de confirmation de retrait */}
+        {isConfirmUnassignOpen && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                <div 
+                    className={`absolute inset-0 bg-black transition-opacity duration-300 ${
+                        confirmUnassignVisible ? "opacity-50" : "opacity-0"
+                    }`}
+                    onClick={closeConfirmUnassign}
+                ></div>
+                
+                <div className={`relative bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 ${
+                    confirmUnassignVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"
+                }`}>
+                    <div className="p-6">
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                            <HiOutlineUserRemove className="w-6 h-6 text-red-600" />
+                        </div>
+                        
+                        <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                            Retirer le rôle
+                        </h3>
+                        
+                        <p className="text-sm text-gray-600 text-center mb-6">
+                            Voulez-vous vraiment retirer le rôle de <strong>{selectedUserIds.length} utilisateur(s)</strong> ?
+                        </p>
+                        
+                        <div className="flex gap-3">
+                            <button
+                                onClick={closeConfirmUnassign}
+                                disabled={assigning}
+                                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors text-sm font-medium"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => {
+                                    closeConfirmUnassign();
+                                    handleBulkUnassign();
+                                }}
+                                disabled={assigning}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors text-sm font-medium"
+                            >
+                                {assigning ? "Retrait..." : "Confirmer"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
         </>
     );
 }
