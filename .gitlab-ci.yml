@@ -33,8 +33,13 @@ test_mobile:
   stage : test
   script : 
     - cd mobile 
+    - flutter --version
     - flutter pub get 
     - flutter test --coverage
+  artifacts:
+    paths:
+      - mobile/coverage/
+    expire_in: 30 min
   allow_failure : false
 
 build_backend:
