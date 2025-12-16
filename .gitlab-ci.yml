@@ -23,6 +23,7 @@ variables:
   GIT_DEPTH: "0"
   DOCKER_IMAGE_BACKEND: "$CI_REGISTRY_IMAGE/backend"
   PUB_CACHE: "${CI_PROJECT_DIR}/mobile/.pub-cache"
+  GRADLE_USER_HOME: "${CI_PROJECT_DIR}/.gradle"
 
 test_backend:
   stage: test
@@ -69,23 +70,27 @@ build_mobile:
   stage: build
   needs: ["test_mobile"]
   cache:
-    key: flutter-${CI_COMMIT_REF_SLUG}
+    key: flutter-android-${CI_COMMIT_REF_SLUG}
     paths:
       - mobile/.pub-cache/
       - mobile/.dart_tool/
-    policy: pull
+      - .gradle/
+      - mobile/build/
+    policy: pull-push
   before_script:
     - export PUB_CACHE="${CI_PROJECT_DIR}/mobile/.pub-cache"
+    - export GRADLE_USER_HOME="${CI_PROJECT_DIR}/.gradle"
   script:
     - cd mobile
     - flutter pub get --offline || flutter pub get
-    - flutter build apk --release
-    - flutter build appbundle --release
+    - flutter build apk --release --no-pub
+    - flutter build appbundle --release --no-pub
   artifacts:
     paths:
       - mobile/build/app/outputs/flutter-apk/app-release.apk
       - mobile/build/app/outputs/bundle/release/app-release.aab
     expire_in: 1 week
+  timeout: 20m
  
 
 sonar_backend:
