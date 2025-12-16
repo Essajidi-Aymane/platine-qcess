@@ -8,15 +8,21 @@ stages:
   - release
 
 cache:
-  key: maven
+  key: 
+    files:
+      - backend/pom.xml
+      - mobile/pubspec.yaml
   paths:
     - .m2/repository
+    - mobile/.pub-cache/
+    - mobile/.dart_tool/
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
   GIT_DEPTH: "0"
   DOCKER_IMAGE_BACKEND: "$CI_REGISTRY_IMAGE/backend"
+  PUB_CACHE: "${CI_PROJECT_DIR}/mobile/.pub-cache"
 
 test_backend:
   stage: test
@@ -30,17 +36,23 @@ test_backend:
 
 test_mobile:
   image: ghcr.io/cirruslabs/flutter:stable
-  stage : test
-  script : 
+  stage: test
+  cache:
+    key: flutter-${CI_COMMIT_REF_SLUG}
+    paths:
+      - mobile/.pub-cache/
+      - mobile/.dart_tool/
+  before_script:
+    - export PUB_CACHE="${CI_PROJECT_DIR}/mobile/.pub-cache"
+  script: 
     - cd mobile 
-    - flutter --version
     - flutter pub get 
-    - flutter test --coverage
+    - flutter test --coverage --concurrency=4
   artifacts:
     paths:
       - mobile/coverage/
     expire_in: 30 min
-  allow_failure : false
+  allow_failure: false
 
 build_backend:
   stage: build
@@ -56,9 +68,17 @@ build_mobile:
   image: ghcr.io/cirruslabs/flutter:stable
   stage: build
   needs: ["test_mobile"]
+  cache:
+    key: flutter-${CI_COMMIT_REF_SLUG}
+    paths:
+      - mobile/.pub-cache/
+      - mobile/.dart_tool/
+    policy: pull
+  before_script:
+    - export PUB_CACHE="${CI_PROJECT_DIR}/mobile/.pub-cache"
   script:
     - cd mobile
-    - flutter pub get
+    - flutter pub get --offline || flutter pub get
     - flutter build apk --release
     - flutter build appbundle --release
   artifacts:
