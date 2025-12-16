@@ -11,19 +11,17 @@ cache:
   key: 
     files:
       - backend/pom.xml
-      - mobile/pubspec.yaml
   paths:
     - .m2/repository
-    - mobile/.pub-cache/
-    - mobile/.dart_tool/
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
   GIT_DEPTH: "0"
   DOCKER_IMAGE_BACKEND: "$CI_REGISTRY_IMAGE/backend"
-  PUB_CACHE: "${CI_PROJECT_DIR}/mobile/.pub-cache"
+  PUB_CACHE: "${CI_PROJECT_DIR}/.pub-cache"
   GRADLE_USER_HOME: "${CI_PROJECT_DIR}/.gradle"
+  ANDROID_HOME: "${CI_PROJECT_DIR}/.android-sdk"
 
 test_backend:
   stage: test
@@ -39,12 +37,18 @@ test_mobile:
   image: ghcr.io/cirruslabs/flutter:stable
   stage: test
   cache:
-    key: flutter-${CI_COMMIT_REF_SLUG}
+    key: flutter-mobile-${CI_COMMIT_REF_SLUG}
     paths:
-      - mobile/.pub-cache/
+      - .pub-cache/
+      - .gradle/
+      - .android-sdk/
       - mobile/.dart_tool/
+      - mobile/build/
+    policy: pull-push
   before_script:
-    - export PUB_CACHE="${CI_PROJECT_DIR}/mobile/.pub-cache"
+    - export PUB_CACHE="${CI_PROJECT_DIR}/.pub-cache"
+    - export GRADLE_USER_HOME="${CI_PROJECT_DIR}/.gradle"
+    - export ANDROID_HOME="${CI_PROJECT_DIR}/.android-sdk"
   script: 
     - cd mobile 
     - flutter pub get 
@@ -70,16 +74,18 @@ build_mobile:
   stage: build
   needs: ["test_mobile"]
   cache:
-    key: flutter-android-${CI_COMMIT_REF_SLUG}
+    key: flutter-mobile-${CI_COMMIT_REF_SLUG}
     paths:
-      - mobile/.pub-cache/
-      - mobile/.dart_tool/
+      - .pub-cache/
       - .gradle/
+      - .android-sdk/
+      - mobile/.dart_tool/
       - mobile/build/
-    policy: pull-push
+    policy: pull
   before_script:
-    - export PUB_CACHE="${CI_PROJECT_DIR}/mobile/.pub-cache"
+    - export PUB_CACHE="${CI_PROJECT_DIR}/.pub-cache"
     - export GRADLE_USER_HOME="${CI_PROJECT_DIR}/.gradle"
+    - export ANDROID_HOME="${CI_PROJECT_DIR}/.android-sdk"
   script:
     - cd mobile
     - flutter pub get --offline || flutter pub get
@@ -103,7 +109,7 @@ sonar_backend:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
 sonar_mobile:
-  image: ghcr.io/sonarsource/sonar-scanner-cli:latest
+  image: sonarsource/sonar-scanner-cli:5.0
   stage: sonar
   needs: ["test_mobile"]
   script:
