@@ -37,7 +37,7 @@ test_mobile:
   image: ghcr.io/cirruslabs/flutter:stable
   stage: test
   cache:
-    key: flutter-mobile-${CI_COMMIT_REF_SLUG}
+    key: flutter-mobile-shared
     paths:
       - .pub-cache/
       - .gradle/
@@ -74,7 +74,7 @@ build_mobile:
   stage: build
   needs: ["test_mobile"]
   cache:
-    key: flutter-mobile-${CI_COMMIT_REF_SLUG}
+    key: flutter-mobile-shared
     paths:
       - .pub-cache/
       - .gradle/
@@ -108,25 +108,7 @@ sonar_backend:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
-sonar_mobile:
-  image: sonarsource/sonar-scanner-cli:5.0
-  stage: sonar
-  needs: ["test_mobile"]
-  script:
-    - cd mobile
-    - sonar-scanner
-      -Dsonar.projectKey=essajidi-aymane-group_Essajidi-Aymane-project
-      -Dsonar.organization=essajidi-aymane-group
-      -Dsonar.host.url=$SONAR_HOST_URL
-      -Dsonar.token=$SONAR_TOKEN
-      -Dsonar.sources=lib
-      -Dsonar.tests=test
-      -Dsonar.flutter.coverage.reportPaths=coverage/lcov.info
-      -Dsonar.branch.name=$CI_COMMIT_BRANCH
-      -Dsonar.exclusions=**/*.g.dart,**/*.freezed.dart,**/*.config.dart
-  allow_failure: true
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+
 
 package_backend:
   stage: package
