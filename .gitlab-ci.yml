@@ -29,7 +29,7 @@ test_backend:
   allow_failure: false
 
 test_mobile:
-  image: cirrusci/flutter:latest
+  image: ghcr.io/cirruslabs/flutter:stable
   stage : test
   script : 
     - cd mobile 
@@ -48,7 +48,7 @@ build_backend:
     expire_in: 30 min
 
 build_mobile:
-  image: cirrusci/flutter:latest
+  image: ghcr.io/cirruslabs/flutter:stable
   stage: build
   needs: ["test_mobile"]
   script:
