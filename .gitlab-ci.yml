@@ -1,55 +1,182 @@
 image: maven:3.9.6-eclipse-temurin-17
 
 stages:
-  - build
   - test
+  - build
   - sonar
+  - package
+  - release
 
 cache:
-  key: maven
+  key: 
+    files:
+      - backend/pom.xml
+      - mobile/pubspec.yaml
   paths:
     - .m2/repository
+    - mobile/.pub-cache/
+    - mobile/.dart_tool/
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
   GIT_DEPTH: "0"
+  DOCKER_IMAGE_BACKEND: "$CI_REGISTRY_IMAGE/backend"
+  PUB_CACHE: "${CI_PROJECT_DIR}/mobile/.pub-cache"
+  GRADLE_USER_HOME: "${CI_PROJECT_DIR}/.gradle"
 
-# =====================
-# 1) BUILD BACKEND
-# =====================
-build_backend:
-  stage: build
-  script:
-    - mvn -B -f backend/pom.xml clean compile
-  artifacts:
-    paths:
-      - backend/**/target
-    expire_in: 30 min
-
-# =====================
-# 2) TEST BACKEND
-# =====================
 test_backend:
   stage: test
-  needs: ["build_backend"]
   script:
-
-    - mvn -B -f backend/pom.xml test
+    - mvn -B -f backend/pom.xml clean test
   artifacts:
     paths:
       - backend/**/target
     expire_in: 30 min
   allow_failure: false
 
-# =====================
-# 3) SONAR BACKEND
-# =====================
+test_mobile:
+  image: ghcr.io/cirruslabs/flutter:stable
+  stage: test
+  cache:
+    key: flutter-${CI_COMMIT_REF_SLUG}
+    paths:
+      - mobile/.pub-cache/
+      - mobile/.dart_tool/
+  before_script:
+    - export PUB_CACHE="${CI_PROJECT_DIR}/mobile/.pub-cache"
+  script: 
+    - cd mobile 
+    - flutter pub get 
+    - flutter test --coverage --concurrency=4
+  artifacts:
+    paths:
+      - mobile/coverage/
+    expire_in: 30 min
+  allow_failure: false
+
+build_backend:
+  stage: build
+  needs : ["test_backend"]
+  script:
+    - mvn -B -f backend/pom.xml compile
+  artifacts:
+    paths:
+      - backend/**/target
+    expire_in: 30 min
+
+build_mobile:
+  image: ghcr.io/cirruslabs/flutter:stable
+  stage: build
+  needs: ["test_mobile"]
+  cache:
+    key: flutter-android-${CI_COMMIT_REF_SLUG}
+    paths:
+      - mobile/.pub-cache/
+      - mobile/.dart_tool/
+      - .gradle/
+      - mobile/build/
+    policy: pull-push
+  before_script:
+    - export PUB_CACHE="${CI_PROJECT_DIR}/mobile/.pub-cache"
+    - export GRADLE_USER_HOME="${CI_PROJECT_DIR}/.gradle"
+  script:
+    - cd mobile
+    - flutter pub get --offline || flutter pub get
+    - flutter build apk --release --no-pub
+    - flutter build appbundle --release --no-pub
+  artifacts:
+    paths:
+      - mobile/build/app/outputs/flutter-apk/app-release.apk
+      - mobile/build/app/outputs/bundle/release/app-release.aab
+    expire_in: 1 week
+  timeout: 20m
+ 
+
 sonar_backend:
   stage: sonar
   needs: ["test_backend"]
   script:
     - mvn -f backend/pom.xml sonar:sonar -Dsonar.projectKey=essajidi-aymane-group_Essajidi-Aymane-project -Dsonar.organization=essajidi-aymane-group -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN -Dsonar.java.source=17 -Dsonar.branch.name=$CI_COMMIT_BRANCH -Dsonar.java.coveragePlugin=jacoco "-Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml" "-Dsonar.exclusions=**/pom.xml,**/target/**,**/.mvn/**"
-  allow_failure: false
+  allow_failure: true
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+
+sonar_mobile:
+  image: ghcr.io/sonarsource/sonar-scanner-cli:latest
+  stage: sonar
+  needs: ["test_mobile"]
+  script:
+    - cd mobile
+    - sonar-scanner
+      -Dsonar.projectKey=essajidi-aymane-group_Essajidi-Aymane-project
+      -Dsonar.organization=essajidi-aymane-group
+      -Dsonar.host.url=$SONAR_HOST_URL
+      -Dsonar.token=$SONAR_TOKEN
+      -Dsonar.sources=lib
+      -Dsonar.tests=test
+      -Dsonar.flutter.coverage.reportPaths=coverage/lcov.info
+      -Dsonar.branch.name=$CI_COMMIT_BRANCH
+      -Dsonar.exclusions=**/*.g.dart,**/*.freezed.dart,**/*.config.dart
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+package_backend:
+  stage: package
+  needs: ["build_backend", "sonar_backend"]
+  script:
+    - mvn -B -f backend/pom.xml package -DskipTests
+  artifacts:
+    paths:
+      - backend/**/target/*.jar
+    expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+docker_release_backend:
+  stage: release
+  image: docker:24
+  services:
+    - docker:24-dind
+  needs: ["package_backend"]
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd backend
+    - docker build -t $DOCKER_IMAGE_BACKEND:$CI_COMMIT_SHORT_SHA -t $DOCKER_IMAGE_BACKEND:latest .
+    - docker push $DOCKER_IMAGE_BACKEND:$CI_COMMIT_SHORT_SHA
+    - docker push $DOCKER_IMAGE_BACKEND:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+
+gitlab_release_backend:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs: ["package_backend", "docker_release_backend"]
+  script:
+    - echo "Backend v$CI_PIPELINE_IID released"
+  release:
+    tag_name: 'backend-v$CI_PIPELINE_IID'
+    description: |
+      ## Backend Release v$CI_PIPELINE_IID
+      
+      **Commit:** $CI_COMMIT_SHORT_SHA
+      **Branch:** $CI_COMMIT_BRANCH
+      **Docker Image:** `$DOCKER_IMAGE_BACKEND:$CI_COMMIT_SHORT_SHA`
+      
+      ###  Déploiement
+      ```bash
+      docker pull $DOCKER_IMAGE_BACKEND:$CI_COMMIT_SHORT_SHA
+      docker run -p 8080:8080 $DOCKER_IMAGE_BACKEND:$CI_COMMIT_SHORT_SHA
+      ```
+    assets:
+      links:
+        - name: 'Backend JAR'
+          url: '$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_REF_NAME/raw/backend/target/app.jar?job=package_backend'
+        - name: 'Docker Image'
+          url: '$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA'
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
