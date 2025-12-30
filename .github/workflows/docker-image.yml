@@ -73,7 +73,7 @@ jobs:
   release-backend:
     name: Release Backend Docker Image
     runs-on: ubuntu-latest
-    needs: sonar-backend
+    needs: build-backend
     if: ${{ github.event.inputs.release == 'true' }}
     steps:
       - name: Checkout code
