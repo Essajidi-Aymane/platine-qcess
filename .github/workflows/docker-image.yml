@@ -66,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-jar
-          path: ./backend/target/*.jar
+          path: ./backend/app-rest/target/*.jar
 
 
 
@@ -83,7 +83,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: backend-jar
-          path: ./backend/target/
+          path: ./backend/app-rest/target/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
