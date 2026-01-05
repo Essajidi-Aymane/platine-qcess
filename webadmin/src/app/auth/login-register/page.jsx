@@ -3,6 +3,7 @@ import React, {useState} from 'react';
 import "../../globals.css";
 import { FaEye, FaRegEyeSlash  } from "react-icons/fa";
 import {useRouter } from "next/navigation";
+import { API_BASE_URL } from '@/lib/api';
 
 
 
@@ -46,8 +47,7 @@ function LoginForm() {
         setError("");
         setLoading(true);
         try {
-
-            const res = await fetch("http://localhost:8080/api/auth/login/web", {
+            const res = await fetch(`${API_BASE_URL}/auth/login/web`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(
@@ -172,7 +172,7 @@ function RegisterForm() {
 
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:8080/api/auth/register", {
+            const res = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

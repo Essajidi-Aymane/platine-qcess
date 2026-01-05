@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, API_URL } from '@/lib/api';
 
 export default function LogsPage() {
     const [logs, setLogs] = useState([]);
@@ -23,7 +24,7 @@ export default function LogsPage() {
     const fetchLogs = async () => {
         try {
             setLoading(true);
-            const res = await fetch('http://localhost:8080/api/access/logs', {
+            const res = await fetch(`${API_BASE_URL}/access/logs`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -51,7 +52,7 @@ export default function LogsPage() {
         useEffect(() => {
         fetchLogs();
 
-        const streamUrl = 'http://localhost:8080/api/access/stream-logs';
+        const streamUrl = `${API_BASE_URL}/access/stream-logs`;
         const eventSource = new EventSource(streamUrl, { withCredentials: true });
 
         eventSource.addEventListener('access-log', (event) => {
