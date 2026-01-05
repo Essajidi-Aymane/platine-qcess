@@ -46,6 +46,7 @@ function LoginForm() {
         e.preventDefault();
         setError("");
         setLoading(true);
+        console.log("Attempting login to:", `${API_BASE_URL}/auth/login/web`);
         try {
             const res = await fetch(`${API_BASE_URL}/auth/login/web`, {
                 method: "POST",
@@ -55,8 +56,10 @@ function LoginForm() {
                 ),
                 credentials: "include"
             });
+            console.log("Response status:", res.status);
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
+                console.error("Login failed:", data);
                 throw new Error(data.message || "Identifiants invalides");
             }
             const data = await res.json();
@@ -66,8 +69,10 @@ function LoginForm() {
 
             const params = new URLSearchParams(window.location.search);
             const next = params.get("next") || "/admin/dashboard";
+            console.log("Redirecting to:", next);
             window.location.assign(next);
         } catch (err) {
+            console.error("Login error:", err);
             setError(err.message);
         } finally {
             setLoading(false);
@@ -171,6 +176,7 @@ function RegisterForm() {
         }
 
         setLoading(true);
+        console.log("Attempting registration to:", `${API_BASE_URL}/auth/register`);
         try {
             const res = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: "POST",
@@ -183,15 +189,19 @@ function RegisterForm() {
                 }),
                 credentials: "include"
             });
+            console.log("Response status:", res.status);
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
+                console.error("Registration failed:", data);
                 throw new Error(data.message || "Inscription impossible.");
             }
             const data = await res.json();
             console.log("Register success:", data);
+            console.log("Redirecting to dashboard");
             window.location.assign("/admin/dashboard");
 
         } catch (err) {
+            console.error("Registration error:", err);
             setError(err.message);
         } finally {
             setLoading(false);
